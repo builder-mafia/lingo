@@ -7,7 +7,7 @@ import {
 import { JsonInput, type JsonInputOptions } from "../../layers/json-input";
 import { CliError } from "../errors";
 
-const validateProblem = (
+export const parseMultipleChoiceProblem = (
   input: unknown,
 ): Effect.Effect<CreateMultipleChoiceProblem, CliError> => {
   const parsed = createMultipleChoiceProblemSchema.safeParse(input);
@@ -23,5 +23,5 @@ export const validateMultipleChoiceProblem = (
   Effect.gen(function* () {
     const jsonInput = yield* JsonInput;
     const input = yield* jsonInput.read(inputOptions);
-    return yield* validateProblem(input);
+    return yield* parseMultipleChoiceProblem(input);
   });

@@ -2,7 +2,8 @@ import { Effect } from "effect";
 
 import { Database } from "../../layers/database";
 import { JsonInput, type JsonInputOptions } from "../../layers/json-input";
-import { noteIdSchema, noteSummarySchema, setNoteSummarySchema, type NoteSummary } from "../../schemas/note-summary";
+import { noteIdSchema } from "../../schemas/note";
+import { noteSummarySchema, setNoteSummarySchema, type NoteSummary } from "../../schemas/note-summary";
 import { CliError } from "../errors";
 
 const validateSummaryInput = (input: unknown): Effect.Effect<string, CliError> => {

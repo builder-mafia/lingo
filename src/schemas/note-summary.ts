@@ -1,6 +1,8 @@
 import { z } from "zod";
 
-export const noteIdSchema = z.string().uuid();
+import { noteIdSchema } from "./note";
+
+export { noteIdSchema } from "./note";
 
 export const setNoteSummarySchema = z.object({
   content: z.string().trim().min(1),

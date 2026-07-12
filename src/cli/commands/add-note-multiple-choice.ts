@@ -2,21 +2,9 @@ import { Effect } from "effect";
 
 import { Database } from "../../layers/database";
 import { JsonInput, type JsonInputOptions } from "../../layers/json-input";
-import {
-  createMultipleChoiceProblemSchema,
-  type CreateMultipleChoiceProblem,
-} from "../../schemas/multiple-choice";
-import { noteIdSchema } from "../../schemas/note-summary";
+import { parseMultipleChoiceProblem } from "./validate-multiple-choice";
+import { noteIdSchema } from "../../schemas/note";
 import { CliError } from "../errors";
-
-const validateProblem = (
-  input: unknown,
-): Effect.Effect<CreateMultipleChoiceProblem, CliError> => {
-  const parsed = createMultipleChoiceProblemSchema.safeParse(input);
-  return parsed.success
-    ? Effect.succeed(parsed.data)
-    : Effect.fail(new CliError("Invalid multiple-choice problem."));
-};
 
 export const addNoteMultipleChoiceProblem = (
   noteId: string,
@@ -33,6 +21,6 @@ export const addNoteMultipleChoiceProblem = (
     }
 
     const input = yield* (yield* JsonInput).read(inputOptions);
-    const problem = yield* validateProblem(input);
+    const problem = yield* parseMultipleChoiceProblem(input);
     return yield* (yield* Database).addMultipleChoiceProblem(parsedNoteId.data, problem);
   });
