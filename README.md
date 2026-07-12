@@ -10,6 +10,7 @@
 - `lingo note create`로 빈 노트 생성 및 localhost URL 반환
 - `lingo note summary set`으로 노트 요약 저장·갱신
 - `lingo note problem multiple-choice add`로 노트별 객관식 문제 저장
+- `lingo answer subjective set`으로 주관식 답변 저장·갱신
 - Zod 기반 노트·요약·객관식 문제 스키마
 - `--data` 인라인 JSON 및 `--data-file` JSON 파일 입력
 - 객관식 선택지의 `order`, `option`, `explanation` 및 `correctId` 무결성 검증

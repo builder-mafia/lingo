@@ -38,6 +38,10 @@ export interface DatabaseService {
     noteId: string,
     problem: CreateSubjectiveProblem,
   ) => Effect.Effect<StoredSubjectiveProblem, CliError>;
+  readonly setSubjectiveAnswer: (
+    problemId: string,
+    content: string,
+  ) => Effect.Effect<{ readonly problemId: string; readonly content: string }, CliError>;
 }
 
 export class Database extends Context.Tag("@lingo/Database")<
@@ -100,6 +104,14 @@ export const initializeDatabaseSchema = (database: SqliteDatabase) => {
       reference_answer TEXT NOT NULL,
       created_at TEXT NOT NULL,
       FOREIGN KEY(note_id) REFERENCES notes(id)
+    )
+  `);
+  database.run(`
+    CREATE TABLE IF NOT EXISTS subjective_answers (
+      problem_id TEXT PRIMARY KEY NOT NULL,
+      content TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY(problem_id) REFERENCES subjective_problems(id)
     )
   `);
 };
@@ -267,6 +279,19 @@ const makeService = (databasePath: string): DatabaseService => ({
         return stored;
       },
       "Could not add subjective problem.",
+    ),
+  setSubjectiveAnswer: (problemId, content) =>
+    withDatabase(
+      databasePath,
+      (database) => {
+        database.query(`
+          INSERT INTO subjective_answers (problem_id, content, updated_at)
+          VALUES (?, ?, ?)
+          ON CONFLICT(problem_id) DO UPDATE SET content = excluded.content, updated_at = excluded.updated_at
+        `).run(problemId, content, new Date().toISOString());
+        return { problemId, content };
+      },
+      "Could not set subjective answer.",
     ),
 });
 
