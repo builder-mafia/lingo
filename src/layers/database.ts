@@ -206,17 +206,37 @@ const makeService = (databasePath: string): DatabaseService => ({
           noteId,
           correctId: problem.correctId,
         };
-        database
-          .query(
-            "INSERT INTO multiple_choice_problems (id, note_id, question, correct_choice_order, created_at) VALUES (?, ?, ?, ?, ?)",
-          )
-          .run(stored.problemId, noteId, problem.question, problem.correctId, new Date().toISOString());
+        const insertProblem = database.query(
+          "INSERT INTO multiple_choice_problems (id, note_id, question, correct_choice_order, created_at) VALUES (?, ?, ?, ?, ?)",
+        );
         const insertChoice = database.query(
           "INSERT INTO multiple_choice_choices (problem_id, choice_order, option, explanation) VALUES (?, ?, ?, ?)",
         );
-        for (const choice of problem.choices) {
-          insertChoice.run(stored.problemId, choice.order, choice.option, choice.explanation);
-        }
+        const readCorrectChoice = database.query<{ readonly choiceOrder: number }, [string, number]>(
+          "SELECT choice_order AS choiceOrder FROM multiple_choice_choices WHERE problem_id = ? AND choice_order = ?",
+        );
+
+        database.transaction(() => {
+          insertProblem.run(
+            stored.problemId,
+            noteId,
+            problem.question,
+            problem.correctId,
+            new Date().toISOString(),
+          );
+          for (const choice of problem.choices) {
+            insertChoice.run(
+              stored.problemId,
+              choice.order,
+              choice.option,
+              choice.explanation,
+            );
+          }
+          if (!readCorrectChoice.get(stored.problemId, stored.correctId)) {
+            throw new Error("Correct choice is missing.");
+          }
+        })();
+
         return stored;
       },
       "Could not add multiple-choice problem.",
