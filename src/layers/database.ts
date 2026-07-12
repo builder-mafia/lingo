@@ -212,10 +212,6 @@ const makeService = (databasePath: string): DatabaseService => ({
         const insertChoice = database.query(
           "INSERT INTO multiple_choice_choices (problem_id, choice_order, option, explanation) VALUES (?, ?, ?, ?)",
         );
-        const readCorrectChoice = database.query<{ readonly choiceOrder: number }, [string, number]>(
-          "SELECT choice_order AS choiceOrder FROM multiple_choice_choices WHERE problem_id = ? AND choice_order = ?",
-        );
-
         database.transaction(() => {
           insertProblem.run(
             stored.problemId,
@@ -231,9 +227,6 @@ const makeService = (databasePath: string): DatabaseService => ({
               choice.option,
               choice.explanation,
             );
-          }
-          if (!readCorrectChoice.get(stored.problemId, stored.correctId)) {
-            throw new Error("Correct choice is missing.");
           }
         })();
 
