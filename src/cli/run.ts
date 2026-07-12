@@ -1,11 +1,14 @@
 import { Effect } from "effect";
 
+import { Database } from "../layers/database";
 import { JsonInput, type JsonInputOptions } from "../layers/json-input";
 import { errorResponse, CliError } from "./errors";
+import { createNote } from "./commands/create-note";
 import { validateMultipleChoiceProblem } from "./commands/validate-multiple-choice";
 
-const usage =
+const multipleChoiceUsage =
   "Usage: lingo problem multiple-choice validate (--data <json> | --data-file <path>)";
+const noteCreateUsage = "Usage: lingo note create";
 
 const parseInputOptions = (args: readonly string[]): Effect.Effect<JsonInputOptions, CliError> => {
   let data: string | undefined;
@@ -17,7 +20,7 @@ const parseInputOptions = (args: readonly string[]): Effect.Effect<JsonInputOpti
 
     if (argument === "--data") {
       if (value === undefined) {
-        return Effect.fail(new CliError(usage));
+        return Effect.fail(new CliError(multipleChoiceUsage));
       }
 
       if (data !== undefined) {
@@ -31,7 +34,7 @@ const parseInputOptions = (args: readonly string[]): Effect.Effect<JsonInputOpti
 
     if (argument === "--data-file") {
       if (value === undefined) {
-        return Effect.fail(new CliError(usage));
+        return Effect.fail(new CliError(multipleChoiceUsage));
       }
 
       if (dataFile !== undefined) {
@@ -45,7 +48,7 @@ const parseInputOptions = (args: readonly string[]): Effect.Effect<JsonInputOpti
       continue;
     }
 
-    return Effect.fail(new CliError(usage));
+    return Effect.fail(new CliError(multipleChoiceUsage));
   }
 
   return Effect.succeed({ data, dataFile });
@@ -53,15 +56,34 @@ const parseInputOptions = (args: readonly string[]): Effect.Effect<JsonInputOpti
 
 export const runCli = (
   args: readonly string[],
-): Effect.Effect<number, never, JsonInput> => {
-  const [resource, problemType, action, ...inputArgs] = args;
+): Effect.Effect<number, never, JsonInput | Database> => {
+  const [resource, type, action, ...inputArgs] = args;
+
+  if (resource === "note" && type === "create" && action === undefined) {
+    return createNote().pipe(
+      Effect.match({
+        onFailure: (error) => {
+          console.error(errorResponse(error));
+          return 1;
+        },
+        onSuccess: (data) => {
+          console.log(JSON.stringify({ ok: true, data }));
+          return 0;
+        },
+      }),
+    );
+  }
 
   if (
     resource !== "problem" ||
-    problemType !== "multiple-choice" ||
+    type !== "multiple-choice" ||
     action !== "validate"
   ) {
-    console.error(errorResponse(new CliError(usage)));
+    console.error(
+      errorResponse(
+        new CliError(resource === "note" ? noteCreateUsage : multipleChoiceUsage),
+      ),
+    );
     return Effect.succeed(1);
   }
 
