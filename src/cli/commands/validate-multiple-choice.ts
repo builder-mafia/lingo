@@ -14,7 +14,7 @@ const validateProblem = (
 
   return parsed.success
     ? Effect.succeed(parsed.data)
-    : Effect.fail(new CliError("Invalid multiple-choice problem.", parsed.error.issues));
+    : Effect.fail(new CliError("Invalid multiple-choice problem."));
 };
 
 export const validateMultipleChoiceProblem = (

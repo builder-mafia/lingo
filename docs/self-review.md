@@ -17,9 +17,9 @@
    - Commands depend on the `JsonInput` service interface and `runCli` provides the live layer.
    - A Layer-level test verifies the service contract.
 
-3. **Fixed — error type was narrower than the application boundary.**
-   - Replaced `CliInputError` with coarse-grained `CliError`.
-   - Messages and optional details still give CLI users actionable feedback without forcing callers to branch on many fine-grained error variants.
+3. **Fixed — validation details exposed raw Zod internals.**
+   - CLI 오류 응답은 이제 안정적인 `CliError` 코드와 메시지만 반환합니다.
+   - 상세 Zod issues는 외부 응답에 노출하지 않으며, coarse-grained 오류 정책을 유지합니다.
 
 4. **Checked — security and input boundaries.**
    - No secrets, shell execution, dynamic code evaluation, or external AI/provider credentials are included.
