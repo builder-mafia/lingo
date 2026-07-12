@@ -35,10 +35,34 @@ const initializeDatabase = (databasePath: string) => {
   return database;
 };
 
-const makeService = (database: SqliteDatabase): DatabaseService => ({
+const withDatabase = <Result>(
+  databasePath: string,
+  operation: (database: SqliteDatabase) => Result,
+  failureMessage: string,
+): Effect.Effect<Result, CliError> =>
+  Effect.try({
+    try: () => initializeDatabase(databasePath),
+    catch: () => new CliError("Could not initialize local database."),
+  }).pipe(
+    Effect.flatMap((database) =>
+      Effect.try({
+        try: () => {
+          try {
+            return operation(database);
+          } finally {
+            database.close();
+          }
+        },
+        catch: () => new CliError(failureMessage),
+      }),
+    ),
+  );
+
+const makeService = (databasePath: string): DatabaseService => ({
   createNote: () =>
-    Effect.try({
-      try: () => {
+    withDatabase(
+      databasePath,
+      (database) => {
         const note = noteSchema.parse({
           id: crypto.randomUUID(),
           createdAt: new Date().toISOString(),
@@ -50,11 +74,12 @@ const makeService = (database: SqliteDatabase): DatabaseService => ({
 
         return note;
       },
-      catch: () => new CliError("Could not create note."),
-    }),
+      "Could not create note.",
+    ),
   findNote: (noteId) =>
-    Effect.try({
-      try: () => {
+    withDatabase(
+      databasePath,
+      (database) => {
         const row = database
           .query<NoteRow, [string]>(
             "SELECT id, created_at AS createdAt FROM notes WHERE id = ?",
@@ -63,18 +88,9 @@ const makeService = (database: SqliteDatabase): DatabaseService => ({
 
         return row ? noteSchema.parse(row) : undefined;
       },
-      catch: () => new CliError("Could not read note."),
-    }),
+      "Could not read note.",
+    ),
 });
 
 export const makeDatabaseLayer = (databasePath: string) =>
-  Layer.scoped(
-    Database,
-    Effect.acquireRelease(
-      Effect.try({
-        try: () => initializeDatabase(databasePath),
-        catch: () => new CliError("Could not initialize local database."),
-      }),
-      (database) => Effect.sync(() => database.close()),
-    ).pipe(Effect.map(makeService)),
-  );
+  Layer.succeed(Database, makeService(databasePath));
