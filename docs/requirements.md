@@ -23,8 +23,9 @@ The local browser/database app must not need to know which AI agent the user use
 2. Set a note summary: `lingo note summary set <note-id> --data <json>` stores or updates the note summary.
 3. Add a multiple-choice problem to a note: `lingo note problem multiple-choice add <note-id> --data <json>` stores a validated problem and its choices.
 4. Add a subjective problem to a note.
-5. Read unanswered or unevaluated subjective answers for a note.
-6. Store a subjective-answer evaluation.
+5. Set a subjective answer: `lingo answer subjective set <problem-id> --data <json>` stores or updates an answer for a subjective problem.
+6. Read unanswered or unevaluated subjective answers for a note.
+7. Store a subjective-answer evaluation.
 
 Structured CLI payloads must accept either:
 
