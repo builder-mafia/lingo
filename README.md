@@ -52,10 +52,11 @@ bun run ./src/cli.ts problem multiple-choice validate --data-file ./problem.json
 src/
 ├── cli/
 │   ├── commands/       # 단일 CLI 유스케이스
-│   ├── errors.ts       # CLI 오류 모델·표현
-│   ├── input.ts        # JSON 입력 소스 처리
+│   ├── errors.ts       # 애플리케이션 오류 모델·표현
 │   └── run.ts          # 명령 라우팅
 ├── cli.ts              # 실행 진입점
+├── layers/             # 재사용 가능한 Effect 서비스와 Live Layers
+│   └── json-input.ts
 └── schemas/            # 모든 Zod 도메인 스키마
     └── multiple-choice.ts
 

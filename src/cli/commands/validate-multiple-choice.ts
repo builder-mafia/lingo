@@ -4,20 +4,24 @@ import {
   createMultipleChoiceProblemSchema,
   type CreateMultipleChoiceProblem,
 } from "../../schemas/multiple-choice";
-import { CliInputError } from "../errors";
-import { readJsonInput, type JsonInputOptions } from "../input";
+import { JsonInput, type JsonInputOptions } from "../../layers/json-input";
+import { CliError } from "../errors";
 
 const validateProblem = (
   input: unknown,
-): Effect.Effect<CreateMultipleChoiceProblem, CliInputError> => {
+): Effect.Effect<CreateMultipleChoiceProblem, CliError> => {
   const parsed = createMultipleChoiceProblemSchema.safeParse(input);
 
   return parsed.success
     ? Effect.succeed(parsed.data)
-    : Effect.fail(new CliInputError("Invalid multiple-choice problem.", parsed.error.issues));
+    : Effect.fail(new CliError("Invalid multiple-choice problem.", parsed.error.issues));
 };
 
 export const validateMultipleChoiceProblem = (
   inputOptions: JsonInputOptions,
-): Effect.Effect<CreateMultipleChoiceProblem, CliInputError> =>
-  readJsonInput(inputOptions).pipe(Effect.flatMap(validateProblem));
+): Effect.Effect<CreateMultipleChoiceProblem, CliError, JsonInput> =>
+  Effect.gen(function* () {
+    const jsonInput = yield* JsonInput;
+    const input = yield* jsonInput.read(inputOptions);
+    return yield* validateProblem(input);
+  });

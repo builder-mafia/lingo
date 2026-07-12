@@ -1,5 +1,5 @@
-export class CliInputError extends Error {
-  readonly _tag = "CliInputError";
+export class CliError extends Error {
+  readonly _tag = "CliError";
 
   constructor(
     message: string,
@@ -9,7 +9,7 @@ export class CliInputError extends Error {
   }
 }
 
-export const errorResponse = (error: CliInputError) =>
+export const errorResponse = (error: CliError) =>
   JSON.stringify({
     ok: false,
     error: {
