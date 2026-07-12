@@ -19,7 +19,7 @@ The local browser/database app must not need to know which AI agent the user use
 
 ## Core CLI operations
 
-1. Create an empty note.
+1. Create an empty note: `lingo note create` returns `noteId`, `createdAt`, and a localhost note URL after storing it in SQLite.
 2. Set a note summary.
 3. Add a multiple-choice problem to a note.
 4. Add a subjective problem to a note.
