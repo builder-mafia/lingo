@@ -6,6 +6,13 @@ import { dirname } from "node:path";
 import { CliError } from "../cli/errors";
 import { noteSchema, type Note } from "../schemas/note";
 import { noteSummarySchema, type NoteSummary } from "../schemas/note-summary";
+import { type CreateMultipleChoiceProblem } from "../schemas/multiple-choice";
+
+export type StoredMultipleChoiceProblem = {
+  readonly problemId: string;
+  readonly noteId: string;
+  readonly correctId: number;
+};
 
 export interface DatabaseService {
   readonly createNote: () => Effect.Effect<Note, CliError>;
@@ -17,6 +24,10 @@ export interface DatabaseService {
   readonly findNoteSummary: (
     noteId: string,
   ) => Effect.Effect<NoteSummary | undefined, CliError>;
+  readonly addMultipleChoiceProblem: (
+    noteId: string,
+    problem: CreateMultipleChoiceProblem,
+  ) => Effect.Effect<StoredMultipleChoiceProblem, CliError>;
 }
 
 export class Database extends Context.Tag("@lingo/Database")<
@@ -49,6 +60,26 @@ export const initializeDatabaseSchema = (database: SqliteDatabase) => {
       content TEXT NOT NULL,
       updated_at TEXT NOT NULL,
       FOREIGN KEY(note_id) REFERENCES notes(id)
+    )
+  `);
+  database.run(`
+    CREATE TABLE IF NOT EXISTS multiple_choice_problems (
+      id TEXT PRIMARY KEY NOT NULL,
+      note_id TEXT NOT NULL,
+      question TEXT NOT NULL,
+      correct_choice_order INTEGER NOT NULL,
+      created_at TEXT NOT NULL,
+      FOREIGN KEY(note_id) REFERENCES notes(id)
+    )
+  `);
+  database.run(`
+    CREATE TABLE IF NOT EXISTS multiple_choice_choices (
+      problem_id TEXT NOT NULL,
+      choice_order INTEGER NOT NULL,
+      option TEXT NOT NULL,
+      explanation TEXT NOT NULL,
+      PRIMARY KEY(problem_id, choice_order),
+      FOREIGN KEY(problem_id) REFERENCES multiple_choice_problems(id)
     )
   `);
 };
@@ -165,6 +196,30 @@ const makeService = (databasePath: string): DatabaseService => ({
         return row ? noteSummarySchema.parse(row) : undefined;
       },
       "Could not read note summary.",
+    ),
+  addMultipleChoiceProblem: (noteId, problem) =>
+    withDatabase(
+      databasePath,
+      (database) => {
+        const stored: StoredMultipleChoiceProblem = {
+          problemId: crypto.randomUUID(),
+          noteId,
+          correctId: problem.correctId,
+        };
+        database
+          .query(
+            "INSERT INTO multiple_choice_problems (id, note_id, question, correct_choice_order, created_at) VALUES (?, ?, ?, ?, ?)",
+          )
+          .run(stored.problemId, noteId, problem.question, problem.correctId, new Date().toISOString());
+        const insertChoice = database.query(
+          "INSERT INTO multiple_choice_choices (problem_id, choice_order, option, explanation) VALUES (?, ?, ?, ?)",
+        );
+        for (const choice of problem.choices) {
+          insertChoice.run(stored.problemId, choice.order, choice.option, choice.explanation);
+        }
+        return stored;
+      },
+      "Could not add multiple-choice problem.",
     ),
 });
 
