@@ -4,6 +4,7 @@ import { Database } from "../layers/database";
 import { JsonInput, type JsonInputOptions } from "../layers/json-input";
 import { errorResponse, CliError } from "./errors";
 import { createNote } from "./commands/create-note";
+import { addNoteMultipleChoiceProblem } from "./commands/add-note-multiple-choice";
 import { setNoteSummary } from "./commands/set-note-summary";
 import { validateMultipleChoiceProblem } from "./commands/validate-multiple-choice";
 
@@ -12,6 +13,8 @@ const multipleChoiceUsage =
 const noteCreateUsage = "Usage: lingo note create";
 const noteSummaryUsage =
   "Usage: lingo note summary set <note-id> (--data <json> | --data-file <path>)";
+const noteMultipleChoiceUsage =
+  "Usage: lingo note problem multiple-choice add <note-id> (--data <json> | --data-file <path>)";
 
 const parseInputOptions = (
   args: readonly string[],
@@ -67,6 +70,34 @@ export const runCli = (
 
   if (resource === "note" && type === "create" && action === undefined) {
     return createNote().pipe(
+      Effect.match({
+        onFailure: (error) => {
+          console.error(errorResponse(error));
+          return 1;
+        },
+        onSuccess: (data) => {
+          console.log(JSON.stringify({ ok: true, data }));
+          return 0;
+        },
+      }),
+    );
+  }
+
+  if (
+    resource === "note" &&
+    type === "problem" &&
+    action === "multiple-choice"
+  ) {
+    const [operation, noteId, ...problemInputArgs] = inputArgs;
+    if (operation !== "add" || noteId === undefined) {
+      console.error(errorResponse(new CliError(noteMultipleChoiceUsage)));
+      return Effect.succeed(1);
+    }
+
+    return parseInputOptions(problemInputArgs, noteMultipleChoiceUsage).pipe(
+      Effect.flatMap((inputOptions) =>
+        addNoteMultipleChoiceProblem(noteId, inputOptions),
+      ),
       Effect.match({
         onFailure: (error) => {
           console.error(errorResponse(error));
