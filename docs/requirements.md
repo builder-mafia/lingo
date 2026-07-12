@@ -56,9 +56,8 @@ A subjective problem stays independent from the multiple-choice schema. It needs
 - Domain validation: Zod, centralized in `src/schemas/`
 - Persistence: local SQLite
 - User interface: browser GUI served only on localhost
-- Common Effect capabilities: modular services and Live Layers in `src/layers/`
+- Common Effect capabilities: focused services and Live Layers in `src/layers/`, composed once by `AppRuntime` in `src/runtime.ts`
 - Error policy: coarse-grained application/CLI errors with readable messages and optional details; avoid excessive error subclasses.
-
 ## Quality and maintenance
 
 - Follow SOLID and single-responsibility boundaries.

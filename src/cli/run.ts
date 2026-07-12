@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import { JsonInputLive, type JsonInputOptions } from "../layers/json-input";
+import { JsonInput, type JsonInputOptions } from "../layers/json-input";
 import { errorResponse, CliError } from "./errors";
 import { validateMultipleChoiceProblem } from "./commands/validate-multiple-choice";
 
@@ -51,7 +51,9 @@ const parseInputOptions = (args: readonly string[]): Effect.Effect<JsonInputOpti
   return Effect.succeed({ data, dataFile });
 };
 
-export const runCli = (args: readonly string[]): Effect.Effect<number> => {
+export const runCli = (
+  args: readonly string[],
+): Effect.Effect<number, never, JsonInput> => {
   const [resource, problemType, action, ...inputArgs] = args;
 
   if (
@@ -65,7 +67,6 @@ export const runCli = (args: readonly string[]): Effect.Effect<number> => {
 
   return parseInputOptions(inputArgs).pipe(
     Effect.flatMap(validateMultipleChoiceProblem),
-    Effect.provide(JsonInputLive),
     Effect.match({
       onFailure: (error) => {
         console.error(errorResponse(error));

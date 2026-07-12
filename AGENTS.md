@@ -15,7 +15,7 @@ Lingo is a local-first note and problem-solving app.
 - Zod schemas in `src/schemas/` are the single source of truth for domain input contracts. Derive TypeScript types from Zod; do not duplicate interfaces.
 - Keep Zod schema files separate by domain type. Only share fields that are truly common.
 - Use Effect for I/O, composition, and dependency boundaries.
-- Put reusable Effect dependencies in `src/layers/` as focused services and Live Layers. Commands should depend on interfaces, not concrete I/O implementations.
+- Put reusable Effect dependencies in `src/layers/` as focused services and Live Layers. Compose those layers once in `src/runtime.ts`; commands should require interfaces, never provide dependencies themselves.
 - Prefer coarse-grained Effect errors (for example, a CLI/application error with a clear message and optional details). Do not create many tiny error variants unless callers genuinely need different recovery behavior.
 - Apply SOLID and single-responsibility design. Separate schemas, input parsing, command orchestration, persistence, and presentation.
 

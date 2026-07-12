@@ -55,6 +55,7 @@ src/
 │   ├── errors.ts       # 애플리케이션 오류 모델·표현
 │   └── run.ts          # 명령 라우팅
 ├── cli.ts              # 실행 진입점
+├── runtime.ts          # 공유 Layer를 조립한 AppRuntime
 ├── layers/             # 재사용 가능한 Effect 서비스와 Live Layers
 │   └── json-input.ts
 └── schemas/            # 모든 Zod 도메인 스키마
