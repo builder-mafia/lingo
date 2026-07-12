@@ -8,7 +8,8 @@
 - Effect 기반 CLI 실행 흐름 및 오류 처리
 - Bun 내장 SQLite 기반 로컬 note 영속성
 - `lingo note create`로 빈 노트 생성 및 localhost URL 반환
-- Zod 기반 노트·객관식 문제 스키마
+- `lingo note summary set`으로 노트 요약 저장·갱신
+- Zod 기반 노트·요약·객관식 문제 스키마
 - `--data` 인라인 JSON 및 `--data-file` JSON 파일 입력
 - 객관식 선택지의 `order`, `option`, `explanation` 및 `correctId` 무결성 검증
 
@@ -20,6 +21,12 @@ bun run ./src/cli.ts note create
 ```
 
 성공하면 로컬 SQLite에 저장된 `noteId`와 이후 브라우저 UI에서 열 URL을 JSON으로 반환합니다. 데이터베이스는 기본적으로 `~/.lingo/lingo.sqlite`에 생성됩니다.
+
+노트 요약은 JSON 문자열 또는 JSON 파일로 저장·갱신할 수 있습니다.
+
+```bash
+bun run ./src/cli.ts note summary set <note-id> --data '{"content":"노트의 핵심 요약"}'
+```
 
 객관식 입력 검증 예시:
 
@@ -71,6 +78,7 @@ src/
 │   └── json-input.ts
 └── schemas/            # 모든 Zod 도메인 스키마
     ├── multiple-choice.ts
+    ├── note-summary.ts
     └── note.ts
 
 tests/

@@ -4,13 +4,19 @@ import { Database } from "../layers/database";
 import { JsonInput, type JsonInputOptions } from "../layers/json-input";
 import { errorResponse, CliError } from "./errors";
 import { createNote } from "./commands/create-note";
+import { setNoteSummary } from "./commands/set-note-summary";
 import { validateMultipleChoiceProblem } from "./commands/validate-multiple-choice";
 
 const multipleChoiceUsage =
   "Usage: lingo problem multiple-choice validate (--data <json> | --data-file <path>)";
 const noteCreateUsage = "Usage: lingo note create";
+const noteSummaryUsage =
+  "Usage: lingo note summary set <note-id> (--data <json> | --data-file <path>)";
 
-const parseInputOptions = (args: readonly string[]): Effect.Effect<JsonInputOptions, CliError> => {
+const parseInputOptions = (
+  args: readonly string[],
+  usage: string,
+): Effect.Effect<JsonInputOptions, CliError> => {
   let data: string | undefined;
   let dataFile: string | undefined;
 
@@ -20,7 +26,7 @@ const parseInputOptions = (args: readonly string[]): Effect.Effect<JsonInputOpti
 
     if (argument === "--data") {
       if (value === undefined) {
-        return Effect.fail(new CliError(multipleChoiceUsage));
+        return Effect.fail(new CliError(usage));
       }
 
       if (data !== undefined) {
@@ -34,7 +40,7 @@ const parseInputOptions = (args: readonly string[]): Effect.Effect<JsonInputOpti
 
     if (argument === "--data-file") {
       if (value === undefined) {
-        return Effect.fail(new CliError(multipleChoiceUsage));
+        return Effect.fail(new CliError(usage));
       }
 
       if (dataFile !== undefined) {
@@ -48,7 +54,7 @@ const parseInputOptions = (args: readonly string[]): Effect.Effect<JsonInputOpti
       continue;
     }
 
-    return Effect.fail(new CliError(multipleChoiceUsage));
+    return Effect.fail(new CliError(usage));
   }
 
   return Effect.succeed({ data, dataFile });
@@ -61,6 +67,29 @@ export const runCli = (
 
   if (resource === "note" && type === "create" && action === undefined) {
     return createNote().pipe(
+      Effect.match({
+        onFailure: (error) => {
+          console.error(errorResponse(error));
+          return 1;
+        },
+        onSuccess: (data) => {
+          console.log(JSON.stringify({ ok: true, data }));
+          return 0;
+        },
+      }),
+    );
+  }
+
+  if (resource === "note" && type === "summary" && action === "set") {
+    const [noteId, ...summaryInputArgs] = inputArgs;
+
+    if (noteId === undefined) {
+      console.error(errorResponse(new CliError(noteSummaryUsage)));
+      return Effect.succeed(1);
+    }
+
+    return parseInputOptions(summaryInputArgs, noteSummaryUsage).pipe(
+      Effect.flatMap((inputOptions) => setNoteSummary(noteId, inputOptions)),
       Effect.match({
         onFailure: (error) => {
           console.error(errorResponse(error));
@@ -87,7 +116,7 @@ export const runCli = (
     return Effect.succeed(1);
   }
 
-  return parseInputOptions(inputArgs).pipe(
+  return parseInputOptions(inputArgs, multipleChoiceUsage).pipe(
     Effect.flatMap(validateMultipleChoiceProblem),
     Effect.match({
       onFailure: (error) => {
