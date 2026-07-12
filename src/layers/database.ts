@@ -125,16 +125,6 @@ const makeService = (databasePath: string): DatabaseService => ({
     withDatabase(
       databasePath,
       (database) => {
-        const note = database
-          .query<{ readonly id: string }, [string]>(
-            "SELECT id FROM notes WHERE id = ?",
-          )
-          .get(noteId);
-
-        if (!note) {
-          throw new Error("Note not found.");
-        }
-
         const summary = noteSummarySchema.parse({
           noteId,
           content,
