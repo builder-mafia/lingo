@@ -7,11 +7,17 @@ import { CliError } from "../cli/errors";
 import { noteSchema, type Note } from "../schemas/note";
 import { noteSummarySchema, type NoteSummary } from "../schemas/note-summary";
 import { type CreateMultipleChoiceProblem } from "../schemas/multiple-choice";
+import { type CreateSubjectiveProblem } from "../schemas/subjective";
 
 export type StoredMultipleChoiceProblem = {
   readonly problemId: string;
   readonly noteId: string;
   readonly correctId: number;
+};
+
+export type StoredSubjectiveProblem = {
+  readonly problemId: string;
+  readonly noteId: string;
 };
 
 export interface DatabaseService {
@@ -28,6 +34,10 @@ export interface DatabaseService {
     noteId: string,
     problem: CreateMultipleChoiceProblem,
   ) => Effect.Effect<StoredMultipleChoiceProblem, CliError>;
+  readonly addSubjectiveProblem: (
+    noteId: string,
+    problem: CreateSubjectiveProblem,
+  ) => Effect.Effect<StoredSubjectiveProblem, CliError>;
 }
 
 export class Database extends Context.Tag("@lingo/Database")<
@@ -80,6 +90,16 @@ export const initializeDatabaseSchema = (database: SqliteDatabase) => {
       explanation TEXT NOT NULL,
       PRIMARY KEY(problem_id, choice_order),
       FOREIGN KEY(problem_id) REFERENCES multiple_choice_problems(id)
+    )
+  `);
+  database.run(`
+    CREATE TABLE IF NOT EXISTS subjective_problems (
+      id TEXT PRIMARY KEY NOT NULL,
+      note_id TEXT NOT NULL,
+      question TEXT NOT NULL,
+      reference_answer TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      FOREIGN KEY(note_id) REFERENCES notes(id)
     )
   `);
 };
@@ -233,6 +253,20 @@ const makeService = (databasePath: string): DatabaseService => ({
         return stored;
       },
       "Could not add multiple-choice problem.",
+    ),
+  addSubjectiveProblem: (noteId, problem) =>
+    withDatabase(
+      databasePath,
+      (database) => {
+        const stored: StoredSubjectiveProblem = { problemId: crypto.randomUUID(), noteId };
+        database
+          .query(
+            "INSERT INTO subjective_problems (id, note_id, question, reference_answer, created_at) VALUES (?, ?, ?, ?, ?)",
+          )
+          .run(stored.problemId, noteId, problem.question, problem.referenceAnswer, new Date().toISOString());
+        return stored;
+      },
+      "Could not add subjective problem.",
     ),
 });
 
