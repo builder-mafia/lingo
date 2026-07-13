@@ -20,6 +20,13 @@ export type StoredSubjectiveProblem = {
   readonly noteId: string;
 };
 
+export type UnevaluatedSubjectiveAnswer = {
+  readonly problemId: string;
+  readonly question: string;
+  readonly referenceAnswer: string;
+  readonly answer: string;
+};
+
 export interface DatabaseService {
   readonly createNote: () => Effect.Effect<Note, CliError>;
   readonly findNote: (noteId: string) => Effect.Effect<Note | undefined, CliError>;
@@ -42,6 +49,9 @@ export interface DatabaseService {
     problemId: string,
     content: string,
   ) => Effect.Effect<{ readonly problemId: string; readonly content: string }, CliError>;
+  readonly listUnevaluatedSubjectiveAnswers: (
+    noteId: string,
+  ) => Effect.Effect<readonly UnevaluatedSubjectiveAnswer[], CliError>;
 }
 
 export class Database extends Context.Tag("@lingo/Database")<
@@ -292,6 +302,25 @@ const makeService = (databasePath: string): DatabaseService => ({
         return { problemId, content };
       },
       "Could not set subjective answer.",
+    ),
+  listUnevaluatedSubjectiveAnswers: (noteId) =>
+    withDatabase(
+      databasePath,
+      (database) =>
+        database
+          .query<UnevaluatedSubjectiveAnswer, [string]>(`
+            SELECT
+              problems.id AS problemId,
+              problems.question AS question,
+              problems.reference_answer AS referenceAnswer,
+              answers.content AS answer
+            FROM subjective_problems AS problems
+            INNER JOIN subjective_answers AS answers ON answers.problem_id = problems.id
+            WHERE problems.note_id = ?
+            ORDER BY problems.created_at ASC
+          `)
+          .all(noteId),
+      "Could not list subjective answers.",
     ),
 });
 

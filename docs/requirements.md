@@ -17,6 +17,19 @@ Browser GUI → displays stored evaluation
 
 The local browser/database app must not need to know which AI agent the user uses. Codex, Claude Code, Cursor, Hermes, and local models remain concerns of the calling skill.
 
+## CLI taxonomy
+
+Use the resource first, then the minimum action and identifier needed:
+
+- `lingo note create`
+- `lingo note summary set <note-id>`
+- `lingo problem multiple-choice add <note-id>`
+- `lingo problem subjective add <note-id>`
+- `lingo answer set <problem-id>`
+- `lingo answer list <note-id>`
+
+Do not put a temporary storage state in a command name or mandatory flag. A state filter is added only once multiple meaningful states exist.
+
 ## Core CLI operations
 
 1. Create an empty note: `lingo note create` returns `noteId`, `createdAt`, and a localhost note URL after storing it in SQLite.
