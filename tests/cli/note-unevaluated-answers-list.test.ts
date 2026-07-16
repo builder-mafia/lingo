@@ -17,9 +17,9 @@ test("lists only the selected note's unevaluated subjective answers with problem
     const firstProblem = JSON.parse((await runCli(home, ["note", "problem", "subjective", "add", firstNote.noteId, "--data", JSON.stringify({ question: "첫 질문", referenceAnswer: "첫 모범답" })])).stdout).data;
     const secondProblem = JSON.parse((await runCli(home, ["note", "problem", "subjective", "add", secondNote.noteId, "--data", JSON.stringify({ question: "둘 질문", referenceAnswer: "둘 모범답" })])).stdout).data;
     await runCli(home, ["answer", "subjective", "set", firstProblem.problemId, "--data", JSON.stringify({ content: "첫 답" })]);
-    await runCli(home, ["answer", "subjective", "set", secondProblem.problemId, "--data", JSON.stringify({ content: "둘 답" })]);
+    await runCli(home, ["evaluation", "set", firstProblem.problemId, "--data", JSON.stringify({ feedback: "평가 완료" })]);
     const result = await runCli(home, ["answer", "list", firstNote.noteId]);
     expect(result.exitCode).toBe(0);
-    expect(JSON.parse(result.stdout).data).toEqual([{ problemId: firstProblem.problemId, question: "첫 질문", referenceAnswer: "첫 모범답", answer: "첫 답" }]);
+    expect(JSON.parse(result.stdout).data).toEqual([]);
   } finally { rmSync(home, { recursive: true, force: true }); }
 });

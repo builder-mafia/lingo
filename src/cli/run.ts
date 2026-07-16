@@ -8,6 +8,7 @@ import { addNoteMultipleChoiceProblem } from "./commands/add-note-multiple-choic
 import { addNoteSubjectiveProblem } from "./commands/add-note-subjective";
 import { setSubjectiveAnswer } from "./commands/set-subjective-answer";
 import { listSubjectiveAnswers } from "./commands/list-subjective-answers";
+import { setSubjectiveEvaluation } from "./commands/set-subjective-evaluation";
 import { setNoteSummary } from "./commands/set-note-summary";
 import { validateMultipleChoiceProblem } from "./commands/validate-multiple-choice";
 
@@ -23,6 +24,8 @@ const noteSubjectiveUsage =
 const subjectiveAnswerUsage =
   "Usage: lingo answer subjective set <problem-id> (--data <json> | --data-file <path>)";
 const answerListUsage = "Usage: lingo answer list <note-id>";
+const evaluationUsage =
+  "Usage: lingo evaluation set <problem-id> (--data <json> | --data-file <path>)";
 
 const parseInputOptions = (
   args: readonly string[],
@@ -75,6 +78,21 @@ export const runCli = (
   args: readonly string[],
 ): Effect.Effect<number, never, JsonInput | Database> => {
   const [resource, type, action, ...inputArgs] = args;
+
+  if (resource === "evaluation" && type === "set") {
+    const [problemId, ...evaluationInputArgs] = [action, ...inputArgs];
+    if (problemId === undefined) {
+      console.error(errorResponse(new CliError(evaluationUsage)));
+      return Effect.succeed(1);
+    }
+    return parseInputOptions(evaluationInputArgs, evaluationUsage).pipe(
+      Effect.flatMap((inputOptions) => setSubjectiveEvaluation(problemId, inputOptions)),
+      Effect.match({
+        onFailure: (error) => { console.error(errorResponse(error)); return 1; },
+        onSuccess: (data) => { console.log(JSON.stringify({ ok: true, data })); return 0; },
+      }),
+    );
+  }
 
   if (resource === "answer" && type === "list") {
     const [noteId, ...unexpectedArgs] = [action, ...inputArgs];

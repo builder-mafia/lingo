@@ -52,6 +52,10 @@ export interface DatabaseService {
   readonly listUnevaluatedSubjectiveAnswers: (
     noteId: string,
   ) => Effect.Effect<readonly UnevaluatedSubjectiveAnswer[], CliError>;
+  readonly setSubjectiveEvaluation: (
+    problemId: string,
+    feedback: string,
+  ) => Effect.Effect<{ readonly problemId: string; readonly feedback: string }, CliError>;
 }
 
 export class Database extends Context.Tag("@lingo/Database")<
@@ -122,6 +126,15 @@ export const initializeDatabaseSchema = (database: SqliteDatabase) => {
       content TEXT NOT NULL,
       updated_at TEXT NOT NULL,
       FOREIGN KEY(problem_id) REFERENCES subjective_problems(id)
+    )
+  `);
+  database.run(`
+    CREATE TABLE IF NOT EXISTS subjective_evaluations (
+      problem_id TEXT PRIMARY KEY NOT NULL,
+      feedback TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY(problem_id) REFERENCES subjective_problems(id),
+      FOREIGN KEY(problem_id) REFERENCES subjective_answers(problem_id)
     )
   `);
 };
@@ -316,11 +329,25 @@ const makeService = (databasePath: string): DatabaseService => ({
               answers.content AS answer
             FROM subjective_problems AS problems
             INNER JOIN subjective_answers AS answers ON answers.problem_id = problems.id
-            WHERE problems.note_id = ?
+            LEFT JOIN subjective_evaluations AS evaluations ON evaluations.problem_id = problems.id
+            WHERE problems.note_id = ? AND evaluations.problem_id IS NULL
             ORDER BY problems.created_at ASC
           `)
           .all(noteId),
       "Could not list subjective answers.",
+    ),
+  setSubjectiveEvaluation: (problemId, feedback) =>
+    withDatabase(
+      databasePath,
+      (database) => {
+        database.query(`
+          INSERT INTO subjective_evaluations (problem_id, feedback, updated_at)
+          VALUES (?, ?, ?)
+          ON CONFLICT(problem_id) DO UPDATE SET feedback = excluded.feedback, updated_at = excluded.updated_at
+        `).run(problemId, feedback, new Date().toISOString());
+        return { problemId, feedback };
+      },
+      "Could not set subjective evaluation.",
     ),
 });
 
