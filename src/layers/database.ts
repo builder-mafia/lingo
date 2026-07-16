@@ -133,7 +133,8 @@ export const initializeDatabaseSchema = (database: SqliteDatabase) => {
       problem_id TEXT PRIMARY KEY NOT NULL,
       feedback TEXT NOT NULL,
       updated_at TEXT NOT NULL,
-      FOREIGN KEY(problem_id) REFERENCES subjective_problems(id)
+      FOREIGN KEY(problem_id) REFERENCES subjective_problems(id),
+      FOREIGN KEY(problem_id) REFERENCES subjective_answers(problem_id)
     )
   `);
 };

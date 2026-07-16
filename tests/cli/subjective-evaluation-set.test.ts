@@ -15,6 +15,7 @@ test("stores and updates an evaluation for a subjective problem", async () => {
   try {
     const note = JSON.parse((await runCli(home, ["note", "create"])).stdout).data;
     const problem = JSON.parse((await runCli(home, ["note", "problem", "subjective", "add", note.noteId, "--data", JSON.stringify({ question: "설명", referenceAnswer: "모범" })])).stdout).data;
+    await runCli(home, ["answer", "subjective", "set", problem.problemId, "--data", JSON.stringify({ content: "답변" })]);
     const first = await runCli(home, ["evaluation", "set", problem.problemId, "--data", JSON.stringify({ feedback: "근거가 부족합니다." })]);
     const second = await runCli(home, ["evaluation", "set", problem.problemId, "--data", JSON.stringify({ feedback: "근거가 충분합니다." })]);
     expect(first.exitCode).toBe(0);
