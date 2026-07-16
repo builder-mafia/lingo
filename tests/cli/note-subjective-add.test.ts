@@ -25,9 +25,7 @@ test("stores a subjective problem for a note", async () => {
     const created = await runCli(home, ["note", "create"]);
     const noteId = JSON.parse(created.stdout).data.noteId;
     const result = await runCli(home, [
-      "note",
       "problem",
-      "subjective",
       "add",
       noteId,
       "--data",
