@@ -27,6 +27,7 @@ Use the resource first, then the minimum action and identifier needed:
 - `lingo problem subjective add <note-id>`
 - `lingo answer set <problem-id>`
 - `lingo answer list <note-id>`
+- `lingo evaluation set <problem-id>`
 
 Do not put a temporary storage state in a command name or mandatory flag. A state filter is added only once multiple meaningful states exist.
 
@@ -38,7 +39,7 @@ Do not put a temporary storage state in a command name or mandatory flag. A stat
 4. Add a subjective problem to a note.
 5. Set a subjective answer: `lingo answer subjective set <problem-id> --data <json>` stores or updates an answer for a subjective problem.
 6. Read unanswered or unevaluated subjective answers for a note.
-7. Store a subjective-answer evaluation.
+7. Store a subjective-answer evaluation: `lingo evaluation set <problem-id> --data <json>` stores or updates external AI feedback.
 
 Structured CLI payloads must accept either:
 
