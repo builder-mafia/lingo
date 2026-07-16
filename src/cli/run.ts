@@ -135,21 +135,6 @@ export const runCli = (
     );
   }
 
-  if (resource === "answer" && type === "subjective" && action === "set") {
-    const [problemId, ...answerInputArgs] = inputArgs;
-    if (problemId === undefined) {
-      console.error(errorResponse(new CliError(subjectiveAnswerUsage)));
-      return Effect.succeed(1);
-    }
-    return parseInputOptions(answerInputArgs, subjectiveAnswerUsage).pipe(
-      Effect.flatMap((inputOptions) => setSubjectiveAnswer(problemId, inputOptions)),
-      Effect.match({
-        onFailure: (error) => { console.error(errorResponse(error)); return 1; },
-        onSuccess: (data) => { console.log(JSON.stringify({ ok: true, data })); return 0; },
-      }),
-    );
-  }
-
   if (resource === "note" && type === "create" && action === undefined) {
     return createNote().pipe(
       Effect.match({

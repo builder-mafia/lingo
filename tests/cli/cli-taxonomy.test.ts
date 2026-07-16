@@ -14,3 +14,13 @@ test("adds a multiple-choice problem with the concise problem add command", asyn
   const result = await run(["problem", "add", note.noteId, "--data", JSON.stringify({ question: "질문", choices: [{ order: 1, option: "가", explanation: "설명" }, { order: 2, option: "나", explanation: "설명" }], correctId: 1 })]);
   expect(result.exitCode).toBe(0);
 });
+
+test("rejects the removed answer subjective set command", async () => {
+  const child = Bun.spawn(
+    ["bun", "run", cliPath, "answer", "subjective", "set", crypto.randomUUID(), "--data", '{"content":"답변"}'],
+    { cwd: projectRoot, stdout: "pipe", stderr: "pipe" },
+  );
+  const [exitCode, stderr] = await Promise.all([child.exited, new Response(child.stderr).text()]);
+  expect(exitCode).toBe(1);
+  expect(JSON.parse(stderr).error.code).toBe("CliError");
+});

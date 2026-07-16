@@ -23,8 +23,7 @@ Use the resource first, then the minimum action and identifier needed:
 
 - `lingo note create`
 - `lingo note summary set <note-id>`
-- `lingo problem multiple-choice add <note-id>`
-- `lingo problem subjective add <note-id>`
+- `lingo problem add <note-id>`
 - `lingo answer set <problem-id>`
 - `lingo answer list <note-id>`
 - `lingo evaluation set <problem-id>`
