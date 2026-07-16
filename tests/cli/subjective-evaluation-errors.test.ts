@@ -13,7 +13,7 @@ test("rejects evaluation when a subjective problem has no answer", async () => {
   };
   try {
     const note = JSON.parse((await run(["note", "create"])).output).data;
-    const problem = JSON.parse((await run(["note", "problem", "subjective", "add", note.noteId, "--data", JSON.stringify({ question: "질문", referenceAnswer: "모범" })])).output).data;
+    const problem = JSON.parse((await run(["problem", "add", note.noteId, "--data", JSON.stringify({ question: "질문", referenceAnswer: "모범" })])).output).data;
     const result = await run(["evaluation", "set", problem.problemId, "--data", JSON.stringify({ feedback: "평가" })], true);
     expect(result.exitCode).toBe(1);
     expect(JSON.parse(result.output).error.message).toBe("Could not set subjective evaluation.");

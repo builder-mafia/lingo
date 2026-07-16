@@ -35,11 +35,10 @@ Do not put a temporary storage state in a command name or mandatory flag. A stat
 
 1. Create an empty note: `lingo note create` returns `noteId`, `createdAt`, and a localhost note URL after storing it in SQLite.
 2. Set a note summary: `lingo note summary set <note-id> --data <json>` stores or updates the note summary.
-3. Add a multiple-choice problem to a note: `lingo note problem multiple-choice add <note-id> --data <json>` stores a validated problem and its choices.
-4. Add a subjective problem to a note.
-5. Set a subjective answer: `lingo answer subjective set <problem-id> --data <json>` stores or updates an answer for a subjective problem.
-6. Read unanswered or unevaluated subjective answers for a note.
-7. Store a subjective-answer evaluation: `lingo evaluation set <problem-id> --data <json>` stores or updates external AI feedback.
+3. Add a problem: `lingo problem add <note-id> --data <json>` infers a multiple-choice or subjective contract from the JSON shape.
+4. Set an answer: `lingo answer set <problem-id> --data <json>` stores or updates an answer for a subjective problem.
+5. Read answers needing evaluation: `lingo answer list <note-id>` returns unanswered evaluations with problem context.
+6. Store an evaluation: `lingo evaluation set <problem-id> --data <json>` stores or updates external AI feedback.
 
 Structured CLI payloads must accept either:
 

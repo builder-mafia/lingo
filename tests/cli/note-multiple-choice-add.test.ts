@@ -28,9 +28,7 @@ test("stores a multiple-choice problem and its choices for a note", async () => 
     const created = await runCli(home, ["note", "create"]);
     const noteId = JSON.parse(created.stdout).data.noteId;
     const result = await runCli(home, [
-      "note",
       "problem",
-      "multiple-choice",
       "add",
       noteId,
       "--data",

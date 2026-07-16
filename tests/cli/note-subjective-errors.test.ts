@@ -8,7 +8,7 @@ const projectRoot = new URL("../..", import.meta.url).pathname;
 test("returns a coarse error without persisting a subjective problem for a missing note", async () => {
   const home = `/tmp/lingo-subjective-missing-${crypto.randomUUID()}`;
   const child = Bun.spawn([
-    "bun", "run", cliPath, "note", "problem", "subjective", "add",
+    "bun", "run", cliPath, "problem", "add",
     "f26a9922-c4a0-4de0-90fa-1e1a6cc46405", "--data",
     JSON.stringify({ question: "저장 불가", referenceAnswer: "답" }),
   ], { cwd: projectRoot, env: { ...process.env, HOME: home }, stdout: "pipe", stderr: "pipe" });

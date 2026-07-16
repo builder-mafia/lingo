@@ -1,94 +1,171 @@
 # Lingo
 
-로컬 우선 노트·문제 풀이 앱입니다. 스킬은 `lingo` CLI로 노트와 문제를 만들고, 사용자는 이후 localhost 브라우저 UI에서 문제를 풉니다.
+로컬 우선 노트·문제 풀이 앱입니다. 스킬은 `lingo` CLI로 노트·문제·답변·평가를 SQLite에 저장하고, 사용자는 이후 localhost 브라우저 UI에서 문제를 풉니다.
 
-## 현재 구현 범위
+- 기본 데이터베이스: `~/.lingo/lingo.sqlite`
+- 모든 응답: JSON
+- 구조화 입력: `--data '<JSON>'` 또는 `--data-file <파일>` 중 **하나만** 사용
 
-- Bun + TypeScript 실행 환경
-- Effect 기반 CLI 실행 흐름 및 오류 처리
-- Bun 내장 SQLite 기반 로컬 note 영속성
-- `lingo note create`로 빈 노트 생성 및 localhost URL 반환
-- `lingo note summary set`으로 노트 요약 저장·갱신
-- `lingo note problem multiple-choice add`로 노트별 객관식 문제 저장
-- `lingo answer subjective set`으로 주관식 답변 저장·갱신
-- Zod 기반 노트·요약·객관식 문제 스키마
-- `--data` 인라인 JSON 및 `--data-file` JSON 파일 입력
-- 객관식 선택지의 `order`, `option`, `explanation` 및 `correctId` 무결성 검증
-
-## 사용법
+## 빠른 시작
 
 ```bash
 bun install
 bun run ./src/cli.ts note create
 ```
 
-성공하면 로컬 SQLite에 저장된 `noteId`와 이후 브라우저 UI에서 열 URL을 JSON으로 반환합니다. 데이터베이스는 기본적으로 `~/.lingo/lingo.sqlite`에 생성됩니다.
+성공하면 새 노트의 ID와 localhost URL을 반환합니다.
 
-노트 요약은 JSON 문자열 또는 JSON 파일로 저장·갱신할 수 있습니다.
-
-```bash
-bun run ./src/cli.ts note summary set <note-id> --data '{"content":"노트의 핵심 요약"}'
+```json
+{
+  "ok": true,
+  "data": {
+    "noteId": "<note-id>",
+    "createdAt": "2026-07-16T12:00:00.000Z",
+    "noteUrl": "http://127.0.0.1:3000/notes/<note-id>"
+  }
+}
 ```
 
-객관식 입력 검증 예시:
+아래 예시에서는 이 값을 `<note-id>`로 표기합니다.
+
+## CLI 명령 한눈에 보기
+
+| 목적 | 명령 |
+| --- | --- |
+| 빈 노트 만들기 | `lingo note create` |
+| 노트 요약 저장 | `lingo note summary set <note-id>` |
+| 객관식/주관식 문제 추가 | `lingo problem add <note-id>` |
+| 주관식 답변 저장 | `lingo answer set <problem-id>` |
+| 아직 평가되지 않은 답변 조회 | `lingo answer list <note-id>` |
+| AI 평가 결과 저장 | `lingo evaluation set <problem-id>` |
+
+명령은 리소스 중심으로 짧게 유지합니다. 문제 종류는 별도의 `--type`이 아니라 입력 JSON의 구조로 판별합니다.
+
+## Practice: 노트부터 평가까지
+
+### 1. 노트 만들기
 
 ```bash
-bun run ./src/cli.ts problem multiple-choice validate --data '{
+bun run ./src/cli.ts note create
+```
+
+출력의 `data.noteId`를 다음 단계의 `<note-id>` 자리에 넣습니다.
+
+### 2. 요약 저장하기
+
+```bash
+bun run ./src/cli.ts note summary set <note-id> --data '{
+  "content": "고객 인터뷰로 사업 아이디어의 문제 가설을 검증하는 연습 노트"
+}'
+```
+
+### 3. 객관식 문제 추가하기
+
+`choices`가 있으면 Lingo가 객관식 문제로 저장합니다.
+
+```bash
+bun run ./src/cli.ts problem add <note-id> --data '{
   "question": "고객 문제를 검증하는 첫 행동은 무엇인가요?",
   "choices": [
     {
       "order": 1,
       "option": "기능을 전부 구현한다",
-      "explanation": "고객 문제를 검증하기 전 구현부터 시작하면 불필요한 기능을 만들 위험이 큽니다."
+      "explanation": "문제를 확인하기 전에 구현부터 시작하면 불필요한 기능을 만들 위험이 큽니다."
     },
     {
       "order": 2,
       "option": "잠재 고객을 인터뷰한다",
-      "explanation": "정답입니다. 실제 문제와 현재 행동을 확인해 가설을 검증할 수 있습니다."
+      "explanation": "실제 문제와 현재 행동을 확인해 가설을 검증할 수 있습니다."
     }
   ],
   "correctId": 2
 }'
 ```
 
-JSON 파일도 지원합니다.
+출력의 `data.problemId`를 `<problem-id>`로 사용합니다.
+
+### 4. 주관식 문제 추가하기
+
+`referenceAnswer`가 있으면 Lingo가 주관식 문제로 저장합니다.
 
 ```bash
-bun run ./src/cli.ts problem multiple-choice validate --data-file ./problem.json
+bun run ./src/cli.ts problem add <note-id> --data '{
+  "question": "고객 인터뷰에서 확인할 핵심 가설을 한 문장으로 작성하세요.",
+  "referenceAnswer": "누가 어떤 상황에서 어떤 비용이나 불편을 반복적으로 겪는지 확인한다."
+}'
 ```
 
-## 검증 규칙
+### 5. 주관식 답변 저장하기
 
+```bash
+bun run ./src/cli.ts answer set <problem-id> --data '{
+  "content": "초기 창업자는 고객이 시간을 많이 쓰는 반복 업무를 겪는지 먼저 인터뷰로 확인해야 한다."
+}'
+```
+
+같은 `<problem-id>`로 다시 실행하면 답변을 새 내용으로 갱신합니다.
+
+### 6. AI 평가 대상 답변 읽기
+
+스킬은 이 JSON을 읽은 뒤 Lingo 밖에서 원하는 AI를 사용해 평가합니다.
+
+```bash
+bun run ./src/cli.ts answer list <note-id>
+```
+
+반환값에는 평가에 필요한 문제와 답변 문맥이 들어 있습니다.
+
+```json
+{
+  "ok": true,
+  "data": [
+    {
+      "problemId": "<problem-id>",
+      "question": "...",
+      "referenceAnswer": "...",
+      "answer": "..."
+    }
+  ]
+}
+```
+
+### 7. AI 평가 결과 저장하기
+
+Lingo는 AI provider를 직접 호출하지 않습니다. 스킬이 만든 feedback만 저장합니다.
+
+```bash
+bun run ./src/cli.ts evaluation set <problem-id> --data '{
+  "feedback": "핵심 방향은 맞습니다. 고객이 실제로 겪는 반복 업무와 현재 해결 방법을 더 구체적으로 적어 보세요."
+}'
+```
+
+평가를 저장한 답변은 다음 `answer list <note-id>` 결과에서 제외됩니다.
+
+## JSON 파일 입력
+
+긴 입력은 파일로 관리할 수 있습니다.
+
+```bash
+cat > problem.json <<'JSON'
+{
+  "question": "가설 검증에 가장 먼저 확인할 것은 무엇인가요?",
+  "referenceAnswer": "대상 고객이 문제를 실제로 반복 경험하는지 확인한다."
+}
+JSON
+
+bun run ./src/cli.ts problem add <note-id> --data-file ./problem.json
+```
+
+`--data`와 `--data-file`은 동시에 사용할 수 없으며, 같은 플래그를 두 번 사용할 수도 없습니다.
+
+## 입력 검증 규칙
+
+- 모든 ID는 UUID여야 합니다.
+- 요약·답변·feedback·문제 문장은 비어 있을 수 없습니다.
 - 객관식 문제는 선택지가 2개 이상이어야 합니다.
 - `choices[].order`는 양의 정수이며 중복될 수 없습니다.
-- `option`과 `explanation`은 비어 있을 수 없습니다.
 - `correctId`는 반드시 하나의 `choices[].order` 값이어야 합니다.
-- `--data`와 `--data-file`은 동시에 사용할 수 없습니다.
-
-## 구조
-
-```text
-src/
-├── cli/
-│   ├── commands/       # 단일 CLI 유스케이스
-│   ├── errors.ts       # 애플리케이션 오류 모델·표현
-│   └── run.ts          # 명령 라우팅
-├── cli.ts              # 실행 진입점
-├── runtime.ts          # 공유 Layer를 조립한 AppRuntime
-├── layers/             # 재사용 가능한 Effect 서비스와 Live Layers
-│   ├── database.ts
-│   └── json-input.ts
-└── schemas/            # 모든 Zod 도메인 스키마
-    ├── multiple-choice.ts
-    ├── note-summary.ts
-    └── note.ts
-
-tests/
-├── cli/
-└── schemas/
-```
-
-`schemas/`는 도메인 데이터 계약만 담당합니다. CLI 입력 처리, 명령 라우팅, 오류 표현은 각각 별도 파일로 분리해 단일 책임 원칙을 유지합니다.
+- `choices`와 `referenceAnswer`를 모두 넣지 말고, 만들려는 문제 형태에 맞는 JSON만 전달합니다.
 
 ## 개발
 
@@ -96,3 +173,16 @@ tests/
 bun test
 bun run typecheck
 ```
+
+## 구조
+
+```text
+src/
+├── cli/commands/  # 단일 CLI 유스케이스
+├── cli.ts         # 실행 진입점
+├── runtime.ts     # 공유 Effect Layer를 조립한 AppRuntime
+├── layers/        # SQLite·JSON 입력 같은 재사용 서비스
+└── schemas/       # Zod 도메인 계약
+```
+
+`schemas/`는 도메인 계약만 담당합니다. 입력 처리, 명령 라우팅, 저장소, 오류 표현은 별도 책임으로 분리합니다.
