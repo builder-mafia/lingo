@@ -328,7 +328,8 @@ const makeService = (databasePath: string): DatabaseService => ({
               answers.content AS answer
             FROM subjective_problems AS problems
             INNER JOIN subjective_answers AS answers ON answers.problem_id = problems.id
-            WHERE problems.note_id = ?
+            LEFT JOIN subjective_evaluations AS evaluations ON evaluations.problem_id = problems.id
+            WHERE problems.note_id = ? AND evaluations.problem_id IS NULL
             ORDER BY problems.created_at ASC
           `)
           .all(noteId),
