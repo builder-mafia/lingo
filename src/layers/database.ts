@@ -6,23 +6,23 @@ import { dirname } from "node:path";
 import { CliError } from "../cli/errors";
 import { noteSchema, type Note } from "../schemas/note";
 import { noteSummarySchema, type NoteSummary } from "../schemas/note-summary";
-import { type CreateMultipleChoiceProblem } from "../schemas/multiple-choice";
-import { type CreateSubjectiveProblem } from "../schemas/subjective";
+import { type CreateMultipleChoiceQuestion } from "../schemas/multiple-choice";
+import { type CreateSubjectiveQuestion } from "../schemas/subjective";
 import { runDatabaseMigrations } from "./database-migrations";
 
-export type StoredMultipleChoiceProblem = {
-  readonly problemId: string;
+export type StoredMultipleChoiceQuestion = {
+  readonly questionId: string;
   readonly noteId: string;
   readonly correctId: number;
 };
 
-export type StoredSubjectiveProblem = {
-  readonly problemId: string;
+export type StoredSubjectiveQuestion = {
+  readonly questionId: string;
   readonly noteId: string;
 };
 
 export type UnevaluatedSubjectiveAnswer = {
-  readonly problemId: string;
+  readonly questionId: string;
   readonly question: string;
   readonly referenceAnswer: string;
   readonly answer: string;
@@ -38,25 +38,25 @@ export interface DatabaseService {
   readonly findNoteSummary: (
     noteId: string,
   ) => Effect.Effect<NoteSummary | undefined, CliError>;
-  readonly addMultipleChoiceProblem: (
+  readonly addMultipleChoiceQuestion: (
     noteId: string,
-    problem: CreateMultipleChoiceProblem,
-  ) => Effect.Effect<StoredMultipleChoiceProblem, CliError>;
-  readonly addSubjectiveProblem: (
+    question: CreateMultipleChoiceQuestion,
+  ) => Effect.Effect<StoredMultipleChoiceQuestion, CliError>;
+  readonly addSubjectiveQuestion: (
     noteId: string,
-    problem: CreateSubjectiveProblem,
-  ) => Effect.Effect<StoredSubjectiveProblem, CliError>;
+    question: CreateSubjectiveQuestion,
+  ) => Effect.Effect<StoredSubjectiveQuestion, CliError>;
   readonly setSubjectiveAnswer: (
-    problemId: string,
+    questionId: string,
     content: string,
-  ) => Effect.Effect<{ readonly problemId: string; readonly content: string }, CliError>;
+  ) => Effect.Effect<{ readonly questionId: string; readonly content: string }, CliError>;
   readonly listUnevaluatedSubjectiveAnswers: (
     noteId: string,
   ) => Effect.Effect<readonly UnevaluatedSubjectiveAnswer[], CliError>;
   readonly setSubjectiveEvaluation: (
-    problemId: string,
+    questionId: string,
     feedback: string,
-  ) => Effect.Effect<{ readonly problemId: string; readonly feedback: string }, CliError>;
+  ) => Effect.Effect<{ readonly questionId: string; readonly feedback: string }, CliError>;
 }
 
 export class Database extends Context.Tag("@lingo/Database")<
@@ -193,32 +193,32 @@ const makeService = (databasePath: string): DatabaseService => ({
       },
       "Could not read note summary.",
     ),
-  addMultipleChoiceProblem: (noteId, problem) =>
+  addMultipleChoiceQuestion: (noteId, question) =>
     withDatabase(
       databasePath,
       (database) => {
-        const stored: StoredMultipleChoiceProblem = {
-          problemId: crypto.randomUUID(),
+        const stored: StoredMultipleChoiceQuestion = {
+          questionId: crypto.randomUUID(),
           noteId,
-          correctId: problem.correctId,
+          correctId: question.correctId,
         };
-        const insertProblem = database.query(
-          "INSERT INTO multiple_choice_problems (id, note_id, question, correct_choice_order, created_at) VALUES (?, ?, ?, ?, ?)",
+        const insertQuestion = database.query(
+          "INSERT INTO multiple_choice_questions (id, note_id, question, correct_choice_order, created_at) VALUES (?, ?, ?, ?, ?)",
         );
         const insertChoice = database.query(
-          "INSERT INTO multiple_choice_choices (problem_id, choice_order, option, explanation) VALUES (?, ?, ?, ?)",
+          "INSERT INTO multiple_choice_choices (question_id, choice_order, option, explanation) VALUES (?, ?, ?, ?)",
         );
         database.transaction(() => {
-          insertProblem.run(
-            stored.problemId,
+          insertQuestion.run(
+            stored.questionId,
             noteId,
-            problem.question,
-            problem.correctId,
+            question.question,
+            question.correctId,
             new Date().toISOString(),
           );
-          for (const choice of problem.choices) {
+          for (const choice of question.choices) {
             insertChoice.run(
-              stored.problemId,
+              stored.questionId,
               choice.order,
               choice.option,
               choice.explanation,
@@ -228,32 +228,32 @@ const makeService = (databasePath: string): DatabaseService => ({
 
         return stored;
       },
-      "Could not add multiple-choice problem.",
+      "Could not add multiple-choice question.",
     ),
-  addSubjectiveProblem: (noteId, problem) =>
+  addSubjectiveQuestion: (noteId, question) =>
     withDatabase(
       databasePath,
       (database) => {
-        const stored: StoredSubjectiveProblem = { problemId: crypto.randomUUID(), noteId };
+        const stored: StoredSubjectiveQuestion = { questionId: crypto.randomUUID(), noteId };
         database
           .query(
-            "INSERT INTO subjective_problems (id, note_id, question, reference_answer, created_at) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO subjective_questions (id, note_id, question, reference_answer, created_at) VALUES (?, ?, ?, ?, ?)",
           )
-          .run(stored.problemId, noteId, problem.question, problem.referenceAnswer, new Date().toISOString());
+          .run(stored.questionId, noteId, question.question, question.referenceAnswer, new Date().toISOString());
         return stored;
       },
-      "Could not add subjective problem.",
+      "Could not add subjective question.",
     ),
-  setSubjectiveAnswer: (problemId, content) =>
+  setSubjectiveAnswer: (questionId, content) =>
     withDatabase(
       databasePath,
       (database) => {
         database.query(`
-          INSERT INTO subjective_answers (problem_id, content, updated_at)
+          INSERT INTO subjective_answers (question_id, content, updated_at)
           VALUES (?, ?, ?)
-          ON CONFLICT(problem_id) DO UPDATE SET content = excluded.content, updated_at = excluded.updated_at
-        `).run(problemId, content, new Date().toISOString());
-        return { problemId, content };
+          ON CONFLICT(question_id) DO UPDATE SET content = excluded.content, updated_at = excluded.updated_at
+        `).run(questionId, content, new Date().toISOString());
+        return { questionId, content };
       },
       "Could not set subjective answer.",
     ),
@@ -264,29 +264,29 @@ const makeService = (databasePath: string): DatabaseService => ({
         database
           .query<UnevaluatedSubjectiveAnswer, [string]>(`
             SELECT
-              problems.id AS problemId,
-              problems.question AS question,
-              problems.reference_answer AS referenceAnswer,
+              questions.id AS questionId,
+              questions.question AS question,
+              questions.reference_answer AS referenceAnswer,
               answers.content AS answer
-            FROM subjective_problems AS problems
-            INNER JOIN subjective_answers AS answers ON answers.problem_id = problems.id
-            LEFT JOIN subjective_evaluations AS evaluations ON evaluations.problem_id = problems.id
-            WHERE problems.note_id = ? AND evaluations.problem_id IS NULL
-            ORDER BY problems.created_at ASC
+            FROM subjective_questions AS questions
+            INNER JOIN subjective_answers AS answers ON answers.question_id = questions.id
+            LEFT JOIN subjective_evaluations AS evaluations ON evaluations.question_id = questions.id
+            WHERE questions.note_id = ? AND evaluations.question_id IS NULL
+            ORDER BY questions.created_at ASC
           `)
           .all(noteId),
       "Could not list subjective answers.",
     ),
-  setSubjectiveEvaluation: (problemId, feedback) =>
+  setSubjectiveEvaluation: (questionId, feedback) =>
     withDatabase(
       databasePath,
       (database) => {
         database.query(`
-          INSERT INTO subjective_evaluations (problem_id, feedback, updated_at)
+          INSERT INTO subjective_evaluations (question_id, feedback, updated_at)
           VALUES (?, ?, ?)
-          ON CONFLICT(problem_id) DO UPDATE SET feedback = excluded.feedback, updated_at = excluded.updated_at
-        `).run(problemId, feedback, new Date().toISOString());
-        return { problemId, feedback };
+          ON CONFLICT(question_id) DO UPDATE SET feedback = excluded.feedback, updated_at = excluded.updated_at
+        `).run(questionId, feedback, new Date().toISOString());
+        return { questionId, feedback };
       },
       "Could not set subjective evaluation.",
     ),

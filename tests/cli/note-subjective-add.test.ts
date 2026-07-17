@@ -18,14 +18,14 @@ const runCli = async (home: string, args: readonly string[]) => {
   return { exitCode, stdout };
 };
 
-test("stores a subjective problem for a note", async () => {
+test("stores a subjective question for a note", async () => {
   const home = `/tmp/lingo-subjective-${crypto.randomUUID()}`;
 
   try {
     const created = await runCli(home, ["note", "create"]);
     const noteId = JSON.parse(created.stdout).data.noteId;
     const result = await runCli(home, [
-      "problem",
+      "question",
       "add",
       noteId,
       "--data",
@@ -36,16 +36,16 @@ test("stores a subjective problem for a note", async () => {
     ]);
 
     expect(result.exitCode).toBe(0);
-    const problem = JSON.parse(result.stdout).data;
-    expect(problem).toMatchObject({ noteId });
+    const question = JSON.parse(result.stdout).data;
+    expect(question).toMatchObject({ noteId });
 
     const database = new SqliteDatabase(`${home}/.lingo/lingo.sqlite`);
     try {
       const stored = database
         .query<{ readonly question: string; readonly referenceAnswer: string }, [string]>(
-          "SELECT question, reference_answer AS referenceAnswer FROM subjective_problems WHERE id = ?",
+          "SELECT question, reference_answer AS referenceAnswer FROM subjective_questions WHERE id = ?",
         )
-        .get(problem.problemId);
+        .get(question.questionId);
       expect(stored).toEqual({
         question: "이 사업 아이디어의 핵심 고객 문제를 설명하세요.",
         referenceAnswer: "고객이 반복적으로 겪는 비용 큰 문제를 구체적으로 설명한다.",

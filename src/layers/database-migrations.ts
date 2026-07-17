@@ -69,8 +69,27 @@ const createInitialSchema = (database: SqliteDatabase) => {
   `);
 };
 
+const renameProblemsToQuestions = (database: SqliteDatabase) => {
+  database.run(
+    "ALTER TABLE multiple_choice_problems RENAME TO multiple_choice_questions",
+  );
+  database.run(
+    "ALTER TABLE multiple_choice_choices RENAME COLUMN problem_id TO question_id",
+  );
+  database.run(
+    "ALTER TABLE subjective_problems RENAME TO subjective_questions",
+  );
+  database.run(
+    "ALTER TABLE subjective_answers RENAME COLUMN problem_id TO question_id",
+  );
+  database.run(
+    "ALTER TABLE subjective_evaluations RENAME COLUMN problem_id TO question_id",
+  );
+};
+
 const databaseMigrations: readonly DatabaseMigration[] = [
   { version: 1, migrate: createInitialSchema },
+  { version: 2, migrate: renameProblemsToQuestions },
 ];
 
 export const LATEST_DATABASE_VERSION =

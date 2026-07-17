@@ -3,13 +3,13 @@ import { describe, expect, test } from "bun:test";
 const cliPath = new URL("../../src/cli.ts", import.meta.url).pathname;
 const projectRoot = new URL("../..", import.meta.url).pathname;
 
-const validProblem = {
-  question: "좋은 객관식 문제의 조건은 무엇인가요?",
+const validQuestion = {
+  question: "좋은 객관식 질문의 조건은 무엇인가요?",
   choices: [
     {
       order: 10,
       option: "정답이 존재한다",
-      explanation: "정답입니다. 객관식 문제는 선택지 중 판별 가능한 정답이 필요합니다.",
+      explanation: "정답입니다. 객관식 질문은 선택지 중 판별 가능한 정답이 필요합니다.",
     },
     {
       order: 20,
@@ -22,31 +22,52 @@ const validProblem = {
 
 describe("lingo --data-file input", () => {
   test("loads and validates JSON from a file", async () => {
-    const filePath = `/tmp/lingo-problem-${crypto.randomUUID()}.json`;
-    await Bun.write(filePath, JSON.stringify(validProblem));
+    const home = `/tmp/lingo-data-file-${crypto.randomUUID()}`;
+    const filePath = `/tmp/lingo-question-${crypto.randomUUID()}.json`;
+    await Bun.write(filePath, JSON.stringify(validQuestion));
 
-    const process = Bun.spawn(
+    const createNote = Bun.spawn(
+      ["bun", "run", cliPath, "note", "create"],
+      {
+        cwd: projectRoot,
+        env: { ...process.env, HOME: home },
+        stdout: "pipe",
+      },
+    );
+    await createNote.exited;
+    const note = JSON.parse(await new Response(createNote.stdout).text()).data;
+
+    const child = Bun.spawn(
       [
         "bun",
         "run",
         cliPath,
-        "problem",
-        "multiple-choice",
-        "validate",
+        "question",
+        "add",
+        note.noteId,
         "--data-file",
         filePath,
       ],
-      { cwd: projectRoot, stdout: "pipe", stderr: "pipe" },
+      {
+        cwd: projectRoot,
+        env: { ...process.env, HOME: home },
+        stdout: "pipe",
+        stderr: "pipe",
+      },
     );
 
     const [exitCode, stdout, stderr] = await Promise.all([
-      process.exited,
-      new Response(process.stdout).text(),
-      new Response(process.stderr).text(),
+      child.exited,
+      new Response(child.stdout).text(),
+      new Response(child.stderr).text(),
     ]);
 
     expect(stderr).toBe("");
     expect(exitCode).toBe(0);
-    expect(JSON.parse(stdout)).toEqual({ ok: true, data: validProblem });
+    expect(JSON.parse(stdout).data).toMatchObject({
+      noteId: note.noteId,
+      questionId: expect.any(String),
+      correctId: validQuestion.correctId,
+    });
   });
 });

@@ -135,4 +135,123 @@ describe("database migrations", () => {
       database.close();
     }
   });
+
+  test("renames question storage without losing version 1 data", () => {
+    const database = new SqliteDatabase(":memory:");
+    const noteId = "f837b0af-0e71-445a-8ed3-ae54af96361d";
+    const multipleChoiceQuestionId = "b9125414-bda5-4447-9ef6-876831647243";
+    const subjectiveQuestionId = "f035d495-68a8-48cc-bc62-5f20b32fc8d8";
+
+    try {
+      database.run("PRAGMA foreign_keys = ON");
+      database.run(`
+        CREATE TABLE notes (
+          id TEXT PRIMARY KEY NOT NULL,
+          created_at TEXT NOT NULL
+        )
+      `);
+      database.run(`
+        CREATE TABLE multiple_choice_problems (
+          id TEXT PRIMARY KEY NOT NULL,
+          note_id TEXT NOT NULL,
+          question TEXT NOT NULL,
+          correct_choice_order INTEGER NOT NULL,
+          created_at TEXT NOT NULL,
+          FOREIGN KEY(note_id) REFERENCES notes(id)
+        )
+      `);
+      database.run(`
+        CREATE TABLE multiple_choice_choices (
+          problem_id TEXT NOT NULL,
+          choice_order INTEGER NOT NULL,
+          option TEXT NOT NULL,
+          explanation TEXT NOT NULL,
+          PRIMARY KEY(problem_id, choice_order),
+          FOREIGN KEY(problem_id) REFERENCES multiple_choice_problems(id)
+        )
+      `);
+      database.run(`
+        CREATE TABLE subjective_problems (
+          id TEXT PRIMARY KEY NOT NULL,
+          note_id TEXT NOT NULL,
+          question TEXT NOT NULL,
+          reference_answer TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          FOREIGN KEY(note_id) REFERENCES notes(id)
+        )
+      `);
+      database.run(`
+        CREATE TABLE subjective_answers (
+          problem_id TEXT PRIMARY KEY NOT NULL,
+          content TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY(problem_id) REFERENCES subjective_problems(id)
+        )
+      `);
+      database.run(`
+        CREATE TABLE subjective_evaluations (
+          problem_id TEXT PRIMARY KEY NOT NULL,
+          feedback TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY(problem_id) REFERENCES subjective_problems(id),
+          FOREIGN KEY(problem_id) REFERENCES subjective_answers(problem_id)
+        )
+      `);
+      database.run("PRAGMA user_version = 1");
+
+      database
+        .query("INSERT INTO notes (id, created_at) VALUES (?, ?)")
+        .run(noteId, "2026-07-17T00:00:00.000Z");
+      database
+        .query("INSERT INTO multiple_choice_problems (id, note_id, question, correct_choice_order, created_at) VALUES (?, ?, ?, ?, ?)")
+        .run(multipleChoiceQuestionId, noteId, "객관식 질문", 1, "2026-07-17T00:00:00.000Z");
+      database
+        .query("INSERT INTO multiple_choice_choices (problem_id, choice_order, option, explanation) VALUES (?, ?, ?, ?)")
+        .run(multipleChoiceQuestionId, 1, "선택지", "설명");
+      database
+        .query("INSERT INTO subjective_problems (id, note_id, question, reference_answer, created_at) VALUES (?, ?, ?, ?, ?)")
+        .run(subjectiveQuestionId, noteId, "주관식 질문", "참고 답안", "2026-07-17T00:00:00.000Z");
+      database
+        .query("INSERT INTO subjective_answers (problem_id, content, updated_at) VALUES (?, ?, ?)")
+        .run(subjectiveQuestionId, "내 답변", "2026-07-17T00:00:00.000Z");
+      database
+        .query("INSERT INTO subjective_evaluations (problem_id, feedback, updated_at) VALUES (?, ?, ?)")
+        .run(subjectiveQuestionId, "피드백", "2026-07-17T00:00:00.000Z");
+
+      initializeDatabaseSchema(database);
+
+      expect(readDatabaseVersion(database)).toBe(2);
+      expect(
+        database
+          .query<{ readonly id: string }, [string]>(
+            "SELECT id FROM multiple_choice_questions WHERE id = ?",
+          )
+          .get(multipleChoiceQuestionId),
+      ).toEqual({ id: multipleChoiceQuestionId });
+      expect(
+        database
+          .query<{ readonly questionId: string }, [string]>(
+            "SELECT question_id AS questionId FROM multiple_choice_choices WHERE question_id = ?",
+          )
+          .get(multipleChoiceQuestionId),
+      ).toEqual({ questionId: multipleChoiceQuestionId });
+      expect(
+        database
+          .query<{ readonly questionId: string; readonly content: string }, [string]>(
+            "SELECT question_id AS questionId, content FROM subjective_answers WHERE question_id = ?",
+          )
+          .get(subjectiveQuestionId),
+      ).toEqual({ questionId: subjectiveQuestionId, content: "내 답변" });
+      expect(
+        database
+          .query<{ readonly questionId: string; readonly feedback: string }, [string]>(
+            "SELECT question_id AS questionId, feedback FROM subjective_evaluations WHERE question_id = ?",
+          )
+          .get(subjectiveQuestionId),
+      ).toEqual({ questionId: subjectiveQuestionId, feedback: "피드백" });
+      expect(database.query("PRAGMA foreign_key_check").all()).toEqual([]);
+    } finally {
+      database.close();
+    }
+  });
 });

@@ -21,14 +21,14 @@ const runCli = async (home: string, args: readonly string[]) => {
   return { exitCode, stdout };
 };
 
-test("stores a multiple-choice problem and its choices for a note", async () => {
-  const home = `/tmp/lingo-problem-${crypto.randomUUID()}`;
+test("stores a multiple-choice question and its choices for a note", async () => {
+  const home = `/tmp/lingo-question-${crypto.randomUUID()}`;
 
   try {
     const created = await runCli(home, ["note", "create"]);
     const noteId = JSON.parse(created.stdout).data.noteId;
     const result = await runCli(home, [
-      "problem",
+      "question",
       "add",
       noteId,
       "--data",
@@ -43,16 +43,16 @@ test("stores a multiple-choice problem and its choices for a note", async () => 
     ]);
 
     expect(result.exitCode).toBe(0);
-    const problem = JSON.parse(result.stdout).data;
-    expect(problem).toMatchObject({ noteId, correctId: 2 });
+    const question = JSON.parse(result.stdout).data;
+    expect(question).toMatchObject({ noteId, correctId: 2 });
 
     const database = new SqliteDatabase(`${home}/.lingo/lingo.sqlite`);
     try {
       const storedChoices = database
         .query<{ readonly option: string }, [string]>(
-          "SELECT option FROM multiple_choice_choices WHERE problem_id = ? ORDER BY choice_order",
+          "SELECT option FROM multiple_choice_choices WHERE question_id = ? ORDER BY choice_order",
         )
-        .all(problem.problemId);
+        .all(question.questionId);
       expect(storedChoices).toEqual([{ option: "첫 번째" }, { option: "두 번째" }]);
     } finally {
       database.close();

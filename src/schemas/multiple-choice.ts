@@ -6,7 +6,7 @@ export const multipleChoiceChoiceSchema = z.object({
   explanation: z.string().trim().min(1),
 });
 
-export const createMultipleChoiceProblemSchema = z
+export const createMultipleChoiceQuestionSchema = z
   .object({
     question: z.string().trim().min(1),
     choices: z.array(multipleChoiceChoiceSchema).min(2),
@@ -32,6 +32,6 @@ export const createMultipleChoiceProblemSchema = z
     }
   });
 
-export type CreateMultipleChoiceProblem = z.infer<
-  typeof createMultipleChoiceProblemSchema
+export type CreateMultipleChoiceQuestion = z.infer<
+  typeof createMultipleChoiceQuestionSchema
 >;

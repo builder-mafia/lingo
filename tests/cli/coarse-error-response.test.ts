@@ -4,14 +4,26 @@ const cliPath = new URL("../../src/cli.ts", import.meta.url).pathname;
 const projectRoot = new URL("../..", import.meta.url).pathname;
 
 test("returns a coarse CLI error without raw Zod issues", async () => {
-  const process = Bun.spawn(
+  const home = `/tmp/lingo-coarse-error-${crypto.randomUUID()}`;
+  const createNote = Bun.spawn(
+    ["bun", "run", cliPath, "note", "create"],
+    {
+      cwd: projectRoot,
+      env: { ...process.env, HOME: home },
+      stdout: "pipe",
+    },
+  );
+  await createNote.exited;
+  const note = JSON.parse(await new Response(createNote.stdout).text()).data;
+
+  const child = Bun.spawn(
     [
       "bun",
       "run",
       cliPath,
-      "problem",
-      "multiple-choice",
-      "validate",
+      "question",
+      "add",
+      note.noteId,
       "--data",
       JSON.stringify({
         question: "질문",
@@ -22,12 +34,17 @@ test("returns a coarse CLI error without raw Zod issues", async () => {
         correctId: 3,
       }),
     ],
-    { cwd: projectRoot, stdout: "pipe", stderr: "pipe" },
+    {
+      cwd: projectRoot,
+      env: { ...process.env, HOME: home },
+      stdout: "pipe",
+      stderr: "pipe",
+    },
   );
 
   const [exitCode, stderr] = await Promise.all([
-    process.exited,
-    new Response(process.stderr).text(),
+    child.exited,
+    new Response(child.stderr).text(),
   ]);
   const response = JSON.parse(stderr);
 
@@ -36,7 +53,7 @@ test("returns a coarse CLI error without raw Zod issues", async () => {
     ok: false,
     error: {
       code: "CliError",
-      message: "Invalid multiple-choice problem.",
+      message: "Invalid question.",
       details: [],
     },
   });

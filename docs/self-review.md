@@ -27,5 +27,5 @@
 
 ## Remaining scope, not a defect
 
-- Note persistence, SQLite, localhost browser UI, subjective problems, answers, and evaluations are intentionally future work.
+- Note persistence, SQLite, localhost browser UI, subjective questions, answers, and evaluations are intentionally future work.
 - Future reusable I/O services (SQLite repository, local server, CLI output) should follow the same `src/layers/` interface + Live Layer pattern when they are introduced.

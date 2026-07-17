@@ -1,6 +1,6 @@
 # Lingo
 
-로컬 우선 노트·문제 풀이 앱입니다. 스킬은 `lingo` CLI로 노트·문제·답변·평가를 SQLite에 저장하고, 사용자는 이후 localhost 브라우저 UI에서 문제를 풉니다.
+로컬 우선 노트·질문 풀이 앱입니다. 스킬은 `lingo` CLI로 노트·질문·답변·평가를 SQLite에 저장하고, 사용자는 이후 localhost 브라우저 UI에서 질문에 답합니다.
 
 - 기본 데이터베이스: `~/.lingo/lingo.sqlite`
 - 모든 응답: JSON
@@ -34,12 +34,12 @@ bun run ./src/cli.ts note create
 | --- | --- |
 | 빈 노트 만들기 | `lingo note create` |
 | 노트 요약 저장 | `lingo note summary set <note-id>` |
-| 객관식/주관식 문제 추가 | `lingo problem add <note-id>` |
-| 주관식 답변 저장 | `lingo answer set <problem-id>` |
+| 객관식/주관식 질문 추가 | `lingo question add <note-id>` |
+| 주관식 답변 저장 | `lingo answer set <question-id>` |
 | 아직 평가되지 않은 답변 조회 | `lingo answer list <note-id>` |
-| AI 평가 결과 저장 | `lingo evaluation set <problem-id>` |
+| AI 평가 결과 저장 | `lingo evaluation set <question-id>` |
 
-명령은 리소스 중심으로 짧게 유지합니다. 문제 종류는 별도의 `--type`이 아니라 입력 JSON의 구조로 판별합니다.
+명령은 리소스 중심으로 짧게 유지합니다. 질문 종류는 별도의 `--type`이 아니라 입력 JSON의 구조로 판별합니다.
 
 ## Practice: 노트부터 평가까지
 
@@ -59,12 +59,12 @@ bun run ./src/cli.ts note summary set <note-id> --data '{
 }'
 ```
 
-### 3. 객관식 문제 추가하기
+### 3. 객관식 질문 추가하기
 
-`choices`가 있으면 Lingo가 객관식 문제로 저장합니다.
+`choices`가 있으면 Lingo가 객관식 질문으로 저장합니다.
 
 ```bash
-bun run ./src/cli.ts problem add <note-id> --data '{
+bun run ./src/cli.ts question add <note-id> --data '{
   "question": "고객 문제를 검증하는 첫 행동은 무엇인가요?",
   "choices": [
     {
@@ -82,14 +82,14 @@ bun run ./src/cli.ts problem add <note-id> --data '{
 }'
 ```
 
-출력의 `data.problemId`를 `<problem-id>`로 사용합니다.
+출력의 `data.questionId`를 `<question-id>`로 사용합니다.
 
-### 4. 주관식 문제 추가하기
+### 4. 주관식 질문 추가하기
 
-`referenceAnswer`가 있으면 Lingo가 주관식 문제로 저장합니다.
+`referenceAnswer`가 있으면 Lingo가 주관식 질문으로 저장합니다.
 
 ```bash
-bun run ./src/cli.ts problem add <note-id> --data '{
+bun run ./src/cli.ts question add <note-id> --data '{
   "question": "고객 인터뷰에서 확인할 핵심 가설을 한 문장으로 작성하세요.",
   "referenceAnswer": "누가 어떤 상황에서 어떤 비용이나 불편을 반복적으로 겪는지 확인한다."
 }'
@@ -98,12 +98,12 @@ bun run ./src/cli.ts problem add <note-id> --data '{
 ### 5. 주관식 답변 저장하기
 
 ```bash
-bun run ./src/cli.ts answer set <problem-id> --data '{
+bun run ./src/cli.ts answer set <question-id> --data '{
   "content": "초기 창업자는 고객이 시간을 많이 쓰는 반복 업무를 겪는지 먼저 인터뷰로 확인해야 한다."
 }'
 ```
 
-같은 `<problem-id>`로 다시 실행하면 답변을 새 내용으로 갱신합니다.
+같은 `<question-id>`로 다시 실행하면 답변을 새 내용으로 갱신합니다.
 
 ### 6. AI 평가 대상 답변 읽기
 
@@ -113,14 +113,14 @@ bun run ./src/cli.ts answer set <problem-id> --data '{
 bun run ./src/cli.ts answer list <note-id>
 ```
 
-반환값에는 평가에 필요한 문제와 답변 문맥이 들어 있습니다.
+반환값에는 평가에 필요한 질문과 답변 문맥이 들어 있습니다.
 
 ```json
 {
   "ok": true,
   "data": [
     {
-      "problemId": "<problem-id>",
+      "questionId": "<question-id>",
       "question": "...",
       "referenceAnswer": "...",
       "answer": "..."
@@ -134,7 +134,7 @@ bun run ./src/cli.ts answer list <note-id>
 Lingo는 AI provider를 직접 호출하지 않습니다. 스킬이 만든 feedback만 저장합니다.
 
 ```bash
-bun run ./src/cli.ts evaluation set <problem-id> --data '{
+bun run ./src/cli.ts evaluation set <question-id> --data '{
   "feedback": "핵심 방향은 맞습니다. 고객이 실제로 겪는 반복 업무와 현재 해결 방법을 더 구체적으로 적어 보세요."
 }'
 ```
@@ -146,14 +146,14 @@ bun run ./src/cli.ts evaluation set <problem-id> --data '{
 긴 입력은 파일로 관리할 수 있습니다.
 
 ```bash
-cat > problem.json <<'JSON'
+cat > question.json <<'JSON'
 {
   "question": "가설 검증에 가장 먼저 확인할 것은 무엇인가요?",
   "referenceAnswer": "대상 고객이 문제를 실제로 반복 경험하는지 확인한다."
 }
 JSON
 
-bun run ./src/cli.ts problem add <note-id> --data-file ./problem.json
+bun run ./src/cli.ts question add <note-id> --data-file ./question.json
 ```
 
 `--data`와 `--data-file`은 동시에 사용할 수 없으며, 같은 플래그를 두 번 사용할 수도 없습니다.
@@ -161,11 +161,11 @@ bun run ./src/cli.ts problem add <note-id> --data-file ./problem.json
 ## 입력 검증 규칙
 
 - 모든 ID는 UUID여야 합니다.
-- 요약·답변·feedback·문제 문장은 비어 있을 수 없습니다.
-- 객관식 문제는 선택지가 2개 이상이어야 합니다.
+- 요약·답변·feedback·질문 문장은 비어 있을 수 없습니다.
+- 객관식 질문은 선택지가 2개 이상이어야 합니다.
 - `choices[].order`는 양의 정수이며 중복될 수 없습니다.
 - `correctId`는 반드시 하나의 `choices[].order` 값이어야 합니다.
-- `choices`와 `referenceAnswer`를 모두 넣지 말고, 만들려는 문제 형태에 맞는 JSON만 전달합니다.
+- `choices`와 `referenceAnswer`를 모두 넣지 말고, 만들려는 질문 형태에 맞는 JSON만 전달합니다.
 
 ## 개발
 

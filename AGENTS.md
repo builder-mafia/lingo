@@ -2,9 +2,9 @@
 
 ## Product direction
 
-Lingo is a local-first note and problem-solving app.
+Lingo is a local-first note and active-learning app.
 
-- A skill creates notes and problems through the `lingo` CLI, then returns a localhost browser URL.
+- A skill creates notes and questions through the `lingo` CLI, then returns a localhost browser URL.
 - The browser UI stores answers in the local database.
 - A skill later reads answers through the CLI, evaluates them with the active AI agent, and writes evaluation results back through the CLI.
 - Keep the local app independent of a specific AI provider. The app does not invoke Codex, Claude, Cursor, or Ollama itself.

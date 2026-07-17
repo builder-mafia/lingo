@@ -2,9 +2,9 @@
 
 ## Purpose
 
-Lingo is a local-first system for generating and solving learning/problem notes.
+Lingo is a local-first system for generating and answering questions from learning notes.
 
-A **note** is a unit containing a summary and problems. A skill creates and enriches a note through the `lingo` CLI, then gives the user a localhost browser URL for solving it.
+A **note** is a unit containing a summary and questions. A skill creates and enriches a note through the `lingo` CLI, then gives the user a localhost browser URL for solving it.
 
 ## Intended flow
 
@@ -23,10 +23,10 @@ Use the resource first, then the minimum action and identifier needed:
 
 - `lingo note create`
 - `lingo note summary set <note-id>`
-- `lingo problem add <note-id>`
-- `lingo answer set <problem-id>`
+- `lingo question add <note-id>`
+- `lingo answer set <question-id>`
 - `lingo answer list <note-id>`
-- `lingo evaluation set <problem-id>`
+- `lingo evaluation set <question-id>`
 
 Do not put a temporary storage state in a command name or mandatory flag. A state filter is added only once multiple meaningful states exist.
 
@@ -34,10 +34,10 @@ Do not put a temporary storage state in a command name or mandatory flag. A stat
 
 1. Create an empty note: `lingo note create` returns `noteId`, `createdAt`, and a localhost note URL after storing it in SQLite.
 2. Set a note summary: `lingo note summary set <note-id> --data <json>` stores or updates the note summary.
-3. Add a problem: `lingo problem add <note-id> --data <json>` infers a multiple-choice or subjective contract from the JSON shape.
-4. Set an answer: `lingo answer set <problem-id> --data <json>` stores or updates an answer for a subjective problem.
-5. Read answers needing evaluation: `lingo answer list <note-id>` returns unanswered evaluations with problem context.
-6. Store an evaluation: `lingo evaluation set <problem-id> --data <json>` stores or updates external AI feedback.
+3. Add a question: `lingo question add <note-id> --data <json>` infers a multiple-choice or subjective contract from the JSON shape.
+4. Set an answer: `lingo answer set <question-id> --data <json>` stores or updates an answer for a subjective question.
+5. Read answers needing evaluation: `lingo answer list <note-id>` returns unanswered evaluations with question context.
+6. Store an evaluation: `lingo evaluation set <question-id> --data <json>` stores or updates external AI feedback.
 
 Structured CLI payloads must accept either:
 
@@ -46,11 +46,11 @@ Structured CLI payloads must accept either:
 
 They must never accept both flags at once.
 
-## Problem schemas
+## Question schemas
 
 ### Multiple choice
 
-A multiple-choice problem contains:
+A multiple-choice question contains:
 
 - `question`
 - `choices`: objects with `order`, `option`, and `explanation`
@@ -60,7 +60,7 @@ A multiple-choice problem contains:
 
 ### Subjective
 
-A subjective problem stays independent from the multiple-choice schema. It needs a prompt and AI-evaluation criteria/rubric. Example answers may be optional.
+A subjective question stays independent from the multiple-choice schema. It contains question text and a reference answer used by the external evaluator.
 
 ## Architecture decisions
 
