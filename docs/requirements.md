@@ -68,6 +68,7 @@ A subjective problem stays independent from the multiple-choice schema. It needs
 - Effects and I/O composition: Effect
 - Domain validation: Zod, centralized in `src/schemas/`
 - Persistence: local SQLite
+- SQLite schema evolution: ordered transactional migrations tracked with `PRAGMA user_version`
 - User interface: browser GUI served only on localhost
 - Common Effect capabilities: focused services and Live Layers in `src/layers/`, composed once by `AppRuntime` in `src/runtime.ts`
 - Error policy: coarse-grained application/CLI errors with readable messages and optional details; avoid excessive error subclasses.
