@@ -21,7 +21,7 @@ The local browser/database app must not need to know which AI agent the user use
 
 Use the resource first, then the minimum action and identifier needed:
 
-- `lingo note create`
+- `lingo note create --data <json>`
 - `lingo note summary set <note-id>`
 - `lingo question add <note-id>`
 - `lingo answer set <question-id>`
@@ -32,7 +32,7 @@ Do not put a temporary storage state in a command name or mandatory flag. A stat
 
 ## Core CLI operations
 
-1. Create an empty note: `lingo note create` returns `noteId`, `createdAt`, and a localhost note URL after storing it in SQLite.
+1. Create a note: `lingo note create --data <json>` stores a required non-empty `title` and optional `labels`, then returns that metadata with `noteId`, `createdAt`, and a localhost note URL. Label whitespace and duplicates are removed while preserving the first-seen order.
 2. Set a note summary: `lingo note summary set <note-id> --data <json>` stores or updates the note summary.
 3. Add a question: `lingo question add <note-id> --data <json>` infers a multiple-choice or subjective contract from the JSON shape.
 4. Set an answer: `lingo answer set <question-id> --data <json>` stores or updates an answer for a subjective question.

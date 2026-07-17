@@ -12,6 +12,8 @@ import { setNoteSummary } from "./commands/set-note-summary";
 
 const noteSummaryUsage =
   "Usage: lingo note summary set <note-id> (--data <json> | --data-file <path>)";
+const noteCreateUsage =
+  "Usage: lingo note create (--data <json> | --data-file <path>)";
 const questionAddUsage =
   "Usage: lingo question add <note-id> (--data <json> | --data-file <path>)";
 const subjectiveAnswerUsage =
@@ -131,8 +133,11 @@ export const runCli = (
     );
   }
 
-  if (resource === "note" && type === "create" && action === undefined) {
-    return createNote().pipe(
+  if (resource === "note" && type === "create") {
+    const noteInputArgs = action === undefined ? inputArgs : [action, ...inputArgs];
+
+    return parseInputOptions(noteInputArgs, noteCreateUsage).pipe(
+      Effect.flatMap((inputOptions) => createNote(inputOptions)),
       Effect.match({
         onFailure: (error) => {
           console.error(errorResponse(error));

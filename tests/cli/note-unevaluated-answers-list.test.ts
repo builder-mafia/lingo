@@ -12,8 +12,26 @@ const runCli = async (home: string, args: readonly string[]) => {
 test("lists only the selected note's unevaluated subjective answers with question context", async () => {
   const home = `/tmp/lingo-unevaluated-${crypto.randomUUID()}`;
   try {
-    const firstNote = JSON.parse((await runCli(home, ["note", "create"])).stdout).data;
-    const secondNote = JSON.parse((await runCli(home, ["note", "create"])).stdout).data;
+    const firstNote = JSON.parse(
+      (
+        await runCli(home, [
+          "note",
+          "create",
+          "--data",
+          JSON.stringify({ title: "첫 노트" }),
+        ])
+      ).stdout,
+    ).data;
+    const secondNote = JSON.parse(
+      (
+        await runCli(home, [
+          "note",
+          "create",
+          "--data",
+          JSON.stringify({ title: "둘째 노트" }),
+        ])
+      ).stdout,
+    ).data;
     const firstQuestion = JSON.parse((await runCli(home, ["question", "add", firstNote.noteId, "--data", JSON.stringify({ question: "첫 질문", referenceAnswer: "첫 모범답" })])).stdout).data;
     const secondQuestion = JSON.parse((await runCli(home, ["question", "add", secondNote.noteId, "--data", JSON.stringify({ question: "둘 질문", referenceAnswer: "둘 모범답" })])).stdout).data;
     await runCli(home, ["answer", "set", firstQuestion.questionId, "--data", JSON.stringify({ content: "첫 답" })]);

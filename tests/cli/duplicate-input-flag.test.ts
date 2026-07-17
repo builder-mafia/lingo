@@ -15,7 +15,15 @@ const question = JSON.stringify({
 test("rejects duplicate structured input flags instead of silently choosing one", async () => {
   const home = `/tmp/lingo-duplicate-input-${crypto.randomUUID()}`;
   const createNote = Bun.spawn(
-    ["bun", "run", cliPath, "note", "create"],
+    [
+      "bun",
+      "run",
+      cliPath,
+      "note",
+      "create",
+      "--data",
+      JSON.stringify({ title: "테스트 노트" }),
+    ],
     {
       cwd: projectRoot,
       env: { ...process.env, HOME: home },

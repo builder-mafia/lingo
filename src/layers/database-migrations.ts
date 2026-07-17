@@ -87,9 +87,26 @@ const renameProblemsToQuestions = (database: SqliteDatabase) => {
   );
 };
 
+const addNoteMetadata = (database: SqliteDatabase) => {
+  database.run(
+    "ALTER TABLE notes ADD COLUMN title TEXT NOT NULL DEFAULT '제목 없는 노트'",
+  );
+  database.run(`
+    CREATE TABLE note_labels (
+      note_id TEXT NOT NULL,
+      label TEXT NOT NULL,
+      position INTEGER NOT NULL,
+      PRIMARY KEY(note_id, label),
+      UNIQUE(note_id, position),
+      FOREIGN KEY(note_id) REFERENCES notes(id)
+    )
+  `);
+};
+
 const databaseMigrations: readonly DatabaseMigration[] = [
   { version: 1, migrate: createInitialSchema },
   { version: 2, migrate: renameProblemsToQuestions },
+  { version: 3, migrate: addNoteMetadata },
 ];
 
 export const LATEST_DATABASE_VERSION =

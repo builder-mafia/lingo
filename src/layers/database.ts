@@ -4,7 +4,11 @@ import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 
 import { CliError } from "../cli/errors";
-import { noteSchema, type Note } from "../schemas/note";
+import {
+  noteSchema,
+  type CreateNote,
+  type Note,
+} from "../schemas/note";
 import { noteSummarySchema, type NoteSummary } from "../schemas/note-summary";
 import { type CreateMultipleChoiceQuestion } from "../schemas/multiple-choice";
 import { type CreateSubjectiveQuestion } from "../schemas/subjective";
@@ -29,7 +33,7 @@ export type UnevaluatedSubjectiveAnswer = {
 };
 
 export interface DatabaseService {
-  readonly createNote: () => Effect.Effect<Note, CliError>;
+  readonly createNote: (input: CreateNote) => Effect.Effect<Note, CliError>;
   readonly findNote: (noteId: string) => Effect.Effect<Note | undefined, CliError>;
   readonly setNoteSummary: (
     noteId: string,
@@ -66,7 +70,12 @@ export class Database extends Context.Tag("@lingo/Database")<
 
 type NoteRow = {
   readonly id: string;
+  readonly title: string;
   readonly createdAt: string;
+};
+
+type NoteLabelRow = {
+  readonly label: string;
 };
 
 type NoteSummaryRow = {
@@ -117,18 +126,30 @@ const withDatabase = <Result>(
   );
 
 const makeService = (databasePath: string): DatabaseService => ({
-  createNote: () =>
+  createNote: (input) =>
     withDatabase(
       databasePath,
       (database) => {
         const note = noteSchema.parse({
           id: crypto.randomUUID(),
+          title: input.title,
+          labels: input.labels,
           createdAt: new Date().toISOString(),
         });
 
-        database
-          .query("INSERT INTO notes (id, created_at) VALUES (?, ?)")
-          .run(note.id, note.createdAt);
+        const insertNote = database.query(
+          "INSERT INTO notes (id, title, created_at) VALUES (?, ?, ?)",
+        );
+        const insertLabel = database.query(
+          "INSERT INTO note_labels (note_id, label, position) VALUES (?, ?, ?)",
+        );
+
+        database.transaction(() => {
+          insertNote.run(note.id, note.title, note.createdAt);
+          note.labels.forEach((label, position) => {
+            insertLabel.run(note.id, label, position);
+          });
+        })();
 
         return note;
       },
@@ -140,11 +161,22 @@ const makeService = (databasePath: string): DatabaseService => ({
       (database) => {
         const row = database
           .query<NoteRow, [string]>(
-            "SELECT id, created_at AS createdAt FROM notes WHERE id = ?",
+            "SELECT id, title, created_at AS createdAt FROM notes WHERE id = ?",
           )
           .get(noteId);
 
-        return row ? noteSchema.parse(row) : undefined;
+        if (!row) {
+          return undefined;
+        }
+
+        const labels = database
+          .query<NoteLabelRow, [string]>(
+            "SELECT label FROM note_labels WHERE note_id = ? ORDER BY position",
+          )
+          .all(noteId)
+          .map(({ label }) => label);
+
+        return noteSchema.parse({ ...row, labels });
       },
       "Could not read note.",
     ),

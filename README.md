@@ -10,7 +10,10 @@
 
 ```bash
 bun install
-bun run ./src/cli.ts note create
+bun run ./src/cli.ts note create --data '{
+  "title": "고객 문제 가설 검증",
+  "labels": ["Product", "Interview"]
+}'
 ```
 
 성공하면 새 노트의 ID와 localhost URL을 반환합니다.
@@ -20,8 +23,10 @@ bun run ./src/cli.ts note create
   "ok": true,
   "data": {
     "noteId": "<note-id>",
+    "title": "고객 문제 가설 검증",
+    "labels": ["Product", "Interview"],
     "createdAt": "2026-07-16T12:00:00.000Z",
-    "noteUrl": "http://127.0.0.1:3000/notes/<note-id>"
+    "noteUrl": "http://127.0.0.1:4312/notes/<note-id>"
   }
 }
 ```
@@ -32,7 +37,7 @@ bun run ./src/cli.ts note create
 
 | 목적 | 명령 |
 | --- | --- |
-| 빈 노트 만들기 | `lingo note create` |
+| 노트 만들기 | `lingo note create --data <json>` |
 | 노트 요약 저장 | `lingo note summary set <note-id>` |
 | 객관식/주관식 질문 추가 | `lingo question add <note-id>` |
 | 주관식 답변 저장 | `lingo answer set <question-id>` |
@@ -46,7 +51,10 @@ bun run ./src/cli.ts note create
 ### 1. 노트 만들기
 
 ```bash
-bun run ./src/cli.ts note create
+bun run ./src/cli.ts note create --data '{
+  "title": "고객 문제 가설 검증",
+  "labels": ["Product", "Interview"]
+}'
 ```
 
 출력의 `data.noteId`를 다음 단계의 `<note-id>` 자리에 넣습니다.
@@ -161,6 +169,8 @@ bun run ./src/cli.ts question add <note-id> --data-file ./question.json
 ## 입력 검증 규칙
 
 - 모든 ID는 UUID여야 합니다.
+- 노트 `title`은 필수이며 공백일 수 없습니다.
+- 노트 `labels`는 선택 사항입니다. 각 label의 앞뒤 공백과 중복은 제거됩니다.
 - 요약·답변·feedback·질문 문장은 비어 있을 수 없습니다.
 - 객관식 질문은 선택지가 2개 이상이어야 합니다.
 - `choices[].order`는 양의 정수이며 중복될 수 없습니다.

@@ -12,7 +12,16 @@ test("rejects evaluation when a subjective question has no answer", async () => 
     return { exitCode, output };
   };
   try {
-    const note = JSON.parse((await run(["note", "create"])).output).data;
+    const note = JSON.parse(
+      (
+        await run([
+          "note",
+          "create",
+          "--data",
+          JSON.stringify({ title: "테스트 노트" }),
+        ])
+      ).output,
+    ).data;
     const question = JSON.parse((await run(["question", "add", note.noteId, "--data", JSON.stringify({ question: "질문", referenceAnswer: "모범" })])).output).data;
     const result = await run(["evaluation", "set", question.questionId, "--data", JSON.stringify({ feedback: "평가" })], true);
     expect(result.exitCode).toBe(1);

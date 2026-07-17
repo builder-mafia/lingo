@@ -11,7 +11,12 @@ const runWithUnavailableHome = (args: readonly string[]) =>
   });
 
 test("returns a JSON CLI error when note database initialization fails", async () => {
-  const child = runWithUnavailableHome(["note", "create"]);
+  const child = runWithUnavailableHome([
+    "note",
+    "create",
+    "--data",
+    JSON.stringify({ title: "테스트 노트" }),
+  ]);
   const [exitCode, stderr] = await Promise.all([
     child.exited,
     new Response(child.stderr).text(),

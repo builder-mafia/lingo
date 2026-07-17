@@ -22,7 +22,12 @@ test("stores a subjective question for a note", async () => {
   const home = `/tmp/lingo-subjective-${crypto.randomUUID()}`;
 
   try {
-    const created = await runCli(home, ["note", "create"]);
+    const created = await runCli(home, [
+      "note",
+      "create",
+      "--data",
+      JSON.stringify({ title: "테스트 노트" }),
+    ]);
     const noteId = JSON.parse(created.stdout).data.noteId;
     const result = await runCli(home, [
       "question",

@@ -4,6 +4,7 @@ import { expect, test } from "bun:test";
 
 import { createNote } from "../../src/cli/commands/create-note";
 import { Database, makeDatabaseLayer } from "../../src/layers/database";
+import { JsonInputLive } from "../../src/layers/json-input";
 
 const tempDatabasePath = () =>
   `/tmp/lingo-note-${crypto.randomUUID()}.sqlite`;
@@ -11,11 +12,18 @@ const tempDatabasePath = () =>
 test("creates a note in SQLite and returns its localhost URL", async () => {
   const databasePath = tempDatabasePath();
   const runtime = ManagedRuntime.make(
-    Layer.mergeAll(makeDatabaseLayer(databasePath)),
+    Layer.mergeAll(JsonInputLive, makeDatabaseLayer(databasePath)),
   );
 
   try {
-    const created = await runtime.runPromise(createNote());
+    const created = await runtime.runPromise(
+      createNote({
+        data: JSON.stringify({
+          title: "Effect 오류 모델",
+          labels: ["TypeScript", "Effect"],
+        }),
+      }),
+    );
     const stored = await runtime.runPromise(
       Effect.gen(function* () {
         const database = yield* Database;
@@ -28,6 +36,8 @@ test("creates a note in SQLite and returns its localhost URL", async () => {
     );
     expect(stored).toEqual({
       id: created.noteId,
+      title: "Effect 오류 모델",
+      labels: ["TypeScript", "Effect"],
       createdAt: created.createdAt,
     });
   } finally {
