@@ -3,7 +3,7 @@ import { expect, test } from "bun:test";
 const cliPath = new URL("../../src/cli.ts", import.meta.url).pathname;
 const projectRoot = new URL("../..", import.meta.url).pathname;
 
-const problem = JSON.stringify({
+const question = JSON.stringify({
   question: "질문",
   choices: [
     { order: 1, option: "A", explanation: "정답입니다." },
@@ -13,25 +13,42 @@ const problem = JSON.stringify({
 });
 
 test("rejects duplicate structured input flags instead of silently choosing one", async () => {
-  const process = Bun.spawn(
+  const home = `/tmp/lingo-duplicate-input-${crypto.randomUUID()}`;
+  const createNote = Bun.spawn(
+    ["bun", "run", cliPath, "note", "create"],
+    {
+      cwd: projectRoot,
+      env: { ...process.env, HOME: home },
+      stdout: "pipe",
+    },
+  );
+  await createNote.exited;
+  const note = JSON.parse(await new Response(createNote.stdout).text()).data;
+
+  const child = Bun.spawn(
     [
       "bun",
       "run",
       cliPath,
-      "problem",
-      "multiple-choice",
-      "validate",
+      "question",
+      "add",
+      note.noteId,
       "--data",
-      problem,
+      question,
       "--data",
-      problem,
+      question,
     ],
-    { cwd: projectRoot, stdout: "pipe", stderr: "pipe" },
+    {
+      cwd: projectRoot,
+      env: { ...process.env, HOME: home },
+      stdout: "pipe",
+      stderr: "pipe",
+    },
   );
 
   const [exitCode, stderr] = await Promise.all([
-    process.exited,
-    new Response(process.stderr).text(),
+    child.exited,
+    new Response(child.stderr).text(),
   ]);
 
   expect(exitCode).toBe(1);

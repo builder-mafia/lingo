@@ -9,15 +9,15 @@ const runCli = async (home: string, args: readonly string[]) => {
   return { exitCode, stdout };
 };
 
-test("lists only the selected note's unevaluated subjective answers with problem context", async () => {
+test("lists only the selected note's unevaluated subjective answers with question context", async () => {
   const home = `/tmp/lingo-unevaluated-${crypto.randomUUID()}`;
   try {
     const firstNote = JSON.parse((await runCli(home, ["note", "create"])).stdout).data;
     const secondNote = JSON.parse((await runCli(home, ["note", "create"])).stdout).data;
-    const firstProblem = JSON.parse((await runCli(home, ["problem", "add", firstNote.noteId, "--data", JSON.stringify({ question: "첫 질문", referenceAnswer: "첫 모범답" })])).stdout).data;
-    const secondProblem = JSON.parse((await runCli(home, ["problem", "add", secondNote.noteId, "--data", JSON.stringify({ question: "둘 질문", referenceAnswer: "둘 모범답" })])).stdout).data;
-    await runCli(home, ["answer", "set", firstProblem.problemId, "--data", JSON.stringify({ content: "첫 답" })]);
-    await runCli(home, ["evaluation", "set", firstProblem.problemId, "--data", JSON.stringify({ feedback: "평가 완료" })]);
+    const firstQuestion = JSON.parse((await runCli(home, ["question", "add", firstNote.noteId, "--data", JSON.stringify({ question: "첫 질문", referenceAnswer: "첫 모범답" })])).stdout).data;
+    const secondQuestion = JSON.parse((await runCli(home, ["question", "add", secondNote.noteId, "--data", JSON.stringify({ question: "둘 질문", referenceAnswer: "둘 모범답" })])).stdout).data;
+    await runCli(home, ["answer", "set", firstQuestion.questionId, "--data", JSON.stringify({ content: "첫 답" })]);
+    await runCli(home, ["evaluation", "set", firstQuestion.questionId, "--data", JSON.stringify({ feedback: "평가 완료" })]);
     const result = await runCli(home, ["answer", "list", firstNote.noteId]);
     expect(result.exitCode).toBe(0);
     expect(JSON.parse(result.stdout).data).toEqual([]);

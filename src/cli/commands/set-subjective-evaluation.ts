@@ -7,14 +7,14 @@ import { setSubjectiveEvaluationSchema } from "../../schemas/subjective-evaluati
 import { CliError } from "../errors";
 
 export const setSubjectiveEvaluation = (
-  problemId: string,
+  questionId: string,
   inputOptions: JsonInputOptions,
-): Effect.Effect<{ readonly problemId: string; readonly feedback: string }, CliError, Database | JsonInput> =>
+): Effect.Effect<{ readonly questionId: string; readonly feedback: string }, CliError, Database | JsonInput> =>
   Effect.gen(function* () {
-    const parsedProblemId = noteIdSchema.safeParse(problemId);
-    if (!parsedProblemId.success) return yield* Effect.fail(new CliError("Invalid subjective problem identifier."));
+    const parsedQuestionId = noteIdSchema.safeParse(questionId);
+    if (!parsedQuestionId.success) return yield* Effect.fail(new CliError("Invalid subjective question identifier."));
     const input = yield* (yield* JsonInput).read(inputOptions);
     const parsed = setSubjectiveEvaluationSchema.safeParse(input);
     if (!parsed.success) return yield* Effect.fail(new CliError("Invalid subjective evaluation."));
-    return yield* (yield* Database).setSubjectiveEvaluation(parsedProblemId.data, parsed.data.feedback);
+    return yield* (yield* Database).setSubjectiveEvaluation(parsedQuestionId.data, parsed.data.feedback);
   });

@@ -1,8 +1,8 @@
 import { z } from "zod";
 
-export const createSubjectiveProblemSchema = z.object({
+export const createSubjectiveQuestionSchema = z.object({
   question: z.string().trim().min(1),
   referenceAnswer: z.string().trim().min(1),
 });
 
-export type CreateSubjectiveProblem = z.infer<typeof createSubjectiveProblemSchema>;
+export type CreateSubjectiveQuestion = z.infer<typeof createSubjectiveQuestionSchema>;

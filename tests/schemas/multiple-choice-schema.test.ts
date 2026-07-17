@@ -1,9 +1,9 @@
 import { expect, test } from "bun:test";
 
-import { createMultipleChoiceProblemSchema } from "../../src/schemas/multiple-choice";
+import { createMultipleChoiceQuestionSchema } from "../../src/schemas/multiple-choice";
 
 test("multiple-choice schema rejects a correctId that does not reference a choice order", () => {
-  const result = createMultipleChoiceProblemSchema.safeParse({
+  const result = createMultipleChoiceQuestionSchema.safeParse({
     question: "질문",
     choices: [
       { order: 1, option: "선택지 A", explanation: "정답입니다." },

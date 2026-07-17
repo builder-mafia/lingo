@@ -2,27 +2,23 @@ import { Effect } from "effect";
 
 import { Database } from "../layers/database";
 import { JsonInput, type JsonInputOptions } from "../layers/json-input";
+import { addQuestion } from "./commands/add-question";
 import { errorResponse, CliError } from "./errors";
 import { createNote } from "./commands/create-note";
-import { addProblem } from "./commands/add-problem";
 import { setSubjectiveAnswer } from "./commands/set-subjective-answer";
 import { listSubjectiveAnswers } from "./commands/list-subjective-answers";
 import { setSubjectiveEvaluation } from "./commands/set-subjective-evaluation";
 import { setNoteSummary } from "./commands/set-note-summary";
-import { validateMultipleChoiceProblem } from "./commands/validate-multiple-choice";
 
-const multipleChoiceUsage =
-  "Usage: lingo problem multiple-choice validate (--data <json> | --data-file <path>)";
-const noteCreateUsage = "Usage: lingo note create";
 const noteSummaryUsage =
   "Usage: lingo note summary set <note-id> (--data <json> | --data-file <path>)";
-const problemAddUsage =
-  "Usage: lingo problem add <note-id> (--data <json> | --data-file <path>)";
+const questionAddUsage =
+  "Usage: lingo question add <note-id> (--data <json> | --data-file <path>)";
 const subjectiveAnswerUsage =
-  "Usage: lingo answer set <problem-id> (--data <json> | --data-file <path>)";
+  "Usage: lingo answer set <question-id> (--data <json> | --data-file <path>)";
 const answerListUsage = "Usage: lingo answer list <note-id>";
 const evaluationUsage =
-  "Usage: lingo evaluation set <problem-id> (--data <json> | --data-file <path>)";
+  "Usage: lingo evaluation set <question-id> (--data <json> | --data-file <path>)";
 
 const parseInputOptions = (
   args: readonly string[],
@@ -76,14 +72,14 @@ export const runCli = (
 ): Effect.Effect<number, never, JsonInput | Database> => {
   const [resource, type, action, ...inputArgs] = args;
 
-  if (resource === "problem" && type === "add") {
-    const [noteId, ...problemInputArgs] = [action, ...inputArgs];
+  if (resource === "question" && type === "add") {
+    const [noteId, ...questionInputArgs] = [action, ...inputArgs];
     if (noteId === undefined) {
-      console.error(errorResponse(new CliError(problemAddUsage)));
+      console.error(errorResponse(new CliError(questionAddUsage)));
       return Effect.succeed(1);
     }
-    return parseInputOptions(problemInputArgs, problemAddUsage).pipe(
-      Effect.flatMap((inputOptions) => addProblem(noteId, inputOptions)),
+    return parseInputOptions(questionInputArgs, questionAddUsage).pipe(
+      Effect.flatMap((inputOptions) => addQuestion(noteId, inputOptions)),
       Effect.match({
         onFailure: (error) => { console.error(errorResponse(error)); return 1; },
         onSuccess: (data) => { console.log(JSON.stringify({ ok: true, data })); return 0; },
@@ -92,13 +88,13 @@ export const runCli = (
   }
 
   if (resource === "answer" && type === "set") {
-    const [problemId, ...answerInputArgs] = [action, ...inputArgs];
-    if (problemId === undefined) {
+    const [questionId, ...answerInputArgs] = [action, ...inputArgs];
+    if (questionId === undefined) {
       console.error(errorResponse(new CliError(subjectiveAnswerUsage)));
       return Effect.succeed(1);
     }
     return parseInputOptions(answerInputArgs, subjectiveAnswerUsage).pipe(
-      Effect.flatMap((inputOptions) => setSubjectiveAnswer(problemId, inputOptions)),
+      Effect.flatMap((inputOptions) => setSubjectiveAnswer(questionId, inputOptions)),
       Effect.match({
         onFailure: (error) => { console.error(errorResponse(error)); return 1; },
         onSuccess: (data) => { console.log(JSON.stringify({ ok: true, data })); return 0; },
@@ -107,13 +103,13 @@ export const runCli = (
   }
 
   if (resource === "evaluation" && type === "set") {
-    const [problemId, ...evaluationInputArgs] = [action, ...inputArgs];
-    if (problemId === undefined) {
+    const [questionId, ...evaluationInputArgs] = [action, ...inputArgs];
+    if (questionId === undefined) {
       console.error(errorResponse(new CliError(evaluationUsage)));
       return Effect.succeed(1);
     }
     return parseInputOptions(evaluationInputArgs, evaluationUsage).pipe(
-      Effect.flatMap((inputOptions) => setSubjectiveEvaluation(problemId, inputOptions)),
+      Effect.flatMap((inputOptions) => setSubjectiveEvaluation(questionId, inputOptions)),
       Effect.match({
         onFailure: (error) => { console.error(errorResponse(error)); return 1; },
         onSuccess: (data) => { console.log(JSON.stringify({ ok: true, data })); return 0; },
@@ -173,30 +169,6 @@ export const runCli = (
     );
   }
 
-  if (
-    resource !== "problem" ||
-    type !== "multiple-choice" ||
-    action !== "validate"
-  ) {
-    console.error(
-      errorResponse(
-        new CliError(resource === "note" ? noteCreateUsage : multipleChoiceUsage),
-      ),
-    );
-    return Effect.succeed(1);
-  }
-
-  return parseInputOptions(inputArgs, multipleChoiceUsage).pipe(
-    Effect.flatMap(validateMultipleChoiceProblem),
-    Effect.match({
-      onFailure: (error) => {
-        console.error(errorResponse(error));
-        return 1;
-      },
-      onSuccess: (data) => {
-        console.log(JSON.stringify({ ok: true, data }));
-        return 0;
-      },
-    }),
-  );
+  console.error(errorResponse(new CliError("Unknown command.")));
+  return Effect.succeed(1);
 };
