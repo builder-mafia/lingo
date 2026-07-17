@@ -10,6 +10,7 @@
 
 ```bash
 bun install
+bun run build:ui
 bun run ./src/cli.ts start
 ```
 
@@ -210,6 +211,19 @@ bun test
 bun run typecheck
 ```
 
+UI를 수정할 때는 API 서버와 Vite 개발 서버를 각각 실행합니다.
+
+```bash
+# terminal 1: SQLite와 API를 제공하는 로컬 서버
+bun run build:ui
+bun run ./src/cli.ts start
+
+# terminal 2: HMR을 제공하며 /api와 /health를 로컬 서버로 전달
+bun run dev:ui
+```
+
+배포용 UI는 `bun run build:ui`로 `dist/ui`에 생성됩니다. `prepack`도 같은 빌드를 실행하므로 향후 npm·Homebrew 패키지는 완성된 정적 자산을 포함하며, 사용자의 `lingo start` 시점에는 프론트엔드를 다시 빌드하지 않습니다.
+
 ## 구조
 
 ```text
@@ -218,7 +232,9 @@ src/
 ├── cli.ts         # 실행 진입점
 ├── runtime.ts     # 공유 Effect Layer를 조립한 AppRuntime
 ├── layers/        # SQLite·JSON 입력 같은 재사용 서비스
-└── schemas/       # Zod 도메인 계약
+├── schemas/       # Zod 도메인 계약
+├── server/        # Hono 앱과 HTTP 라우팅
+└── ui/            # Vite 기반 React 브라우저 앱
 ```
 
 `schemas/`는 도메인 계약만 담당합니다. 입력 처리, 명령 라우팅, 저장소, 오류 표현은 별도 책임으로 분리합니다.

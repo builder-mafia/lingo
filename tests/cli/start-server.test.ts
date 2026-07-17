@@ -1,8 +1,24 @@
-import { expect, test } from "bun:test";
+import { beforeAll, expect, test } from "bun:test";
 import { createServer } from "node:net";
 
 const cliPath = new URL("../../src/cli.ts", import.meta.url).pathname;
 const projectRoot = new URL("../..", import.meta.url).pathname;
+
+beforeAll(async () => {
+  const build = Bun.spawn(["bun", "run", "build:ui"], {
+    cwd: projectRoot,
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  const [exitCode, stderr] = await Promise.all([
+    build.exited,
+    new Response(build.stderr).text(),
+  ]);
+
+  if (exitCode !== 0) {
+    throw new Error(`Could not build test UI assets.\n${stderr}`);
+  }
+});
 
 const findAvailablePort = () =>
   new Promise<number>((resolve, reject) => {
@@ -81,9 +97,31 @@ test("lingo start serves the local health endpoint", async () => {
 
     const html = await pageResponse.text();
     expect(html).toContain('<div id="lingo-root"></div>');
-    const scriptPath = html.match(/<script type="module" src="([^"]+)"/i)?.[1];
+
+    const deepLinkResponse = await fetch(
+      `${started.data.serverUrl}/notes/example-note/session`,
+    );
+    expect(deepLinkResponse.status).toBe(200);
+    expect(deepLinkResponse.headers.get("content-type")).toContain("text/html");
+    expect(await deepLinkResponse.text()).toBe(html);
+
+    const missingApiResponse = await fetch(`${started.data.serverUrl}/api/missing`);
+    expect(missingApiResponse.status).toBe(404);
+    expect(missingApiResponse.headers.get("content-type")).toContain(
+      "application/json",
+    );
+
+    const missingAssetResponse = await fetch(
+      `${started.data.serverUrl}/assets/missing.js`,
+    );
+    expect(missingAssetResponse.status).toBe(404);
+    expect(missingAssetResponse.headers.get("content-type")).toContain(
+      "application/json",
+    );
+
+    const scriptPath = html.match(/<script[^>]+src="([^"]+)"/i)?.[1];
     const stylePaths = [
-      ...html.matchAll(/<link rel="stylesheet" href="([^"]+)"/gi),
+      ...html.matchAll(/<link[^>]+rel="stylesheet"[^>]+href="([^"]+)"/gi),
     ].map((match) => match[1]);
     expect(scriptPath).toBeDefined();
     expect(stylePaths.length).toBeGreaterThan(0);
@@ -94,8 +132,8 @@ test("lingo start serves the local health endpoint", async () => {
     ]);
     expect(scriptResponse.status).toBe(200);
     expect(scriptResponse.headers.get("content-type")).toContain("javascript");
-    const script = await scriptResponse.text();
-    expect(script).toContain("App_appRoot");
+    expect(scriptResponse.headers.get("cache-control")).toContain("immutable");
+    expect(scriptPath).toStartWith("/assets/");
 
     const styles: string[] = [];
     for (const styleResponse of styleResponses) {
@@ -103,7 +141,7 @@ test("lingo start serves the local health endpoint", async () => {
       expect(styleResponse.headers.get("content-type")).toContain("text/css");
       styles.push(await styleResponse.text());
     }
-    expect(styles.join("\n")).toContain(".App_appRoot");
+    expect(styles.join("\n")).toContain("--color-background");
   } finally {
     child.kill();
     await child.exited;
