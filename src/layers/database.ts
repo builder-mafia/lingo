@@ -8,6 +8,7 @@ import { noteSchema, type Note } from "../schemas/note";
 import { noteSummarySchema, type NoteSummary } from "../schemas/note-summary";
 import { type CreateMultipleChoiceProblem } from "../schemas/multiple-choice";
 import { type CreateSubjectiveProblem } from "../schemas/subjective";
+import { runDatabaseMigrations } from "./database-migrations";
 
 export type StoredMultipleChoiceProblem = {
   readonly problemId: string;
@@ -76,67 +77,7 @@ type NoteSummaryRow = {
 
 export const initializeDatabaseSchema = (database: SqliteDatabase) => {
   database.run("PRAGMA foreign_keys = ON");
-  database.run(`
-    CREATE TABLE IF NOT EXISTS notes (
-      id TEXT PRIMARY KEY NOT NULL,
-      created_at TEXT NOT NULL
-    )
-  `);
-  database.run(`
-    CREATE TABLE IF NOT EXISTS note_summaries (
-      note_id TEXT PRIMARY KEY NOT NULL,
-      content TEXT NOT NULL,
-      updated_at TEXT NOT NULL,
-      FOREIGN KEY(note_id) REFERENCES notes(id)
-    )
-  `);
-  database.run(`
-    CREATE TABLE IF NOT EXISTS multiple_choice_problems (
-      id TEXT PRIMARY KEY NOT NULL,
-      note_id TEXT NOT NULL,
-      question TEXT NOT NULL,
-      correct_choice_order INTEGER NOT NULL,
-      created_at TEXT NOT NULL,
-      FOREIGN KEY(note_id) REFERENCES notes(id)
-    )
-  `);
-  database.run(`
-    CREATE TABLE IF NOT EXISTS multiple_choice_choices (
-      problem_id TEXT NOT NULL,
-      choice_order INTEGER NOT NULL,
-      option TEXT NOT NULL,
-      explanation TEXT NOT NULL,
-      PRIMARY KEY(problem_id, choice_order),
-      FOREIGN KEY(problem_id) REFERENCES multiple_choice_problems(id)
-    )
-  `);
-  database.run(`
-    CREATE TABLE IF NOT EXISTS subjective_problems (
-      id TEXT PRIMARY KEY NOT NULL,
-      note_id TEXT NOT NULL,
-      question TEXT NOT NULL,
-      reference_answer TEXT NOT NULL,
-      created_at TEXT NOT NULL,
-      FOREIGN KEY(note_id) REFERENCES notes(id)
-    )
-  `);
-  database.run(`
-    CREATE TABLE IF NOT EXISTS subjective_answers (
-      problem_id TEXT PRIMARY KEY NOT NULL,
-      content TEXT NOT NULL,
-      updated_at TEXT NOT NULL,
-      FOREIGN KEY(problem_id) REFERENCES subjective_problems(id)
-    )
-  `);
-  database.run(`
-    CREATE TABLE IF NOT EXISTS subjective_evaluations (
-      problem_id TEXT PRIMARY KEY NOT NULL,
-      feedback TEXT NOT NULL,
-      updated_at TEXT NOT NULL,
-      FOREIGN KEY(problem_id) REFERENCES subjective_problems(id),
-      FOREIGN KEY(problem_id) REFERENCES subjective_answers(problem_id)
-    )
-  `);
+  runDatabaseMigrations(database);
 };
 
 const initializeDatabase = (databasePath: string) => {
