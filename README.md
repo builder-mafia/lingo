@@ -70,7 +70,7 @@ bun run ./src/cli.ts start
 }
 ```
 
-`GET /health`는 서버 준비 상태를 JSON으로 반환합니다. 서버는 외부 네트워크에 공개되지 않도록 `127.0.0.1`에만 바인딩됩니다.
+출력된 `serverUrl`을 브라우저에서 열면 Lingo의 Understanding Map 화면을 볼 수 있습니다. `GET /health`는 서버 준비 상태를 JSON으로 반환합니다. 서버는 외부 네트워크에 공개되지 않도록 `127.0.0.1`에만 바인딩됩니다.
 
 ## Practice: 노트부터 평가까지
 

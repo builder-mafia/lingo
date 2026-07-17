@@ -74,6 +74,36 @@ test("lingo start serves the local health endpoint", async () => {
       ok: true,
       data: { status: "ready" },
     });
+
+    const pageResponse = await fetch(started.data.serverUrl);
+    expect(pageResponse.status).toBe(200);
+    expect(pageResponse.headers.get("content-type")).toContain("text/html");
+
+    const html = await pageResponse.text();
+    expect(html).toContain('<div id="lingo-root"></div>');
+    const scriptPath = html.match(/<script type="module" src="([^"]+)"/i)?.[1];
+    const stylePaths = [
+      ...html.matchAll(/<link rel="stylesheet" href="([^"]+)"/gi),
+    ].map((match) => match[1]);
+    expect(scriptPath).toBeDefined();
+    expect(stylePaths.length).toBeGreaterThan(0);
+
+    const [scriptResponse, ...styleResponses] = await Promise.all([
+      fetch(new URL(scriptPath ?? "", started.data.serverUrl)),
+      ...stylePaths.map((path) => fetch(new URL(path, started.data.serverUrl))),
+    ]);
+    expect(scriptResponse.status).toBe(200);
+    expect(scriptResponse.headers.get("content-type")).toContain("javascript");
+    const script = await scriptResponse.text();
+    expect(script).toContain("App_appRoot");
+
+    const styles: string[] = [];
+    for (const styleResponse of styleResponses) {
+      expect(styleResponse.status).toBe(200);
+      expect(styleResponse.headers.get("content-type")).toContain("text/css");
+      styles.push(await styleResponse.text());
+    }
+    expect(styles.join("\n")).toContain(".App_appRoot");
   } finally {
     child.kill();
     await child.exited;
