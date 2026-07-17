@@ -46,11 +46,18 @@ describe("database migrations", () => {
       expect(readDatabaseVersion(database)).toBe(LATEST_DATABASE_VERSION);
       expect(
         database
-          .query<{ readonly id: string; readonly title: string }, [string]>(
-            "SELECT id, title FROM notes WHERE id = ?",
+          .query<
+            { readonly id: string; readonly title: string; readonly status: string },
+            [string]
+          >(
+            "SELECT id, title, status FROM notes WHERE id = ?",
           )
           .get(noteId),
-      ).toEqual({ id: noteId, title: "제목 없는 노트" });
+      ).toEqual({
+        id: noteId,
+        title: "제목 없는 노트",
+        status: "not_started",
+      });
       expect(
         database
           .query<{ readonly name: string }, []>(
@@ -58,6 +65,47 @@ describe("database migrations", () => {
           )
           .get(),
       ).toEqual({ name: "subjective_evaluations" });
+    } finally {
+      database.close();
+    }
+  });
+
+  test("adds workflow state and resolvable questions without losing data", () => {
+    const database = new SqliteDatabase(":memory:");
+    const noteId = "e849132a-606f-4097-9396-2362ea8a2706";
+    const questionId = "d3a8b147-6b9e-4ea7-9167-91d7bb38cc87";
+
+    try {
+      initializeDatabaseSchema(database);
+      database
+        .query("INSERT INTO notes (id, title, created_at) VALUES (?, ?, ?)")
+        .run(noteId, "분산 락", "2026-07-18T00:00:00.000Z");
+      database
+        .query(
+          "INSERT INTO subjective_questions (id, note_id, question, reference_answer, created_at) VALUES (?, ?, ?, ?, ?)",
+        )
+        .run(
+          questionId,
+          noteId,
+          "락 소유권은 어떻게 검증할까?",
+          "토큰을 비교한다.",
+          "2026-07-18T00:00:00.000Z",
+        );
+
+      expect(
+        database
+          .query<{ readonly status: string }, [string]>(
+            "SELECT status FROM notes WHERE id = ?",
+          )
+          .get(noteId),
+      ).toEqual({ status: "not_started" });
+      expect(
+        database
+          .query<{ readonly resolvedAt: string | null }, [string]>(
+            "SELECT resolved_at AS resolvedAt FROM subjective_questions WHERE id = ?",
+          )
+          .get(questionId),
+      ).toEqual({ resolvedAt: null });
     } finally {
       database.close();
     }

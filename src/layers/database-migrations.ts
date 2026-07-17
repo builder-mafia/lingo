@@ -103,10 +103,25 @@ const addNoteMetadata = (database: SqliteDatabase) => {
   `);
 };
 
+const addWorkspaceState = (database: SqliteDatabase) => {
+  database.run(`
+    ALTER TABLE notes
+    ADD COLUMN status TEXT NOT NULL DEFAULT 'not_started'
+    CHECK (status IN ('not_started', 'in_progress', 'completed', 'deferred'))
+  `);
+  database.run(
+    "ALTER TABLE multiple_choice_questions ADD COLUMN resolved_at TEXT",
+  );
+  database.run(
+    "ALTER TABLE subjective_questions ADD COLUMN resolved_at TEXT",
+  );
+};
+
 const databaseMigrations: readonly DatabaseMigration[] = [
   { version: 1, migrate: createInitialSchema },
   { version: 2, migrate: renameProblemsToQuestions },
   { version: 3, migrate: addNoteMetadata },
+  { version: 4, migrate: addWorkspaceState },
 ];
 
 export const LATEST_DATABASE_VERSION =

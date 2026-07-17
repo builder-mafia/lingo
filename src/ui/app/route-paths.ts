@@ -1,8 +1,6 @@
 export const routePaths = {
-  understandingMap: "/",
+  notes: "/",
   note: (noteId: string) => `/notes/${encodeURIComponent(noteId)}`,
-  questionSession: (noteId: string) =>
-    `/notes/${encodeURIComponent(noteId)}/session`,
-  sessionReflection: (noteId: string) =>
-    `/notes/${encodeURIComponent(noteId)}/result`,
+  question: (noteId: string, questionId: string) =>
+    `/notes/${encodeURIComponent(noteId)}/questions/${encodeURIComponent(questionId)}`,
 } as const;

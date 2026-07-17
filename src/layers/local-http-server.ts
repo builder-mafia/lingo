@@ -2,7 +2,8 @@ import { Context, Effect, Layer, Scope } from "effect";
 import { join } from "node:path";
 
 import { CliError } from "../cli/errors";
-import { makeLocalWebApp } from "../server/local-web-app";
+import { makeLocalWebApp, type LocalWebAppApi } from "../server/local-web-app";
+import { Database } from "./database";
 
 export type LocalHttpServerConfig = {
   readonly hostname: "127.0.0.1";
@@ -29,6 +30,7 @@ export class LocalHttpServer extends Context.Tag("@lingo/LocalHttpServer")<
 
 const makeService = (
   config: LocalHttpServerConfig,
+  api: LocalWebAppApi,
 ): LocalHttpServerService => ({
   listen: Effect.acquireRelease(
     Effect.tryPromise({
@@ -45,7 +47,7 @@ const makeService = (
           throw new Error("Browser application assets were not built.");
         }
 
-        const app = makeLocalWebApp({ webRootPath: config.webRootPath });
+        const app = makeLocalWebApp({ webRootPath: config.webRootPath, api });
         return Bun.serve({
           hostname: config.hostname,
           port: config.port,
@@ -66,4 +68,35 @@ const makeService = (
 });
 
 export const makeLocalHttpServerLayer = (config: LocalHttpServerConfig) =>
-  Layer.succeed(LocalHttpServer, makeService(config));
+  Layer.effect(
+    LocalHttpServer,
+    Effect.gen(function* () {
+      const database = yield* Database;
+      const api: LocalWebAppApi = {
+        listWorkspace: () =>
+          Effect.runPromise(
+            Effect.all(
+              {
+                notes: database.listNoteWorkspace(),
+                prompts: database.listWorkspacePrompts(),
+              },
+              { concurrency: "unbounded" },
+            ),
+          ),
+        setNoteStatus: (noteId, status) =>
+          Effect.runPromise(database.setNoteStatus(noteId, status)),
+        findNoteOverview: (noteId) =>
+          Effect.runPromise(database.findNoteOverview(noteId)),
+        findQuestionSession: (questionId) =>
+          Effect.runPromise(database.findQuestionSession(questionId)),
+        setSubjectiveAnswer: (questionId, content) =>
+          Effect.runPromise(database.setSubjectiveAnswer(questionId, content)),
+        resolveSubjectiveQuestion: (questionId) =>
+          Effect.runPromise(database.resolveSubjectiveQuestion(questionId)),
+        reopenSubjectiveQuestion: (questionId) =>
+          Effect.runPromise(database.reopenSubjectiveQuestion(questionId)),
+      };
+
+      return makeService(config, api);
+    }),
+  );

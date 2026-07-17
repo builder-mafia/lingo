@@ -1,5 +1,8 @@
 import { beforeAll, expect, test } from "bun:test";
+import { mkdtempSync, rmSync } from "node:fs";
 import { createServer } from "node:net";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 const cliPath = new URL("../../src/cli.ts", import.meta.url).pathname;
 const projectRoot = new URL("../..", import.meta.url).pathname;
@@ -60,10 +63,11 @@ const readLine = async (stream: ReadableStream<Uint8Array>) => {
 
 test("lingo start serves the local health endpoint", async () => {
   const port = await findAvailablePort();
+  const home = mkdtempSync(join(tmpdir(), "lingo-start-test-"));
 
   const child = Bun.spawn(["bun", "run", cliPath, "start"], {
     cwd: projectRoot,
-    env: { ...process.env, LINGO_PORT: String(port) },
+    env: { ...process.env, HOME: home, LINGO_PORT: String(port) },
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -89,6 +93,15 @@ test("lingo start serves the local health endpoint", async () => {
     expect(await response.json()).toEqual({
       ok: true,
       data: { status: "ready" },
+    });
+
+    const workspaceResponse = await fetch(
+      `${started.data.serverUrl}/api/workspace`,
+    );
+    expect(workspaceResponse.status).toBe(200);
+    expect(await workspaceResponse.json()).toEqual({
+      ok: true,
+      data: { notes: [], prompts: [] },
     });
 
     const pageResponse = await fetch(started.data.serverUrl);
@@ -141,10 +154,11 @@ test("lingo start serves the local health endpoint", async () => {
       expect(styleResponse.headers.get("content-type")).toContain("text/css");
       styles.push(await styleResponse.text());
     }
-    expect(styles.join("\n")).toContain("--color-background");
+    expect(styles.join("\n")).toContain("--color-canvas");
   } finally {
     child.kill();
     await child.exited;
+    rmSync(home, { recursive: true, force: true });
   }
 });
 
