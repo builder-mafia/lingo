@@ -2,6 +2,7 @@ import { Effect } from "effect";
 
 import { Database } from "../layers/database";
 import { JsonInput, type JsonInputOptions } from "../layers/json-input";
+import { LocalHttpServer } from "../layers/local-http-server";
 import { addQuestion } from "./commands/add-question";
 import { errorResponse, CliError } from "./errors";
 import { createNote } from "./commands/create-note";
@@ -9,6 +10,7 @@ import { setSubjectiveAnswer } from "./commands/set-subjective-answer";
 import { listSubjectiveAnswers } from "./commands/list-subjective-answers";
 import { setSubjectiveEvaluation } from "./commands/set-subjective-evaluation";
 import { setNoteSummary } from "./commands/set-note-summary";
+import { startServer } from "./commands/start-server";
 
 const noteSummaryUsage =
   "Usage: lingo note summary set <note-id> (--data <json> | --data-file <path>)";
@@ -71,8 +73,19 @@ const parseInputOptions = (
 
 export const runCli = (
   args: readonly string[],
-): Effect.Effect<number, never, JsonInput | Database> => {
+): Effect.Effect<number, never, JsonInput | Database | LocalHttpServer> => {
   const [resource, type, action, ...inputArgs] = args;
+
+  if (resource === "start" && type === undefined) {
+    return startServer().pipe(
+      Effect.catchAll((error) =>
+        Effect.sync(() => {
+          console.error(errorResponse(error));
+          return 1;
+        }),
+      ),
+    );
+  }
 
   if (resource === "question" && type === "add") {
     const [noteId, ...questionInputArgs] = [action, ...inputArgs];
