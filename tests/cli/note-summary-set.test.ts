@@ -26,7 +26,12 @@ test("sets and updates a note summary through JSON CLI input", async () => {
   const home = `/tmp/lingo-summary-${crypto.randomUUID()}`;
 
   try {
-    const created = await runCli(home, ["note", "create"]);
+    const created = await runCli(home, [
+      "note",
+      "create",
+      "--data",
+      JSON.stringify({ title: "테스트 노트" }),
+    ]);
     const noteId = JSON.parse(created.stdout).data.noteId;
 
     const first = await runCli(home, [

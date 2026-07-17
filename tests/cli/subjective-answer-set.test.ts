@@ -14,7 +14,16 @@ const runCli = async (home: string, args: readonly string[]) => {
 test("stores and updates a subjective answer", async () => {
   const home = `/tmp/lingo-answer-${crypto.randomUUID()}`;
   try {
-    const note = JSON.parse((await runCli(home, ["note", "create"])).stdout).data;
+    const note = JSON.parse(
+      (
+        await runCli(home, [
+          "note",
+          "create",
+          "--data",
+          JSON.stringify({ title: "테스트 노트" }),
+        ])
+      ).stdout,
+    ).data;
     const question = JSON.parse((await runCli(home, ["question", "add", note.noteId, "--data", JSON.stringify({ question: "설명하세요", referenceAnswer: "모범 답안" })])).stdout).data;
     const first = await runCli(home, ["answer", "set", question.questionId, "--data", JSON.stringify({ content: "첫 답변" })]);
     const second = await runCli(home, ["answer", "set", question.questionId, "--data", JSON.stringify({ content: "갱신 답변" })]);

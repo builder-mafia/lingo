@@ -46,11 +46,11 @@ describe("database migrations", () => {
       expect(readDatabaseVersion(database)).toBe(LATEST_DATABASE_VERSION);
       expect(
         database
-          .query<{ readonly id: string }, [string]>(
-            "SELECT id FROM notes WHERE id = ?",
+          .query<{ readonly id: string; readonly title: string }, [string]>(
+            "SELECT id, title FROM notes WHERE id = ?",
           )
           .get(noteId),
-      ).toEqual({ id: noteId });
+      ).toEqual({ id: noteId, title: "제목 없는 노트" });
       expect(
         database
           .query<{ readonly name: string }, []>(
@@ -220,7 +220,21 @@ describe("database migrations", () => {
 
       initializeDatabaseSchema(database);
 
-      expect(readDatabaseVersion(database)).toBe(2);
+      expect(readDatabaseVersion(database)).toBe(LATEST_DATABASE_VERSION);
+      expect(
+        database
+          .query<{ readonly title: string }, [string]>(
+            "SELECT title FROM notes WHERE id = ?",
+          )
+          .get(noteId),
+      ).toEqual({ title: "제목 없는 노트" });
+      expect(
+        database
+          .query<{ readonly name: string }, []>(
+            "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'note_labels'",
+          )
+          .get(),
+      ).toEqual({ name: "note_labels" });
       expect(
         database
           .query<{ readonly id: string }, [string]>(

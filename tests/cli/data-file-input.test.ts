@@ -27,7 +27,15 @@ describe("lingo --data-file input", () => {
     await Bun.write(filePath, JSON.stringify(validQuestion));
 
     const createNote = Bun.spawn(
-      ["bun", "run", cliPath, "note", "create"],
+      [
+        "bun",
+        "run",
+        cliPath,
+        "note",
+        "create",
+        "--data",
+        JSON.stringify({ title: "테스트 노트" }),
+      ],
       {
         cwd: projectRoot,
         env: { ...process.env, HOME: home },

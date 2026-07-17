@@ -27,7 +27,12 @@ test("loads note summary content from a JSON file", async () => {
 
   try {
     await Bun.write(dataFile, JSON.stringify({ content: "파일 요약" }));
-    const created = await runCli(home, ["note", "create"]);
+    const created = await runCli(home, [
+      "note",
+      "create",
+      "--data",
+      JSON.stringify({ title: "테스트 노트" }),
+    ]);
     const noteId = JSON.parse(created.stdout).data.noteId;
     const result = await runCli(home, [
       "note",

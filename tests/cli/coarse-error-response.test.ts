@@ -6,7 +6,15 @@ const projectRoot = new URL("../..", import.meta.url).pathname;
 test("returns a coarse CLI error without raw Zod issues", async () => {
   const home = `/tmp/lingo-coarse-error-${crypto.randomUUID()}`;
   const createNote = Bun.spawn(
-    ["bun", "run", cliPath, "note", "create"],
+    [
+      "bun",
+      "run",
+      cliPath,
+      "note",
+      "create",
+      "--data",
+      JSON.stringify({ title: "테스트 노트" }),
+    ],
     {
       cwd: projectRoot,
       env: { ...process.env, HOME: home },

@@ -25,7 +25,12 @@ test("stores a multiple-choice question and its choices for a note", async () =>
   const home = `/tmp/lingo-question-${crypto.randomUUID()}`;
 
   try {
-    const created = await runCli(home, ["note", "create"]);
+    const created = await runCli(home, [
+      "note",
+      "create",
+      "--data",
+      JSON.stringify({ title: "테스트 노트" }),
+    ]);
     const noteId = JSON.parse(created.stdout).data.noteId;
     const result = await runCli(home, [
       "question",

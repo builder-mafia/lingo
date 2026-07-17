@@ -20,7 +20,16 @@ const run = async (home: string, args: readonly string[]) => {
 
 test("adds a multiple-choice question with the concise question add command", async () => {
   const home = `/tmp/lingo-cli-taxonomy-${crypto.randomUUID()}`;
-  const note = JSON.parse((await run(home, ["note", "create"])).stdout).data;
+  const note = JSON.parse(
+    (
+      await run(home, [
+        "note",
+        "create",
+        "--data",
+        JSON.stringify({ title: "테스트 노트" }),
+      ])
+    ).stdout,
+  ).data;
   const result = await run(home, ["question", "add", note.noteId, "--data", JSON.stringify({ question: "질문", choices: [{ order: 1, option: "가", explanation: "설명" }, { order: 2, option: "나", explanation: "설명" }], correctId: 1 })]);
 
   expect(result.exitCode).toBe(0);
@@ -34,7 +43,16 @@ test("adds a multiple-choice question with the concise question add command", as
 
 test("rejects the removed problem add command", async () => {
   const home = `/tmp/lingo-legacy-problem-${crypto.randomUUID()}`;
-  const note = JSON.parse((await run(home, ["note", "create"])).stdout).data;
+  const note = JSON.parse(
+    (
+      await run(home, [
+        "note",
+        "create",
+        "--data",
+        JSON.stringify({ title: "테스트 노트" }),
+      ])
+    ).stdout,
+  ).data;
   const { exitCode, stderr } = await run(home, [
     "problem",
     "add",
