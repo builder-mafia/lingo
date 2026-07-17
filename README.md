@@ -10,6 +10,12 @@
 
 ```bash
 bun install
+bun run ./src/cli.ts start
+```
+
+서버는 `http://127.0.0.1:4312`에서 실행됩니다. 다른 터미널에서 노트를 만듭니다.
+
+```bash
 bun run ./src/cli.ts note create --data '{
   "title": "고객 문제 가설 검증",
   "labels": ["Product", "Interview"]
@@ -37,6 +43,7 @@ bun run ./src/cli.ts note create --data '{
 
 | 목적 | 명령 |
 | --- | --- |
+| 로컬 서버 실행 | `lingo start` |
 | 노트 만들기 | `lingo note create --data <json>` |
 | 노트 요약 저장 | `lingo note summary set <note-id>` |
 | 객관식/주관식 질문 추가 | `lingo question add <note-id>` |
@@ -45,6 +52,25 @@ bun run ./src/cli.ts note create --data '{
 | AI 평가 결과 저장 | `lingo evaluation set <question-id>` |
 
 명령은 리소스 중심으로 짧게 유지합니다. 질문 종류는 별도의 `--type`이 아니라 입력 JSON의 구조로 판별합니다.
+
+## 로컬 서버 실행
+
+```bash
+bun run ./src/cli.ts start
+```
+
+서버가 준비되면 다음 JSON을 출력하고 종료하지 않은 채 localhost 요청을 기다립니다.
+
+```json
+{
+  "ok": true,
+  "data": {
+    "serverUrl": "http://127.0.0.1:4312"
+  }
+}
+```
+
+`GET /health`는 서버 준비 상태를 JSON으로 반환합니다. 서버는 외부 네트워크에 공개되지 않도록 `127.0.0.1`에만 바인딩됩니다.
 
 ## Practice: 노트부터 평가까지
 
