@@ -6,6 +6,34 @@
 - 모든 응답: JSON
 - 구조화 입력: `--data '<JSON>'` 또는 `--data-file <파일>` 중 **하나만** 사용
 
+## 설치
+
+macOS와 Linux에서는 설치 스크립트로 최신 GitHub Release를 설치합니다.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/builder-mafia/lingo/main/install.sh | sh
+```
+
+기본 설치 경로는 `~/.local/bin/lingo`입니다. 이 디렉터리가 `PATH`에 없다면 사용하는 셸 설정에 다음 내용을 추가합니다.
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+특정 버전이나 다른 설치 경로를 지정할 수도 있습니다.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/builder-mafia/lingo/main/install.sh | \
+  sh -s -- --version v0.1.0 --install-dir "$HOME/bin"
+```
+
+설치 스크립트는 운영체제와 CPU에 맞는 실행 파일을 선택하고, Release의 `SHA256SUMS`로 아카이브를 검증한 뒤 기존 `lingo`를 교체합니다.
+
+```bash
+lingo --version
+lingo start
+```
+
 ## 빠른 시작
 
 ```bash
