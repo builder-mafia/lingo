@@ -14,7 +14,7 @@
   ],
   "scripts": {
     "build:ui": "vite build",
-    "dev:ui": "vite",
+    "dev:ui": "bun run src/dev-ui.ts",
     "prepack": "bun run build:ui",
     "test": "bun test",
     "typecheck": "bunx tsc --noEmit"

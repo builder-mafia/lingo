@@ -1,0 +1,83 @@
+.page {
+  display: grid;
+  justify-items: start;
+  align-content: center;
+  width: min(100% - 40px, 560px);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 48px 0;
+}
+
+.mark {
+  display: grid;
+  grid-template-columns: repeat(3, 3px);
+  align-items: end;
+  gap: 2px;
+  width: 26px;
+  height: 26px;
+  padding: 6px;
+  border-radius: 7px;
+  background: var(--color-ink-strong);
+}
+
+.mark span {
+  border-radius: 1px;
+  background: var(--color-canvas);
+}
+
+.mark span:nth-child(1) { height: 5px; }
+.mark span:nth-child(2) { height: 9px; }
+.mark span:nth-child(3) { height: 13px; background: var(--color-accent); }
+
+.eyebrow {
+  margin: 24px 0 0;
+  color: var(--color-accent);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.page h1 {
+  margin: 10px 0 0;
+  color: var(--color-ink-strong);
+  font-size: clamp(24px, 4vw, 34px);
+  font-weight: 580;
+  line-height: 1.35;
+  letter-spacing: -0.035em;
+}
+
+.description {
+  max-width: 48ch;
+  margin: 18px 0 0;
+  color: var(--color-ink-muted);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.description code {
+  padding: 2px 5px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  color: var(--color-ink);
+  background: var(--color-surface-subtle);
+  font-size: 12px;
+}
+
+.page button {
+  min-height: 36px;
+  margin-top: 24px;
+  padding: 0 13px;
+  border: 1px solid var(--color-accent);
+  border-radius: 6px;
+  color: var(--color-on-accent);
+  background: var(--color-accent);
+  font-size: 12px;
+  font-weight: 550;
+  cursor: default;
+  transition: background-color 120ms ease, transform 100ms ease;
+}
+
+.page button:active { transform: scale(0.98); }
+
+@media (hover: hover) and (pointer: fine) {
+  .page button:hover { background: var(--color-accent-hover); }
+}

@@ -9,6 +9,7 @@ export type LocalHttpServerConfig = {
   readonly hostname: "127.0.0.1";
   readonly port: number;
   readonly webRootPath: string;
+  readonly requireWebAssets?: boolean;
 };
 
 export type LocalHttpServerAddress = {
@@ -43,7 +44,10 @@ const makeService = (
           throw new Error("Invalid local server port.");
         }
 
-        if (!(await Bun.file(join(config.webRootPath, "index.html")).exists())) {
+        if (
+          config.requireWebAssets !== false &&
+          !(await Bun.file(join(config.webRootPath, "index.html")).exists())
+        ) {
           throw new Error("Browser application assets were not built.");
         }
 

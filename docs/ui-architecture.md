@@ -20,7 +20,7 @@
 
 ### Build once, serve many
 
-- 개발 중에는 Vite dev server가 HMR을 제공하고 `/api`와 `/health`를 `lingo start`에 proxy한다.
+- 개발 중에는 `bun run dev:ui`가 로컬 API 서버의 준비를 확인한 뒤 Vite를 실행한다. Vite는 HMR을 제공하고 `/api`와 `/health`를 해당 서버에 proxy한다.
 - 배포 전 `vite build`가 `dist/ui`에 hash된 HTML·JS·CSS를 만든다.
 - npm·Homebrew 패키지는 `dist/ui`를 포함한다. 최종 사용자는 별도 프론트엔드 빌드 없이 `lingo start`만 실행한다.
 - 서버는 기본적으로 `127.0.0.1`에만 bind한다.

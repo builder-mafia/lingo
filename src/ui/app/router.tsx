@@ -1,6 +1,7 @@
 import { createBrowserRouter, type RouteObject } from "react-router";
 
 import { AppShell } from "../layouts/app-shell/AppShell";
+import { AppErrorPage } from "../pages/app-error/AppErrorPage";
 import { NotFoundPage } from "../pages/not-found/NotFoundPage";
 import {
   loadNoteOverview,
@@ -14,6 +15,7 @@ export const appRoutes: RouteObject[] = [
   {
     path: "/",
     Component: AppShell,
+    ErrorBoundary: AppErrorPage,
     children: [
       {
         index: true,

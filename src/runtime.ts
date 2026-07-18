@@ -14,6 +14,7 @@ const LocalHttpServerLive = makeLocalHttpServerLayer({
   hostname: "127.0.0.1",
   port: localServerPort,
   webRootPath,
+  requireWebAssets: Bun.env.LINGO_API_ONLY !== "1",
 }).pipe(Layer.provide(DatabaseLive));
 const AppLayer = Layer.mergeAll(
   JsonInputLive,
