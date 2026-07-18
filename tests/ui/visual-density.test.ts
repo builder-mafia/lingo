@@ -31,5 +31,7 @@ describe("UI visual density", () => {
     expect(search).toContain("font-size: 13px;");
     expect(status).toContain("min-height: 36px;");
     expect(status).toContain("font-size: 13px;");
+    expect(status).toContain("border: 1px solid var(--color-border);");
+    expect(status).not.toContain("border: 1px solid transparent;");
   });
 });
