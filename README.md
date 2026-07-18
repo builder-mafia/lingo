@@ -239,6 +239,17 @@ bun run build:binary --target bun-linux-x64-baseline --outfile dist/bin/lingo-li
 lingo --version
 ```
 
+## 릴리스
+
+GitHub Release는 `package.json` 버전과 동일한 `v<version>` 태그를 push할 때 자동으로 생성됩니다. 예를 들어 `0.1.0`을 릴리스하려면 다음과 같이 실행합니다.
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+Release 워크플로는 전체 테스트와 타입 검사를 통과한 뒤 macOS·Linux의 arm64·x64 실행 파일을 네이티브 러너에서 빌드하고 실행합니다. 각 실행 파일은 `tar.gz`로 게시되며 `SHA256SUMS`와 GitHub artifact attestation도 함께 생성됩니다.
+
 ## 구조
 
 ```text

@@ -1,0 +1,152 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verify release
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Ensure package version matches tag
+        shell: bash
+        run: |
+          package_version="$(bun -p 'require("./package.json").version')"
+          if [[ "$GITHUB_REF_NAME" != "v${package_version}" ]]; then
+            echo "::error::package.json version must match release tag"
+            echo "Expected v${package_version}, received ${GITHUB_REF_NAME}."
+            exit 1
+          fi
+
+      - name: Run tests
+        run: bun test
+
+      - name: Run typecheck
+        run: bun run typecheck
+
+  build:
+    name: Build ${{ matrix.platform }}
+    needs: verify
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            target: bun-darwin-arm64
+            platform: darwin-arm64
+          - runner: macos-15-intel
+            target: bun-darwin-x64
+            platform: darwin-x64
+          - runner: ubuntu-24.04-arm
+            target: bun-linux-arm64
+            platform: linux-arm64
+          - runner: ubuntu-24.04
+            target: bun-linux-x64-baseline
+            platform: linux-x64
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build standalone binary
+        run: >-
+          bun run build:binary
+          --target ${{ matrix.target }}
+          --outfile release/lingo
+
+      - name: Verify embedded version
+        shell: bash
+        run: |
+          expected_version="${GITHUB_REF_NAME#v}"
+          actual_version="$(./release/lingo --version | bun -e 'console.log((await Bun.stdin.json()).data.version)')"
+          if [[ "$actual_version" != "$expected_version" ]]; then
+            echo "::error::Binary version ${actual_version} does not match ${expected_version}."
+            exit 1
+          fi
+
+      - name: Package binary
+        id: package
+        shell: bash
+        run: |
+          archive_name="lingo-${GITHUB_REF_NAME}-${{ matrix.platform }}.tar.gz"
+          tar -czf "release/${archive_name}" -C release lingo
+          rm release/lingo
+          echo "archive=release/${archive_name}" >> "$GITHUB_OUTPUT"
+          echo "name=${archive_name}" >> "$GITHUB_OUTPUT"
+
+      - name: Attest release archive
+        uses: actions/attest@v4
+        with:
+          subject-path: ${{ steps.package.outputs.archive }}
+
+      - name: Upload release archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.package.outputs.name }}
+          path: ${{ steps.package.outputs.archive }}
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - name: Download release archives
+        uses: actions/download-artifact@v4
+        with:
+          path: release
+          merge-multiple: true
+
+      - name: Generate checksums
+        working-directory: release
+        run: sha256sum lingo-*.tar.gz > SHA256SUMS
+
+      - name: Attest checksum manifest
+        uses: actions/attest@v4
+        with:
+          subject-path: release/SHA256SUMS
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: >-
+          gh release create "$GITHUB_REF_NAME"
+          release/lingo-*.tar.gz
+          release/SHA256SUMS
+          --verify-tag
+          --generate-notes
+          --title "Lingo $GITHUB_REF_NAME"
