@@ -1,5 +1,6 @@
 import { AlertDialog } from "@base-ui/react/alert-dialog";
 import { Select } from "@base-ui/react/select";
+import { Check, ChevronDown } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRevalidator } from "react-router";
 
@@ -64,7 +65,9 @@ export const NoteStatusSelect = ({
           <Select.Value>
             {statusOptions.find((option) => option.value === value)?.label}
           </Select.Value>
-          <Select.Icon className={styles.icon}>⌄</Select.Icon>
+          <Select.Icon className={styles.icon}>
+            <ChevronDown aria-hidden="true" />
+          </Select.Icon>
         </Select.Trigger>
         <Select.Portal>
           <Select.Positioner className={styles.positioner} sideOffset={5} align="end">
@@ -74,7 +77,9 @@ export const NoteStatusSelect = ({
                   <Select.Item className={styles.item} key={option.value} value={option.value}>
                     <span className={styles.stateMark} data-status={option.value} aria-hidden="true" />
                     <Select.ItemText>{option.label}</Select.ItemText>
-                    <Select.ItemIndicator className={styles.check}>✓</Select.ItemIndicator>
+                    <Select.ItemIndicator className={styles.check}>
+                      <Check aria-hidden="true" />
+                    </Select.ItemIndicator>
                   </Select.Item>
                 ))}
               </Select.List>

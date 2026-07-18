@@ -32,7 +32,18 @@
 .stateMark[data-status="completed"] { border-color: var(--color-positive); background: var(--color-positive); }
 .stateMark[data-status="deferred"] { border-style: dashed; }
 
-.icon { margin-left: auto; color: var(--color-ink-subtle); font-size: 14px; }
+.icon,
+.check {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+}
+
+.icon { margin-left: auto; color: var(--color-ink-subtle); }
+.icon svg,
+.check svg { display: block; width: 15px; height: 15px; stroke-width: 2; }
 .positioner { z-index: 50; outline: 0; }
 
 .popup {

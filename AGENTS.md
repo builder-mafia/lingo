@@ -26,6 +26,11 @@ Lingo is a local-first note and active-learning app.
 - CLI responses are JSON. Invalid input must produce a JSON error response and a non-zero exit code.
 - Do not add a generic `--type` payload shape when separate commands and schemas make the type explicit.
 
+## UI conventions
+
+- Use Lucide React icons for interface glyphs. Do not use Unicode symbols, emoji, or hand-authored SVGs as substitutes; brand marks and simple CSS status indicators are exceptions.
+- Import only the Lucide icons a component uses and size them through its CSS Module so alignment stays consistent.
+
 ## Quality bar
 
 - Use TDD: write a failing behavior test before production behavior changes.
