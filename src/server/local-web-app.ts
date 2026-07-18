@@ -1,6 +1,4 @@
 import { Hono } from "hono";
-import { serveStatic } from "hono/bun";
-import { join } from "node:path";
 
 import { noteIdSchema } from "../schemas/note";
 import { setNoteStatusSchema, type NoteStatus } from "../schemas/note-status";
@@ -10,6 +8,7 @@ import type {
 } from "../schemas/note-workspace";
 import type { NoteOverview, QuestionSession } from "../schemas/question-session";
 import { setSubjectiveAnswerSchema } from "../schemas/subjective-answer";
+import type { WebAssets } from "./web-assets";
 
 export type LocalWebAppApi = {
   readonly listWorkspace: () => Promise<{
@@ -37,7 +36,7 @@ export type LocalWebAppApi = {
 };
 
 type LocalWebAppConfig = {
-  readonly webRootPath: string;
+  readonly webAssets: WebAssets;
   readonly api: LocalWebAppApi;
 };
 
@@ -68,7 +67,20 @@ const requestFailedResponse = {
   },
 } as const;
 
-export const makeLocalWebApp = ({ webRootPath, api }: LocalWebAppConfig) => {
+const assetResponse = async (
+  webAssets: WebAssets,
+  pathname: string,
+  cacheControl: string,
+) => {
+  const asset = await webAssets.read(pathname);
+  if (asset === undefined) return undefined;
+
+  const headers = new Headers({ "Cache-Control": cacheControl });
+  if (asset.type !== "") headers.set("Content-Type", asset.type);
+  return new Response(asset, { headers });
+};
+
+export const makeLocalWebApp = ({ webAssets, api }: LocalWebAppConfig) => {
   const app = new Hono();
 
   app.get("/health", (context) =>
@@ -181,28 +193,25 @@ export const makeLocalWebApp = ({ webRootPath, api }: LocalWebAppConfig) => {
     }
   });
 
-  app.get(
-    "/assets/*",
-    serveStatic({
-      root: webRootPath,
-      onFound: (_path, context) => {
-        context.header("Cache-Control", "public, max-age=31536000, immutable");
-      },
-    }),
-  );
+  app.get("/assets/*", async (context) => {
+    const response = await assetResponse(
+      webAssets,
+      new URL(context.req.url).pathname,
+      "public, max-age=31536000, immutable",
+    );
+    return response ?? context.json(notFoundResponse, 404);
+  });
   app.all("/assets/*", (context) => context.json(notFoundResponse, 404));
   app.all("/api/*", (context) => context.json(notFoundResponse, 404));
 
-  app.get(
-    "*",
-    serveStatic({
-      root: "/",
-      path: join(webRootPath, "index.html"),
-      onFound: (_path, context) => {
-        context.header("Cache-Control", "no-cache");
-      },
-    }),
-  );
+  app.get("*", async (context) => {
+    const response = await assetResponse(
+      webAssets,
+      "/index.html",
+      "no-cache",
+    );
+    return response ?? context.json(notFoundResponse, 404);
+  });
 
   app.notFound((context) => context.json(notFoundResponse, 404));
 

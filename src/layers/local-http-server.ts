@@ -1,14 +1,14 @@
 import { Context, Effect, Layer, Scope } from "effect";
-import { join } from "node:path";
 
 import { CliError } from "../cli/errors";
 import { makeLocalWebApp, type LocalWebAppApi } from "../server/local-web-app";
+import type { WebAssets } from "../server/web-assets";
 import { Database } from "./database";
 
 export type LocalHttpServerConfig = {
   readonly hostname: "127.0.0.1";
   readonly port: number;
-  readonly webRootPath: string;
+  readonly webAssets: WebAssets;
   readonly requireWebAssets?: boolean;
 };
 
@@ -46,12 +46,12 @@ const makeService = (
 
         if (
           config.requireWebAssets !== false &&
-          !(await Bun.file(join(config.webRootPath, "index.html")).exists())
+          !(await config.webAssets.hasIndex())
         ) {
           throw new Error("Browser application assets were not built.");
         }
 
-        const app = makeLocalWebApp({ webRootPath: config.webRootPath, api });
+        const app = makeLocalWebApp({ webAssets: config.webAssets, api });
         return Bun.serve({
           hostname: config.hostname,
           port: config.port,

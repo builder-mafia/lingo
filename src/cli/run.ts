@@ -11,6 +11,7 @@ import { listSubjectiveAnswers } from "./commands/list-subjective-answers";
 import { setSubjectiveEvaluation } from "./commands/set-subjective-evaluation";
 import { setNoteSummary } from "./commands/set-note-summary";
 import { startServer } from "./commands/start-server";
+import { lingoVersion } from "../version";
 
 const noteSummaryUsage =
   "Usage: lingo note summary set <note-id> (--data <json> | --data-file <path>)";
@@ -74,6 +75,13 @@ const parseInputOptions = (
 export const runCli = (
   args: readonly string[],
 ): Effect.Effect<number, never, JsonInput | Database | LocalHttpServer> => {
+  if (args.length === 1 && args[0] === "--version") {
+    console.log(
+      JSON.stringify({ ok: true, data: { version: lingoVersion } }),
+    );
+    return Effect.succeed(0);
+  }
+
   const [resource, type, action, ...inputArgs] = args;
 
   if (resource === "start" && type === undefined) {

@@ -13,6 +13,7 @@
     "README.md"
   ],
   "scripts": {
+    "build:binary": "bun run scripts/build-binary.ts",
     "build:ui": "vite build",
     "dev:ui": "bun run src/dev-ui.ts",
     "prepack": "bun run build:ui",
