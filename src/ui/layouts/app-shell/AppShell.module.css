@@ -1,0 +1,97 @@
+.appRoot {
+  isolation: isolate;
+  min-height: 100vh;
+}
+
+.topBar {
+  position: sticky;
+  z-index: 20;
+  top: 0;
+  display: flex;
+  align-items: center;
+  min-height: 54px;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-canvas) 92%, transparent);
+  backdrop-filter: blur(12px);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 40px;
+  margin-left: -5px;
+  padding: 0 5px;
+  border-radius: 7px;
+  color: var(--color-ink-strong);
+  text-decoration: none;
+}
+
+.brandName {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+.mark {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 3px);
+  align-items: end;
+  gap: 2px;
+  width: 24px;
+  height: 24px;
+  padding: 6px;
+  border-radius: 6px;
+  background: var(--color-ink-strong);
+}
+
+.mark span {
+  display: block;
+  border-radius: 1px;
+  background: var(--color-canvas);
+}
+
+.mark span:nth-child(1) { height: 5px; }
+.mark span:nth-child(2) { height: 8px; }
+.mark span:nth-child(3) { height: 11px; background: var(--color-accent); }
+
+.divider {
+  width: 1px;
+  height: 16px;
+  margin: 0 14px;
+  background: var(--color-border-strong);
+}
+
+.location {
+  color: var(--color-ink-muted);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.localState {
+  margin-left: auto;
+  color: var(--color-ink-subtle);
+  font-size: 12px;
+}
+
+.main {
+  min-width: 0;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .brand:hover { background: var(--color-surface-hover); }
+}
+
+.brand:active { background: var(--color-surface-active); }
+
+@media (max-width: 640px) {
+  .topBar {
+    padding: 0 14px;
+  }
+
+  .localState {
+    display: none;
+  }
+}

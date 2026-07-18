@@ -12,6 +12,19 @@ import {
 import { noteSummarySchema, type NoteSummary } from "../schemas/note-summary";
 import { type CreateMultipleChoiceQuestion } from "../schemas/multiple-choice";
 import { type CreateSubjectiveQuestion } from "../schemas/subjective";
+import { noteStatusSchema, type NoteStatus } from "../schemas/note-status";
+import {
+  noteWorkspaceItemSchema,
+  workspacePromptSchema,
+  type NoteWorkspaceItem,
+  type WorkspacePrompt,
+} from "../schemas/note-workspace";
+import {
+  noteOverviewSchema,
+  questionSessionSchema,
+  type NoteOverview,
+  type QuestionSession,
+} from "../schemas/question-session";
 import { runDatabaseMigrations } from "./database-migrations";
 
 export type StoredMultipleChoiceQuestion = {
@@ -61,6 +74,39 @@ export interface DatabaseService {
     questionId: string,
     feedback: string,
   ) => Effect.Effect<{ readonly questionId: string; readonly feedback: string }, CliError>;
+  readonly listNoteWorkspace: () => Effect.Effect<
+    readonly NoteWorkspaceItem[],
+    CliError
+  >;
+  readonly setNoteStatus: (
+    noteId: string,
+    status: NoteStatus,
+  ) => Effect.Effect<
+    { readonly noteId: string; readonly status: NoteStatus },
+    CliError
+  >;
+  readonly listWorkspacePrompts: () => Effect.Effect<
+    readonly WorkspacePrompt[],
+    CliError
+  >;
+  readonly findNoteOverview: (
+    noteId: string,
+  ) => Effect.Effect<NoteOverview | undefined, CliError>;
+  readonly findQuestionSession: (
+    questionId: string,
+  ) => Effect.Effect<QuestionSession | undefined, CliError>;
+  readonly resolveSubjectiveQuestion: (
+    questionId: string,
+  ) => Effect.Effect<
+    { readonly questionId: string; readonly resolved: true },
+    CliError
+  >;
+  readonly reopenSubjectiveQuestion: (
+    questionId: string,
+  ) => Effect.Effect<
+    { readonly questionId: string; readonly resolved: false },
+    CliError
+  >;
 }
 
 export class Database extends Context.Tag("@lingo/Database")<
@@ -82,6 +128,50 @@ type NoteSummaryRow = {
   readonly noteId: string;
   readonly content: string;
   readonly updatedAt: string;
+};
+
+type NoteWorkspaceRow = {
+  readonly id: string;
+  readonly title: string;
+  readonly summary: string | null;
+  readonly status: string;
+  readonly openQuestionCount: number;
+  readonly updatedAt: string;
+};
+
+type WorkspacePromptRow = {
+  readonly questionId: string;
+  readonly noteId: string;
+  readonly noteTitle: string;
+  readonly question: string;
+  readonly kind: string;
+  readonly activityAt: string;
+};
+
+type NoteOverviewRow = {
+  readonly id: string;
+  readonly title: string;
+  readonly summary: string | null;
+  readonly status: string;
+};
+
+type NoteQuestionRow = {
+  readonly id: string;
+  readonly question: string;
+  readonly resolvedAt: string | null;
+  readonly hasAnswer: number;
+  readonly hasFeedback: number;
+};
+
+type QuestionSessionRow = {
+  readonly questionId: string;
+  readonly noteId: string;
+  readonly noteTitle: string;
+  readonly summary: string | null;
+  readonly question: string;
+  readonly answer: string | null;
+  readonly feedback: string | null;
+  readonly resolvedAt: string | null;
 };
 
 export const initializeDatabaseSchema = (database: SqliteDatabase) => {
@@ -280,11 +370,28 @@ const makeService = (databasePath: string): DatabaseService => ({
     withDatabase(
       databasePath,
       (database) => {
-        database.query(`
-          INSERT INTO subjective_answers (question_id, content, updated_at)
-          VALUES (?, ?, ?)
-          ON CONFLICT(question_id) DO UPDATE SET content = excluded.content, updated_at = excluded.updated_at
-        `).run(questionId, content, new Date().toISOString());
+        const updatedAt = new Date().toISOString();
+        database.transaction(() => {
+          database
+            .query(
+              "DELETE FROM subjective_evaluations WHERE question_id = ?",
+            )
+            .run(questionId);
+          database.query(`
+            INSERT INTO subjective_answers (question_id, content, updated_at)
+            VALUES (?, ?, ?)
+            ON CONFLICT(question_id) DO UPDATE SET content = excluded.content, updated_at = excluded.updated_at
+          `).run(questionId, content, updatedAt);
+          database.query(`
+            UPDATE notes
+            SET status = 'in_progress'
+            WHERE
+              status = 'not_started'
+              AND id = (
+                SELECT note_id FROM subjective_questions WHERE id = ?
+              )
+          `).run(questionId);
+        })();
         return { questionId, content };
       },
       "Could not set subjective answer.",
@@ -321,6 +428,259 @@ const makeService = (databasePath: string): DatabaseService => ({
         return { questionId, feedback };
       },
       "Could not set subjective evaluation.",
+    ),
+  listNoteWorkspace: () =>
+    withDatabase(
+      databasePath,
+      (database) => {
+        const rows = database
+          .query<NoteWorkspaceRow, []>(`
+            SELECT
+              notes.id,
+              notes.title,
+              summaries.content AS summary,
+              notes.status,
+              (
+                SELECT COUNT(*)
+                FROM subjective_questions
+                WHERE note_id = notes.id AND resolved_at IS NULL
+              ) + (
+                SELECT COUNT(*)
+                FROM multiple_choice_questions
+                WHERE note_id = notes.id AND resolved_at IS NULL
+              ) AS openQuestionCount,
+              MAX(
+                notes.created_at,
+                COALESCE(summaries.updated_at, notes.created_at),
+                COALESCE((
+                  SELECT MAX(created_at)
+                  FROM subjective_questions
+                  WHERE note_id = notes.id
+                ), notes.created_at),
+                COALESCE((
+                  SELECT MAX(created_at)
+                  FROM multiple_choice_questions
+                  WHERE note_id = notes.id
+                ), notes.created_at),
+                COALESCE((
+                  SELECT MAX(answers.updated_at)
+                  FROM subjective_answers AS answers
+                  INNER JOIN subjective_questions AS questions
+                    ON questions.id = answers.question_id
+                  WHERE questions.note_id = notes.id
+                ), notes.created_at),
+                COALESCE((
+                  SELECT MAX(evaluations.updated_at)
+                  FROM subjective_evaluations AS evaluations
+                  INNER JOIN subjective_questions AS questions
+                    ON questions.id = evaluations.question_id
+                  WHERE questions.note_id = notes.id
+                ), notes.created_at)
+              ) AS updatedAt
+            FROM notes
+            LEFT JOIN note_summaries AS summaries ON summaries.note_id = notes.id
+            ORDER BY updatedAt DESC, notes.created_at DESC
+          `)
+          .all();
+
+        const labelQuery = database.query<NoteLabelRow, [string]>(
+          "SELECT label FROM note_labels WHERE note_id = ? ORDER BY position",
+        );
+
+        return rows.map((row) =>
+          noteWorkspaceItemSchema.parse({
+            ...row,
+            labels: labelQuery.all(row.id).map(({ label }) => label),
+          }),
+        );
+      },
+      "Could not list notes.",
+    ),
+  setNoteStatus: (noteId, status) =>
+    withDatabase(
+      databasePath,
+      (database) => {
+        database
+          .query("UPDATE notes SET status = ? WHERE id = ?")
+          .run(status, noteId);
+        const updated = database
+          .query<{ readonly status: string }, [string]>(
+            "SELECT status FROM notes WHERE id = ?",
+          )
+          .get(noteId);
+
+        if (!updated) {
+          throw new Error("Note not found.");
+        }
+
+        return { noteId, status: noteStatusSchema.parse(updated.status) };
+      },
+      "Could not update note status.",
+    ),
+  listWorkspacePrompts: () =>
+    withDatabase(
+      databasePath,
+      (database) =>
+        database
+          .query<WorkspacePromptRow, []>(`
+            SELECT * FROM (
+              SELECT
+                questions.id AS questionId,
+                notes.id AS noteId,
+                notes.title AS noteTitle,
+                questions.question,
+                'feedback_ready' AS kind,
+                evaluations.updated_at AS activityAt
+              FROM subjective_questions AS questions
+              INNER JOIN notes ON notes.id = questions.note_id
+              INNER JOIN subjective_evaluations AS evaluations
+                ON evaluations.question_id = questions.id
+              WHERE
+                questions.resolved_at IS NULL
+                AND notes.status IN ('not_started', 'in_progress')
+
+              UNION ALL
+
+              SELECT
+                questions.id AS questionId,
+                notes.id AS noteId,
+                notes.title AS noteTitle,
+                questions.question,
+                'unanswered' AS kind,
+                questions.created_at AS activityAt
+              FROM subjective_questions AS questions
+              INNER JOIN notes ON notes.id = questions.note_id
+              LEFT JOIN subjective_answers AS answers
+                ON answers.question_id = questions.id
+              WHERE
+                questions.resolved_at IS NULL
+                AND answers.question_id IS NULL
+                AND notes.status IN ('not_started', 'in_progress')
+            )
+            ORDER BY activityAt DESC
+            LIMIT 3
+          `)
+          .all()
+          .map((row) => workspacePromptSchema.parse(row)),
+      "Could not list questions.",
+    ),
+  findNoteOverview: (noteId) =>
+    withDatabase(
+      databasePath,
+      (database) => {
+        const note = database
+          .query<NoteOverviewRow, [string]>(`
+            SELECT
+              notes.id,
+              notes.title,
+              summaries.content AS summary,
+              notes.status
+            FROM notes
+            LEFT JOIN note_summaries AS summaries ON summaries.note_id = notes.id
+            WHERE notes.id = ?
+          `)
+          .get(noteId);
+
+        if (!note) return undefined;
+
+        const labels = database
+          .query<NoteLabelRow, [string]>(
+            "SELECT label FROM note_labels WHERE note_id = ? ORDER BY position",
+          )
+          .all(noteId)
+          .map(({ label }) => label);
+        const questions = database
+          .query<NoteQuestionRow, [string]>(`
+            SELECT
+              questions.id,
+              questions.question,
+              questions.resolved_at AS resolvedAt,
+              CASE WHEN answers.question_id IS NULL THEN 0 ELSE 1 END AS hasAnswer,
+              CASE WHEN evaluations.question_id IS NULL THEN 0 ELSE 1 END AS hasFeedback
+            FROM subjective_questions AS questions
+            LEFT JOIN subjective_answers AS answers ON answers.question_id = questions.id
+            LEFT JOIN subjective_evaluations AS evaluations ON evaluations.question_id = questions.id
+            WHERE questions.note_id = ?
+            ORDER BY questions.created_at DESC
+          `)
+          .all(noteId)
+          .map((question) => ({
+            ...question,
+            hasAnswer: question.hasAnswer === 1,
+            hasFeedback: question.hasFeedback === 1,
+          }));
+
+        return noteOverviewSchema.parse({ ...note, labels, questions });
+      },
+      "Could not read note overview.",
+    ),
+  findQuestionSession: (questionId) =>
+    withDatabase(
+      databasePath,
+      (database) => {
+        const row = database
+          .query<QuestionSessionRow, [string]>(`
+            SELECT
+              questions.id AS questionId,
+              notes.id AS noteId,
+              notes.title AS noteTitle,
+              summaries.content AS summary,
+              questions.question,
+              answers.content AS answer,
+              evaluations.feedback,
+              questions.resolved_at AS resolvedAt
+            FROM subjective_questions AS questions
+            INNER JOIN notes ON notes.id = questions.note_id
+            LEFT JOIN note_summaries AS summaries ON summaries.note_id = notes.id
+            LEFT JOIN subjective_answers AS answers ON answers.question_id = questions.id
+            LEFT JOIN subjective_evaluations AS evaluations ON evaluations.question_id = questions.id
+            WHERE questions.id = ?
+          `)
+          .get(questionId);
+
+        return row ? questionSessionSchema.parse(row) : undefined;
+      },
+      "Could not read question.",
+    ),
+  resolveSubjectiveQuestion: (questionId) =>
+    withDatabase(
+      databasePath,
+      (database) => {
+        const question = database
+          .query<{ readonly id: string }, [string]>(
+            "SELECT id FROM subjective_questions WHERE id = ?",
+          )
+          .get(questionId);
+        if (!question) throw new Error("Question not found.");
+
+        database
+          .query(
+            "UPDATE subjective_questions SET resolved_at = ? WHERE id = ?",
+          )
+          .run(new Date().toISOString(), questionId);
+        return { questionId, resolved: true as const };
+      },
+      "Could not resolve question.",
+    ),
+  reopenSubjectiveQuestion: (questionId) =>
+    withDatabase(
+      databasePath,
+      (database) => {
+        const question = database
+          .query<{ readonly id: string }, [string]>(
+            "SELECT id FROM subjective_questions WHERE id = ?",
+          )
+          .get(questionId);
+        if (!question) throw new Error("Question not found.");
+
+        database
+          .query(
+            "UPDATE subjective_questions SET resolved_at = NULL WHERE id = ?",
+          )
+          .run(questionId);
+        return { questionId, resolved: false as const };
+      },
+      "Could not reopen question.",
     ),
 });
 
