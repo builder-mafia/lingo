@@ -209,6 +209,7 @@ bun run ./src/cli.ts question add <note-id> --data-file ./question.json
 ```bash
 bun test
 bun run typecheck
+bun run build:binary
 ```
 
 UI를 수정할 때는 하나의 명령으로 로컬 API 서버와 Vite 개발 서버를 함께
@@ -221,7 +222,22 @@ bun run dev:ui
 기본 주소는 UI `http://127.0.0.1:5173`, API `http://127.0.0.1:4312`입니다.
 필요하면 `LINGO_UI_PORT`와 `LINGO_PORT`로 각각 변경할 수 있습니다.
 
-배포용 UI는 `bun run build:ui`로 `dist/ui`에 생성됩니다. `prepack`도 같은 빌드를 실행하므로 향후 npm·Homebrew 패키지는 완성된 정적 자산을 포함하며, 사용자의 `lingo start` 시점에는 프론트엔드를 다시 빌드하지 않습니다.
+배포용 UI는 `bun run build:ui`로 `dist/ui`에 생성됩니다. `bun run build:binary`는 UI, Bun 런타임, CLI와 서버 코드를 `dist/bin/lingo` 단일 실행 파일에 포함합니다. 따라서 배포된 `lingo start`는 Bun이나 프론트엔드 빌드 환경 없이 실행됩니다. 사용자 데이터베이스는 실행 파일에 포함하지 않고 `~/.lingo/lingo.sqlite`에 유지합니다.
+
+릴리스 대상과 출력 경로도 지정할 수 있습니다.
+
+```bash
+bun run build:binary --target bun-darwin-arm64 --outfile dist/bin/lingo-darwin-arm64
+bun run build:binary --target bun-darwin-x64 --outfile dist/bin/lingo-darwin-x64
+bun run build:binary --target bun-linux-arm64 --outfile dist/bin/lingo-linux-arm64
+bun run build:binary --target bun-linux-x64-baseline --outfile dist/bin/lingo-linux-x64
+```
+
+실행 파일에 포함된 버전은 다음 명령으로 JSON 형태로 확인합니다.
+
+```bash
+lingo --version
+```
 
 ## 구조
 
