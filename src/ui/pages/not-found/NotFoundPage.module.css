@@ -1,14 +1,14 @@
 .page {
   display: grid;
   justify-items: start;
-  max-width: 620px;
-  padding: 64px 24px;
+  max-width: 680px;
+  padding: 72px 28px;
 }
 
 .page p {
   margin: 0 0 18px;
   color: var(--color-accent);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 720;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -17,7 +17,7 @@
 .page h1 {
   margin: 0;
   color: var(--color-ink-strong);
-  font-size: clamp(38px, 6vw, 64px);
+  font-size: clamp(42px, 6vw, 68px);
   font-weight: 590;
   line-height: 1.14;
   letter-spacing: -0.05em;
@@ -26,7 +26,7 @@
 .page a {
   margin-top: 32px;
   color: var(--color-accent);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 650;
   text-underline-offset: 4px;
 }

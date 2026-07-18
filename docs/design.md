@@ -116,14 +116,16 @@ Material의 색상 시스템에서는 색을 고립된 hex 값이 아닌 `surfac
 | --- | --- | --- |
 | `--color-canvas` | `#F7F7F8` | 앱 배경 |
 | `--color-surface` | `#FFFFFF` | 주 표면 |
-| `--color-surface-subtle` | `#F1F2F4` | 선택 전 hover, 조용한 구획 |
+| `--color-surface-subtle` | `#F1F2F4` | 조용한 구획 |
+| `--color-surface-hover` | `#ECEEF2` | hover 가능한 행과 보조 버튼 |
+| `--color-surface-active` | `#E3E7F8` | 눌림과 열린 선택 상태 |
 | `--color-surface-raised` | `#FAFAFB` | 팝업과 우측 패널 |
 | `--color-ink-strong` | `#17181C` | 제목과 핵심 내용 |
 | `--color-ink` | `#2B2D33` | 본문 |
 | `--color-ink-muted` | `#656A73` | 보조 정보 |
 | `--color-ink-subtle` | `#858B96` | placeholder와 낮은 우선순위 |
-| `--color-border` | `#E2E3E7` | 기본 hairline |
-| `--color-border-strong` | `#CED1D8` | 입력과 선택 경계 |
+| `--color-border` | `#D5D8DF` | 기본 경계 |
+| `--color-border-strong` | `#B9BEC9` | 입력과 선택 경계 |
 | `--color-accent` | `#4658C9` | 주요 행동, 링크, 선택 |
 | `--color-accent-hover` | `#3949B6` | accent hover |
 | `--color-accent-soft` | `#EEF0FF` | 선택된 행과 조용한 강조 |
@@ -141,14 +143,16 @@ Material의 색상 시스템에서는 색을 고립된 hex 값이 아닌 `surfac
 | --- | --- | --- |
 | `--color-canvas` | `#121318` | 앱 배경 |
 | `--color-surface` | `#181A20` | 주 표면 |
-| `--color-surface-subtle` | `#202229` | hover와 선택 전 구획 |
+| `--color-surface-subtle` | `#202229` | 조용한 구획 |
+| `--color-surface-hover` | `#282B34` | hover 가능한 행과 보조 버튼 |
+| `--color-surface-active` | `#303654` | 눌림과 열린 선택 상태 |
 | `--color-surface-raised` | `#1D1F26` | 팝업과 우측 패널 |
 | `--color-ink-strong` | `#F2F3F5` | 제목과 핵심 내용 |
 | `--color-ink` | `#DEE0E5` | 본문 |
 | `--color-ink-muted` | `#9DA2AD` | 보조 정보 |
 | `--color-ink-subtle` | `#767C88` | placeholder와 낮은 우선순위 |
-| `--color-border` | `#2B2E36` | 기본 hairline |
-| `--color-border-strong` | `#3A3E48` | 입력과 선택 경계 |
+| `--color-border` | `#363A44` | 기본 경계 |
+| `--color-border-strong` | `#4A505D` | 입력과 선택 경계 |
 | `--color-accent` | `#AAB5FF` | 주요 행동, 링크, 선택 |
 | `--color-accent-hover` | `#BEC6FF` | accent hover |
 | `--color-accent-soft` | `#272C4C` | 선택된 행과 조용한 강조 |
@@ -163,7 +167,7 @@ Material의 색상 시스템에서는 색을 고립된 hex 값이 아닌 `surfac
 ## 6. Typography
 
 - 시스템 sans stack을 사용해 로컬 설치와 여러 운영체제에서 빠르고 안정적으로 읽힌다.
-- 기본 본문은 `14px / 1.55`, 목록 보조 정보는 `12–13px`, 페이지 제목은 `18–20px`를 기준으로 한다.
+- 기본 본문은 `15px / 1.6`, 목록 보조 정보는 `12–13px`, 페이지 제목은 `21–29px`를 기준으로 한다. 표 헤더처럼 반복되는 가장 작은 정보도 원칙적으로 `11px` 아래로 내리지 않는다.
 - 굵기는 주로 400, 500, 600만 사용한다. 위계는 과도한 굵기보다 크기와 명암으로 만든다.
 - 노트 제목과 질문은 한국어에서 지나친 자간 축소를 피한다. 숫자 열은 `font-variant-numeric: tabular-nums`를 사용한다.
 - 긴 요약과 답변은 읽기 폭을 약 `68ch`로 제한한다.
@@ -171,9 +175,9 @@ Material의 색상 시스템에서는 색을 고립된 hex 값이 아닌 `surfac
 ## 7. Spacing, Shape, and Density
 
 - 4px 단위를 기본 리듬으로 사용한다: `4, 8, 12, 16, 24, 32, 48`.
-- 데스크톱 노트 행 높이는 약 56–64px로 유지해 한 화면에서 맥락을 비교할 수 있게 한다.
+- 데스크톱 노트 행 높이는 약 `68px`로 유지해 가독성과 한 화면의 비교 가능성을 함께 지킨다.
 - 기본 모서리는 6px, 입력·팝업은 8px, 큰 패널은 최대 10px다. pill은 상태나 짧은 label처럼 의미가 있을 때만 쓴다.
-- 화면 구조는 그림자보다 1px hairline, 표면 톤, 여백으로 나눈다. 그림자는 떠 있는 팝업에만 제한한다.
+- 화면 구조는 그림자보다 대비가 확보된 1px 경계, 표면 톤, 여백으로 나눈다. 그림자는 떠 있는 팝업에만 제한한다.
 - 클릭 가능한 작은 아이콘도 실제 hit area는 최소 36px, 주요 touch target은 44–48px를 확보한다.
 
 ## 8. Interaction and Motion
@@ -183,6 +187,7 @@ Material의 색상 시스템에서는 색을 고립된 hex 값이 아닌 `surfac
 - 팝업은 trigger 기점의 transform origin을 사용하며 120–160ms 안에 끝난다.
 - `transition: all`을 금지하고 변화하는 속성만 지정한다.
 - hover 스타일은 hover 가능한 fine pointer에서만 적용한다.
+- hover는 `surface-hover`, 눌림·열림·현재 선택은 코발트가 섞인 `surface-active`를 사용해 상태를 눈으로 구분한다. 상태 차이를 색 하나에만 맡기지는 않는다.
 - `prefers-reduced-motion: reduce`에서는 기능에 필요하지 않은 모션을 제거한다.
 - 저장·피드백 대기처럼 중요한 변화는 애니메이션보다 문장과 상태 레이블로 설명한다.
 

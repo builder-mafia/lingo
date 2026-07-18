@@ -2,13 +2,14 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  width: min(280px, 42vw);
-  min-height: 34px;
-  padding: 0 9px;
+  width: min(320px, 44vw);
+  min-height: 38px;
+  padding: 0 11px;
   border: 1px solid var(--color-border);
   border-radius: 7px;
   color: var(--color-ink-muted);
   background: var(--color-surface);
+  transition: border-color 120ms ease, background-color 120ms ease;
 }
 
 .search:focus-within {
@@ -18,8 +19,8 @@
 
 .search svg {
   flex: 0 0 auto;
-  width: 15px;
-  height: 15px;
+  width: 16px;
+  height: 16px;
   fill: none;
   stroke: currentColor;
   stroke-linecap: round;
@@ -33,7 +34,7 @@
   outline: 0;
   color: var(--color-ink);
   background: transparent;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .search input::placeholder { color: var(--color-ink-subtle); }
@@ -41,13 +42,17 @@
 .search input::-webkit-search-cancel-button { opacity: 0.55; }
 
 .search kbd {
-  padding: 1px 5px;
+  padding: 1px 6px;
   border: 1px solid var(--color-border);
   border-radius: 4px;
   color: var(--color-ink-subtle);
   background: var(--color-surface-subtle);
   font-family: inherit;
-  font-size: 10px;
+  font-size: 11px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .search:hover { border-color: var(--color-border-strong); }
 }
 
 .visuallyHidden {
