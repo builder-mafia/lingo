@@ -1,0 +1,4 @@
+interface:
+  display_name: "Lingo"
+  short_description: "Turn conversations into durable, testable knowledge"
+  default_prompt: "Use $lingo to save what I learned and create questions that test my understanding."

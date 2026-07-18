@@ -38,6 +38,16 @@ curl -fsSL https://raw.githubusercontent.com/builder-mafia/lingo/main/install.sh
 - macOS Apple Silicon, macOS Intel
 - Linux arm64, Linux x64
 
+### Agent Skill
+
+Codex, Claude Code, Cursor 등에서 Lingo CLI를 올바른 학습 흐름으로 사용할 수 있도록 agent skill을 함께 제공합니다.
+
+```bash
+npx skills add builder-mafia/lingo --skill lingo
+```
+
+이 명령은 agent용 지침을 설치합니다. 실제 `lingo` 실행 파일은 위 설치 스크립트로 별도 설치해야 합니다. 모든 프로젝트에서 사용하려면 `-g`를 추가할 수 있습니다.
+
 ## Quick Start
 
 ### 1. 브라우저 작업공간 열기
