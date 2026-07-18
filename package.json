@@ -18,6 +18,7 @@
     "build:ui": "vite build",
     "dev:ui": "bun run src/dev-ui.ts",
     "prepack": "bun run build:ui",
+    "release": "bun run scripts/release.ts",
     "test": "bun test",
     "typecheck": "bunx tsc --noEmit"
   },
