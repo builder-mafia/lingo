@@ -1,66 +1,62 @@
 # Lingo
 
-로컬 우선 노트·질문 풀이 앱입니다. 스킬은 `lingo` CLI로 노트·질문·답변·평가를 SQLite에 저장하고, 사용자는 이후 localhost 브라우저 UI에서 질문에 답합니다.
+배운 것을 모아두고, 자신의 말로 다시 설명하며 이해를 확인하는 local-first 학습 도구입니다.
 
-- 기본 데이터베이스: `~/.lingo/lingo.sqlite`
-- 모든 응답: JSON
-- 구조화 입력: `--data '<JSON>'` 또는 `--data-file <파일>` 중 **하나만** 사용
+AI 에이전트와 스킬은 `lingo` CLI로 노트와 질문을 만들고, 사용자는 localhost 브라우저에서 답합니다. 답변과 피드백은 내 컴퓨터의 SQLite에 쌓이며 Lingo 자체는 특정 AI provider를 호출하지 않습니다.
 
-## 빠른 시작
+```text
+AI agent / skill ── lingo CLI ── local SQLite
+                                      │
+User ─────────── browser UI ──────────┘
+```
+
+## Installation
+
+macOS와 Linux에서 최신 GitHub Release를 설치합니다. Bun이나 Node.js는 필요하지 않습니다.
 
 ```bash
-bun install
-bun run build:ui
-bun run ./src/cli.ts start
+curl -fsSL https://raw.githubusercontent.com/builder-mafia/lingo/main/install.sh | sh
 ```
 
-서버는 `http://127.0.0.1:4312`에서 실행됩니다. 다른 터미널에서 노트를 만듭니다.
+기본 설치 경로는 `~/.local/bin/lingo`입니다. 이 디렉터리가 `PATH`에 없다면 사용하는 셸 설정에 다음 내용을 추가합니다.
 
 ```bash
-bun run ./src/cli.ts note create --data '{
-  "title": "고객 문제 가설 검증",
-  "labels": ["Product", "Interview"]
-}'
+export PATH="$HOME/.local/bin:$PATH"
 ```
 
-성공하면 새 노트의 ID와 localhost URL을 반환합니다.
-
-```json
-{
-  "ok": true,
-  "data": {
-    "noteId": "<note-id>",
-    "title": "고객 문제 가설 검증",
-    "labels": ["Product", "Interview"],
-    "createdAt": "2026-07-16T12:00:00.000Z",
-    "noteUrl": "http://127.0.0.1:4312/notes/<note-id>"
-  }
-}
-```
-
-아래 예시에서는 이 값을 `<note-id>`로 표기합니다.
-
-## CLI 명령 한눈에 보기
-
-| 목적 | 명령 |
-| --- | --- |
-| 로컬 서버 실행 | `lingo start` |
-| 노트 만들기 | `lingo note create --data <json>` |
-| 노트 요약 저장 | `lingo note summary set <note-id>` |
-| 객관식/주관식 질문 추가 | `lingo question add <note-id>` |
-| 주관식 답변 저장 | `lingo answer set <question-id>` |
-| 아직 평가되지 않은 답변 조회 | `lingo answer list <note-id>` |
-| AI 평가 결과 저장 | `lingo evaluation set <question-id>` |
-
-명령은 리소스 중심으로 짧게 유지합니다. 질문 종류는 별도의 `--type`이 아니라 입력 JSON의 구조로 판별합니다.
-
-## 로컬 서버 실행
+특정 버전이나 다른 설치 경로도 선택할 수 있습니다.
 
 ```bash
-bun run ./src/cli.ts start
+curl -fsSL https://raw.githubusercontent.com/builder-mafia/lingo/main/install.sh | \
+  sh -s -- --version v0.1.0 --install-dir "$HOME/bin"
 ```
 
-서버가 준비되면 다음 JSON을 출력하고 종료하지 않은 채 localhost 요청을 기다립니다.
+설치 스크립트는 운영체제와 CPU에 맞는 실행 파일을 선택하고 `SHA256SUMS`로 검증한 뒤 기존 `lingo`를 교체합니다. 최신 버전으로 업데이트할 때는 설치 명령을 다시 실행하면 됩니다.
+
+지원 환경:
+
+- macOS Apple Silicon, macOS Intel
+- Linux arm64, Linux x64
+
+### Agent Skill
+
+Codex, Claude Code, Cursor 등에서 Lingo CLI를 올바른 학습 흐름으로 사용할 수 있도록 agent skill을 함께 제공합니다.
+
+```bash
+npx skills add builder-mafia/lingo --skill lingo
+```
+
+이 명령은 agent용 지침을 설치합니다. 실제 `lingo` 실행 파일은 위 설치 스크립트로 별도 설치해야 합니다. 모든 프로젝트에서 사용하려면 `-g`를 추가할 수 있습니다.
+
+## Quick Start
+
+### 1. 브라우저 작업공간 열기
+
+```bash
+lingo start
+```
+
+Lingo는 localhost 서버를 열고 접속 주소를 JSON으로 반환합니다.
 
 ```json
 {
@@ -71,84 +67,144 @@ bun run ./src/cli.ts start
 }
 ```
 
-출력된 `serverUrl`을 브라우저에서 열면 Lingo의 Understanding Map 화면을 볼 수 있습니다. `GET /health`는 서버 준비 상태를 JSON으로 반환합니다. 서버는 외부 네트워크에 공개되지 않도록 `127.0.0.1`에만 바인딩됩니다.
+명령을 실행한 터미널은 서버를 유지하기 위해 계속 열어둡니다. 브라우저에서 `serverUrl`을 열고, 아래 CLI 명령은 다른 터미널에서 실행합니다.
 
-## Practice: 노트부터 평가까지
-
-### 1. 노트 만들기
+### 2. 첫 노트 만들기
 
 ```bash
-bun run ./src/cli.ts note create --data '{
-  "title": "고객 문제 가설 검증",
-  "labels": ["Product", "Interview"]
+lingo note create --data '{
+  "title": "캐시 무효화 이해하기",
+  "labels": ["Backend", "Architecture"]
 }'
 ```
 
-출력의 `data.noteId`를 다음 단계의 `<note-id>` 자리에 넣습니다.
+성공 응답의 `data.noteId`를 이후 명령의 `<note-id>`에 사용합니다. `data.noteUrl`을 열면 해당 노트로 바로 이동합니다.
 
-### 2. 요약 저장하기
+```json
+{
+  "ok": true,
+  "data": {
+    "noteId": "<note-id>",
+    "title": "캐시 무효화 이해하기",
+    "labels": ["Backend", "Architecture"],
+    "createdAt": "2026-07-18T12:00:00.000Z",
+    "noteUrl": "http://127.0.0.1:4312/notes/<note-id>"
+  }
+}
+```
+
+### 3. 요약과 질문 쌓기
 
 ```bash
-bun run ./src/cli.ts note summary set <note-id> --data '{
-  "content": "고객 인터뷰로 사업 아이디어의 문제 가설을 검증하는 연습 노트"
+lingo note summary set <note-id> --data '{
+  "content": "캐시된 값과 원본 데이터의 일관성을 언제, 어떻게 맞출지 결정하는 문제"
 }'
 ```
 
-### 3. 객관식 질문 추가하기
+```bash
+lingo question add <note-id> --data '{
+  "question": "캐시 무효화가 어려운 이유를 자신의 말로 설명해보세요.",
+  "referenceAnswer": "원본 변경 시점과 캐시 갱신 시점이 어긋나면 오래된 값이 노출되며, 동시 요청과 실패 상황까지 고려해야 하기 때문이다."
+}'
+```
 
-`choices`가 있으면 Lingo가 객관식 질문으로 저장합니다.
+이제 브라우저의 노트 작업공간에서 질문을 열고 답할 수 있습니다.
+
+## How It Works
+
+Lingo는 AI와 사용자가 서로 다른 인터페이스를 사용하도록 역할을 나눕니다.
+
+1. AI 에이전트나 스킬이 대화에서 배운 내용을 `lingo` CLI로 정리합니다.
+2. 노트, 요약, 질문이 로컬 SQLite에 저장됩니다.
+3. 사용자는 `lingo start`로 연 브라우저에서 질문에 자신의 말로 답합니다.
+4. 외부 AI 에이전트가 평가할 답변을 CLI로 읽고 피드백을 다시 저장합니다.
+5. 사용자는 브라우저에서 피드백을 확인하고 다시 답하거나 질문을 정리합니다.
+
+Lingo는 답변을 대신 만들거나 AI provider를 선택하지 않습니다. Codex, Claude Code, Cursor 또는 다른 도구가 Lingo를 호출할 수 있지만, 로컬 앱은 어느 provider를 사용했는지 알 필요가 없습니다.
+
+## Commands
+
+모든 CLI 응답은 JSON입니다. 실패하면 JSON 오류를 stderr에 출력하고 0이 아닌 종료 코드를 반환합니다.
+
+| 목적 | 명령 |
+| --- | --- |
+| 버전 확인 | `lingo --version` |
+| 브라우저 작업공간 열기 | `lingo start` |
+| 노트 만들기 | `lingo note create (--data <json> \| --data-file <path>)` |
+| 노트 요약 저장 | `lingo note summary set <note-id> (--data <json> \| --data-file <path>)` |
+| 질문 추가 | `lingo question add <note-id> (--data <json> \| --data-file <path>)` |
+| 주관식 답변 저장 | `lingo answer set <question-id> (--data <json> \| --data-file <path>)` |
+| 평가가 필요한 답변 조회 | `lingo answer list <note-id>` |
+| AI 피드백 저장 | `lingo evaluation set <question-id> (--data <json> \| --data-file <path>)` |
+
+### Notes
+
+노트에는 필수 제목과 선택 라벨을 저장합니다. 라벨의 앞뒤 공백과 중복은 자동으로 제거됩니다.
 
 ```bash
-bun run ./src/cli.ts question add <note-id> --data '{
-  "question": "고객 문제를 검증하는 첫 행동은 무엇인가요?",
+lingo note create --data '{
+  "title": "좋은 API 경계 설계하기",
+  "labels": ["API", "Design"]
+}'
+```
+
+요약은 현재 이해에 맞게 언제든 갱신할 수 있습니다.
+
+```bash
+lingo note summary set <note-id> --data '{
+  "content": "변경 이유가 다른 책임을 분리하고 안정적인 계약으로 연결한다."
+}'
+```
+
+### Subjective Questions
+
+`referenceAnswer`가 있으면 주관식 질문으로 저장됩니다.
+
+```bash
+lingo question add <note-id> --data '{
+  "question": "이 API에서 인증과 권한 검사를 분리해야 하는 이유는 무엇인가요?",
+  "referenceAnswer": "인증은 사용자의 신원을 확인하고 권한 검사는 해당 사용자의 행동 가능 범위를 판단하므로 변경 이유가 다르다."
+}'
+```
+
+브라우저 UI가 답변을 저장하지만 CLI에서도 같은 답변을 저장하거나 갱신할 수 있습니다.
+
+```bash
+lingo answer set <question-id> --data '{
+  "content": "신원을 확인하는 일과 허용된 행동을 판단하는 일은 서로 다른 정책에 따라 바뀌기 때문이다."
+}'
+```
+
+### Multiple-choice Questions
+
+`choices`와 `correctId`가 있으면 객관식 질문으로 저장됩니다. `correctId`는 정답 선택지의 `order`를 가리킵니다.
+
+```bash
+lingo question add <note-id> --data '{
+  "question": "HTTP 401과 403을 가장 잘 구분한 설명은 무엇인가요?",
   "choices": [
     {
       "order": 1,
-      "option": "기능을 전부 구현한다",
-      "explanation": "문제를 확인하기 전에 구현부터 시작하면 불필요한 기능을 만들 위험이 큽니다."
+      "option": "401은 인증이 필요하고 403은 권한이 부족하다",
+      "explanation": "신원 확인 여부와 접근 권한 여부를 구분한다."
     },
     {
       "order": 2,
-      "option": "잠재 고객을 인터뷰한다",
-      "explanation": "실제 문제와 현재 행동을 확인해 가설을 검증할 수 있습니다."
+      "option": "두 상태 코드는 항상 같은 의미다",
+      "explanation": "인증과 권한 실패는 서로 다른 상황이다."
     }
   ],
-  "correctId": 2
+  "correctId": 1
 }'
 ```
 
-출력의 `data.questionId`를 `<question-id>`로 사용합니다.
+### AI Evaluation
 
-### 4. 주관식 질문 추가하기
-
-`referenceAnswer`가 있으면 Lingo가 주관식 질문으로 저장합니다.
+외부 AI 에이전트는 아직 피드백이 없는 주관식 답변을 읽습니다.
 
 ```bash
-bun run ./src/cli.ts question add <note-id> --data '{
-  "question": "고객 인터뷰에서 확인할 핵심 가설을 한 문장으로 작성하세요.",
-  "referenceAnswer": "누가 어떤 상황에서 어떤 비용이나 불편을 반복적으로 겪는지 확인한다."
-}'
+lingo answer list <note-id>
 ```
-
-### 5. 주관식 답변 저장하기
-
-```bash
-bun run ./src/cli.ts answer set <question-id> --data '{
-  "content": "초기 창업자는 고객이 시간을 많이 쓰는 반복 업무를 겪는지 먼저 인터뷰로 확인해야 한다."
-}'
-```
-
-같은 `<question-id>`로 다시 실행하면 답변을 새 내용으로 갱신합니다.
-
-### 6. AI 평가 대상 답변 읽기
-
-스킬은 이 JSON을 읽은 뒤 Lingo 밖에서 원하는 AI를 사용해 평가합니다.
-
-```bash
-bun run ./src/cli.ts answer list <note-id>
-```
-
-반환값에는 평가에 필요한 질문과 답변 문맥이 들어 있습니다.
 
 ```json
 {
@@ -164,67 +220,88 @@ bun run ./src/cli.ts answer list <note-id>
 }
 ```
 
-### 7. AI 평가 결과 저장하기
-
-Lingo는 AI provider를 직접 호출하지 않습니다. 스킬이 만든 feedback만 저장합니다.
+평가가 끝나면 피드백을 저장합니다.
 
 ```bash
-bun run ./src/cli.ts evaluation set <question-id> --data '{
-  "feedback": "핵심 방향은 맞습니다. 고객이 실제로 겪는 반복 업무와 현재 해결 방법을 더 구체적으로 적어 보세요."
+lingo evaluation set <question-id> --data '{
+  "feedback": "인증과 권한의 변경 이유를 잘 구분했습니다. 여러 역할이 하나의 리소스에 접근할 때 정책이 어떻게 달라지는지도 설명해보세요."
 }'
 ```
 
-평가를 저장한 답변은 다음 `answer list <note-id>` 결과에서 제외됩니다.
+피드백을 저장한 답변은 다음 `answer list <note-id>` 결과에서 제외됩니다.
 
-## JSON 파일 입력
+## Structured Input
 
-긴 입력은 파일로 관리할 수 있습니다.
+JSON 입력이 필요한 명령은 다음 중 정확히 하나를 사용합니다.
 
-```bash
-cat > question.json <<'JSON'
+- `--data '<JSON string>'`
+- `--data-file <JSON file path>`
+
+긴 입력은 JSON 파일로 관리할 수 있습니다.
+
+```json
 {
-  "question": "가설 검증에 가장 먼저 확인할 것은 무엇인가요?",
-  "referenceAnswer": "대상 고객이 문제를 실제로 반복 경험하는지 확인한다."
+  "question": "낙관적 잠금은 어떤 충돌을 방지하나요?",
+  "referenceAnswer": "읽은 이후 다른 요청이 값을 변경했는지 버전으로 확인해 덮어쓰기를 방지한다."
 }
-JSON
-
-bun run ./src/cli.ts question add <note-id> --data-file ./question.json
 ```
 
-`--data`와 `--data-file`은 동시에 사용할 수 없으며, 같은 플래그를 두 번 사용할 수도 없습니다.
+```bash
+lingo question add <note-id> --data-file ./question.json
+```
 
-## 입력 검증 규칙
+`--data`와 `--data-file`을 함께 사용하거나 같은 플래그를 두 번 전달하면 명령이 실패합니다.
 
-- 모든 ID는 UUID여야 합니다.
-- 노트 `title`은 필수이며 공백일 수 없습니다.
-- 노트 `labels`는 선택 사항입니다. 각 label의 앞뒤 공백과 중복은 제거됩니다.
-- 요약·답변·feedback·질문 문장은 비어 있을 수 없습니다.
+입력 규칙:
+
+- 모든 ID는 UUID입니다.
+- 제목, 요약, 질문, 답변, 피드백은 빈 문자열일 수 없습니다.
 - 객관식 질문은 선택지가 2개 이상이어야 합니다.
-- `choices[].order`는 양의 정수이며 중복될 수 없습니다.
-- `correctId`는 반드시 하나의 `choices[].order` 값이어야 합니다.
-- `choices`와 `referenceAnswer`를 모두 넣지 말고, 만들려는 질문 형태에 맞는 JSON만 전달합니다.
+- `choices[].order`는 중복되지 않는 양의 정수입니다.
+- `correctId`는 실제 `choices[].order` 중 하나여야 합니다.
+- 객관식은 `choices`와 `correctId`, 주관식은 `referenceAnswer`를 전달합니다.
 
-## 개발
+## Local Data and Privacy
+
+- 모든 노트, 질문, 답변, 피드백은 기본적으로 `~/.lingo/lingo.sqlite`에 저장됩니다.
+- `lingo start`는 외부 네트워크가 아닌 `127.0.0.1:4312`에만 서버를 엽니다.
+- 실행 파일을 업데이트해도 로컬 데이터베이스는 유지됩니다.
+- Lingo 앱은 AI provider의 API 키나 계정을 요구하지 않습니다.
+- 답변 평가에 어떤 AI를 사용할지와 어떤 데이터를 전달할지는 Lingo를 호출하는 사용자 또는 스킬이 결정합니다.
+
+포트를 변경하려면 `LINGO_PORT`를 지정합니다.
 
 ```bash
+LINGO_PORT=4400 lingo start
+```
+
+## Development
+
+소스에서 개발할 때만 Bun이 필요합니다.
+
+```bash
+git clone https://github.com/builder-mafia/lingo.git
+cd lingo
+bun install --frozen-lockfile
 bun test
 bun run typecheck
-bun run build:binary
 ```
 
-UI를 수정할 때는 하나의 명령으로 로컬 API 서버와 Vite 개발 서버를 함께
-실행합니다. 이미 `lingo start`가 실행 중이면 해당 서버를 재사용합니다.
+로컬 API 서버와 Vite UI를 함께 실행합니다.
 
 ```bash
 bun run dev:ui
 ```
 
-기본 주소는 UI `http://127.0.0.1:5173`, API `http://127.0.0.1:4312`입니다.
-필요하면 `LINGO_UI_PORT`와 `LINGO_PORT`로 각각 변경할 수 있습니다.
+기본 주소는 UI `http://127.0.0.1:5173`, API `http://127.0.0.1:4312`입니다. `LINGO_UI_PORT`와 `LINGO_PORT`로 각각 변경할 수 있습니다.
 
-배포용 UI는 `bun run build:ui`로 `dist/ui`에 생성됩니다. `bun run build:binary`는 UI, Bun 런타임, CLI와 서버 코드를 `dist/bin/lingo` 단일 실행 파일에 포함합니다. 따라서 배포된 `lingo start`는 Bun이나 프론트엔드 빌드 환경 없이 실행됩니다. 사용자 데이터베이스는 실행 파일에 포함하지 않고 `~/.lingo/lingo.sqlite`에 유지합니다.
+독립 실행 파일을 현재 플랫폼용으로 빌드합니다.
 
-릴리스 대상과 출력 경로도 지정할 수 있습니다.
+```bash
+bun run build:binary
+```
+
+지원하는 다른 플랫폼을 지정할 수도 있습니다.
 
 ```bash
 bun run build:binary --target bun-darwin-arm64 --outfile dist/bin/lingo-darwin-arm64
@@ -233,34 +310,30 @@ bun run build:binary --target bun-linux-arm64 --outfile dist/bin/lingo-linux-arm
 bun run build:binary --target bun-linux-x64-baseline --outfile dist/bin/lingo-linux-x64
 ```
 
-실행 파일에 포함된 버전은 다음 명령으로 JSON 형태로 확인합니다.
+## Release
 
-```bash
-lingo --version
-```
-
-## 릴리스
-
-GitHub Release는 `package.json` 버전과 동일한 `v<version>` 태그를 push할 때 자동으로 생성됩니다. 예를 들어 `0.1.0`을 릴리스하려면 다음과 같이 실행합니다.
+`package.json` 버전과 동일한 `v<version>` 태그를 push하면 GitHub Release가 생성됩니다.
 
 ```bash
 git tag v0.1.0
 git push origin v0.1.0
 ```
 
-Release 워크플로는 전체 테스트와 타입 검사를 통과한 뒤 macOS·Linux의 arm64·x64 실행 파일을 네이티브 러너에서 빌드하고 실행합니다. 각 실행 파일은 `tar.gz`로 게시되며 `SHA256SUMS`와 GitHub artifact attestation도 함께 생성됩니다.
+Release 워크플로는 전체 테스트와 타입 검사를 통과한 뒤 macOS·Linux의 arm64·x64 실행 파일, `SHA256SUMS`, artifact attestation을 게시합니다.
 
-## 구조
+## Architecture
 
 ```text
 src/
-├── cli/commands/  # 단일 CLI 유스케이스
-├── cli.ts         # 실행 진입점
-├── runtime.ts     # 공유 Effect Layer를 조립한 AppRuntime
-├── layers/        # SQLite·JSON 입력 같은 재사용 서비스
-├── schemas/       # Zod 도메인 계약
-├── server/        # Hono 앱과 HTTP 라우팅
-└── ui/            # Vite 기반 React 브라우저 앱
+├── cli/commands/  # CLI use cases
+├── layers/        # Effect services and Live Layers
+├── schemas/       # Zod domain contracts
+├── server/        # Hono localhost API and UI server
+├── ui/            # Vite + React browser app
+├── cli.ts         # CLI entry point
+└── runtime.ts     # Effect Layer composition
 ```
 
-`schemas/`는 도메인 계약만 담당합니다. 입력 처리, 명령 라우팅, 저장소, 오류 표현은 별도 책임으로 분리합니다.
+- [Product requirements](./docs/requirements.md)
+- [Design system](./docs/design.md)
+- [UI architecture](./docs/ui-architecture.md)
