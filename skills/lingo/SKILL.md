@@ -31,10 +31,18 @@ Identify one cohesive topic. Write:
 
 - a concrete title that names the concept or decision;
 - zero to three reusable labels;
-- a concise summary of the current understanding;
+- a concise Markdown summary of the current understanding;
 - two to five questions unless the user explicitly asks for a note without practice.
 
 Prefer questions that require the user to explain the idea in their own words or apply it to a new situation. Avoid generic prompts such as “Do you understand this?” or trivia that does not reveal understanding.
+
+Write the summary as Markdown:
+
+- Do not add a top-level heading; the note UI already supplies the title and summary heading.
+- Use short paragraphs for the mental model and bullet lists for parallel facts, tradeoffs, or steps.
+- Use bold text sparingly for terms the user should be able to recall.
+- Use inline or fenced code only when exact syntax matters.
+- Avoid raw HTML, images, and decorative formatting.
 
 ### 2. Create the note
 
@@ -47,10 +55,10 @@ Require an `ok: true` response. Capture `data.noteId` for subsequent commands an
 ### 3. Set the summary
 
 ```bash
-lingo note summary set <note-id> --data '{"content":"Keeping cached values consistent with their source requires an explicit refresh or invalidation policy."}'
+lingo note summary set <note-id> --data '{"content":"A cache needs an explicit consistency policy.\n\n- **TTL** bounds how long stale data can remain.\n- **Invalidation** reacts to source changes."}'
 ```
 
-Describe the learned model, not the conversation that produced it. Update the summary when new learning materially changes the model.
+Describe the learned model, not the conversation that produced it. Keep the Markdown readable as plain text and update the summary when new learning materially changes the model.
 
 ### 4. Add questions
 
