@@ -3,6 +3,7 @@ import { Link, useLoaderData } from "react-router";
 import type { NoteOverview } from "../../../schemas/question-session";
 import { routePaths } from "../../app/route-paths";
 import { NoteStatusSelect } from "../../features/note-status/NoteStatusSelect";
+import { MarkdownContent } from "../../shared/markdown/MarkdownContent";
 import styles from "./NoteOverviewPage.module.css";
 
 export const NoteOverviewPage = () => {
@@ -27,9 +28,11 @@ export const NoteOverviewPage = () => {
 
         <section className={styles.section} aria-labelledby="summary-heading">
           <h2 id="summary-heading">요약</h2>
-          <p className={note.summary ? styles.summary : styles.mutedSummary}>
-            {note.summary ?? "아직 정리된 요약이 없습니다."}
-          </p>
+          {note.summary ? (
+            <MarkdownContent className={styles.summary} content={note.summary} />
+          ) : (
+            <p className={styles.mutedSummary}>아직 정리된 요약이 없습니다.</p>
+          )}
         </section>
 
         <section className={styles.section} aria-labelledby="open-heading">

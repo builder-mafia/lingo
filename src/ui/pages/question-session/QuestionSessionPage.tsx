@@ -8,6 +8,7 @@ import {
   resolveQuestion,
   saveQuestionAnswer,
 } from "../../shared/api/workspace";
+import { MarkdownContent } from "../../shared/markdown/MarkdownContent";
 import styles from "./QuestionSessionPage.module.css";
 
 export const QuestionSessionPage = () => {
@@ -134,7 +135,15 @@ export const QuestionSessionPage = () => {
         <aside className={styles.context}>
           <details>
             <summary>노트 요약</summary>
-            <p>{session.summary ?? "아직 정리된 요약이 없습니다."}</p>
+            {session.summary ? (
+              <MarkdownContent
+                className={styles.contextSummary}
+                compact
+                content={session.summary}
+              />
+            ) : (
+              <p className={styles.contextEmpty}>아직 정리된 요약이 없습니다.</p>
+            )}
           </details>
           {session.answer && editing ? (
             <details>

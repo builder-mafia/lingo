@@ -43,6 +43,7 @@ lingo note summary set <note-id> --data '{
 ```
 
 Running the command again replaces the note's current summary.
+The summary content supports Markdown and is rendered as formatted content in note detail views.
 
 ## Add a subjective question
 

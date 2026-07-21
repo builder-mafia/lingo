@@ -9,7 +9,8 @@
 .labels span { padding: 2px 8px; border: 1px solid var(--color-border); border-radius: 999px; color: var(--color-ink-muted); background: var(--color-surface); font-size: 11px; }
 .section { padding: 36px 0; border-bottom: 1px solid var(--color-border); }
 .section h2 { margin: 0; color: var(--color-ink-strong); font-size: 14px; font-weight: 600; }
-.summary, .mutedSummary { max-width: 68ch; margin: 18px 0 0; white-space: pre-wrap; color: var(--color-ink); font-size: 15px; line-height: 1.75; }
+.summary, .mutedSummary { margin: 18px 0 0; }
+.mutedSummary { max-width: 68ch; color: var(--color-ink); font-size: 15px; line-height: 1.75; }
 .mutedSummary { color: var(--color-ink-subtle); }
 .sectionHeading { display: flex; align-items: baseline; gap: 7px; }
 .sectionHeading span { color: var(--color-ink-subtle); font-size: 11px; }

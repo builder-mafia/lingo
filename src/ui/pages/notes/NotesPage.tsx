@@ -5,6 +5,7 @@ import { routePaths } from "../../app/route-paths";
 import { NoteSearch } from "../../features/note-search/NoteSearch";
 import { NoteStatusSelect } from "../../features/note-status/NoteStatusSelect";
 import type { WorkspaceData } from "../../shared/api/workspace";
+import { toSummaryPreview } from "../../shared/markdown/summary-preview";
 import styles from "./NotesPage.module.css";
 
 const formatDate = (value: string) =>
@@ -91,7 +92,11 @@ export const NotesPage = () => {
                 <span className={styles.noteIcon} aria-hidden="true">◇</span>
                 <div>
                   <strong>{note.title}</strong>
-                  <span>{note.summary ?? "아직 요약이 없습니다."}</span>
+                  <span>
+                    {note.summary
+                      ? toSummaryPreview(note.summary)
+                      : "아직 요약이 없습니다."}
+                  </span>
                 </div>
               </div>
               <span className={styles.questionCount} role="cell">{note.openQuestionCount}</span>
