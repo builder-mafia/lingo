@@ -312,12 +312,16 @@ bun run build:binary --target bun-linux-x64-baseline --outfile dist/bin/lingo-li
 
 ## Release
 
-`package.json` 버전과 동일한 `v<version>` 태그를 push하면 GitHub Release가 생성됩니다.
+릴리스할 버전으로 `package.json`을 갱신하고 `main`에 머지한 뒤 release 명령을 실행합니다. 명령은 현재 버전으로 annotated tag를 만들고 원격에 push합니다.
 
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+git switch main
+git pull --ff-only
+bun run release --dry-run
+bun run release
 ```
+
+release 명령은 작업 트리가 깨끗한지, 로컬 `main`이 `origin/main`과 같은지, 같은 버전 태그가 이미 존재하는지 검사합니다. 마지막 확인을 생략해야 하는 자동화 환경에서는 `bun run release --yes`를 사용합니다.
 
 Release 워크플로는 전체 테스트와 타입 검사를 통과한 뒤 macOS·Linux의 arm64·x64 실행 파일, `SHA256SUMS`, artifact attestation을 게시합니다.
 
