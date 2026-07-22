@@ -85,6 +85,9 @@ export interface DatabaseService {
     { readonly noteId: string; readonly status: NoteStatus },
     CliError
   >;
+  readonly trashNote: (
+    noteId: string,
+  ) => Effect.Effect<{ readonly noteId: string; readonly trashed: true }, CliError>;
   readonly listWorkspacePrompts: () => Effect.Effect<
     readonly WorkspacePrompt[],
     CliError
@@ -95,13 +98,24 @@ export interface DatabaseService {
   readonly findQuestionSession: (
     questionId: string,
   ) => Effect.Effect<QuestionSession | undefined, CliError>;
-  readonly resolveSubjectiveQuestion: (
+  readonly setMultipleChoiceAnswer: (
+    questionId: string,
+    selectedId: number,
+  ) => Effect.Effect<
+    {
+      readonly questionId: string;
+      readonly selectedId: number;
+      readonly correct: boolean;
+    },
+    CliError
+  >;
+  readonly resolveQuestion: (
     questionId: string,
   ) => Effect.Effect<
     { readonly questionId: string; readonly resolved: true },
     CliError
   >;
-  readonly reopenSubjectiveQuestion: (
+  readonly reopenQuestion: (
     questionId: string,
   ) => Effect.Effect<
     { readonly questionId: string; readonly resolved: false },
@@ -157,6 +171,7 @@ type NoteOverviewRow = {
 
 type NoteQuestionRow = {
   readonly id: string;
+  readonly kind: string;
   readonly question: string;
   readonly resolvedAt: string | null;
   readonly hasAnswer: number;
@@ -164,6 +179,7 @@ type NoteQuestionRow = {
 };
 
 type QuestionSessionRow = {
+  readonly kind: string;
   readonly questionId: string;
   readonly noteId: string;
   readonly noteTitle: string;
@@ -173,6 +189,26 @@ type QuestionSessionRow = {
   readonly feedback: string | null;
   readonly resolvedAt: string | null;
 };
+
+type MultipleChoiceQuestionSessionRow = {
+  readonly correctId: number;
+  readonly kind: string;
+  readonly noteId: string;
+  readonly noteTitle: string;
+  readonly question: string;
+  readonly questionId: string;
+  readonly resolvedAt: string | null;
+  readonly selectedId: number | null;
+  readonly summary: string | null;
+};
+
+type MultipleChoiceChoiceRow = {
+  readonly explanation: string;
+  readonly option: string;
+  readonly order: number;
+};
+
+type StoredQuestionKind = "multiple_choice" | "subjective";
 
 export const initializeDatabaseSchema = (database: SqliteDatabase) => {
   database.run("PRAGMA foreign_keys = ON");
@@ -214,6 +250,29 @@ const withDatabase = <Result>(
       }),
     ),
   );
+
+const findStoredQuestionKind = (
+  database: SqliteDatabase,
+  questionId: string,
+) =>
+  database
+    .query<{ readonly kind: StoredQuestionKind }, [string, string]>(`
+      SELECT kind
+      FROM (
+        SELECT 'subjective' AS kind
+        FROM subjective_questions AS questions
+        INNER JOIN notes ON notes.id = questions.note_id
+        WHERE questions.id = ? AND notes.deleted_at IS NULL
+
+        UNION ALL
+
+        SELECT 'multiple_choice' AS kind
+        FROM multiple_choice_questions AS questions
+        INNER JOIN notes ON notes.id = questions.note_id
+        WHERE questions.id = ? AND notes.deleted_at IS NULL
+      )
+    `)
+    .get(questionId, questionId)?.kind;
 
 const makeService = (databasePath: string): DatabaseService => ({
   createNote: (input) =>
@@ -475,10 +534,18 @@ const makeService = (databasePath: string): DatabaseService => ({
                   INNER JOIN subjective_questions AS questions
                     ON questions.id = evaluations.question_id
                   WHERE questions.note_id = notes.id
+                ), notes.created_at),
+                COALESCE((
+                  SELECT MAX(answers.answered_at)
+                  FROM multiple_choice_answers AS answers
+                  INNER JOIN multiple_choice_questions AS questions
+                    ON questions.id = answers.question_id
+                  WHERE questions.note_id = notes.id
                 ), notes.created_at)
               ) AS updatedAt
             FROM notes
             LEFT JOIN note_summaries AS summaries ON summaries.note_id = notes.id
+            WHERE notes.deleted_at IS NULL
             ORDER BY updatedAt DESC, notes.created_at DESC
           `)
           .all();
@@ -501,11 +568,13 @@ const makeService = (databasePath: string): DatabaseService => ({
       databasePath,
       (database) => {
         database
-          .query("UPDATE notes SET status = ? WHERE id = ?")
+          .query(
+            "UPDATE notes SET status = ? WHERE id = ? AND deleted_at IS NULL",
+          )
           .run(status, noteId);
         const updated = database
           .query<{ readonly status: string }, [string]>(
-            "SELECT status FROM notes WHERE id = ?",
+            "SELECT status FROM notes WHERE id = ? AND deleted_at IS NULL",
           )
           .get(noteId);
 
@@ -516,6 +585,29 @@ const makeService = (databasePath: string): DatabaseService => ({
         return { noteId, status: noteStatusSchema.parse(updated.status) };
       },
       "Could not update note status.",
+    ),
+  trashNote: (noteId) =>
+    withDatabase(
+      databasePath,
+      (database) => {
+        database
+          .query(
+            "UPDATE notes SET deleted_at = COALESCE(deleted_at, ?) WHERE id = ?",
+          )
+          .run(new Date().toISOString(), noteId);
+        const trashed = database
+          .query<{ readonly deletedAt: string | null }, [string]>(
+            "SELECT deleted_at AS deletedAt FROM notes WHERE id = ?",
+          )
+          .get(noteId);
+
+        if (!trashed?.deletedAt) {
+          throw new Error("Note not found.");
+        }
+
+        return { noteId, trashed: true as const };
+      },
+      "Could not move note to trash.",
     ),
   listWorkspacePrompts: () =>
     withDatabase(
@@ -538,6 +630,7 @@ const makeService = (databasePath: string): DatabaseService => ({
               WHERE
                 questions.resolved_at IS NULL
                 AND notes.status IN ('not_started', 'in_progress')
+                AND notes.deleted_at IS NULL
 
               UNION ALL
 
@@ -556,6 +649,25 @@ const makeService = (databasePath: string): DatabaseService => ({
                 questions.resolved_at IS NULL
                 AND answers.question_id IS NULL
                 AND notes.status IN ('not_started', 'in_progress')
+                AND notes.deleted_at IS NULL
+
+              UNION ALL
+
+              SELECT
+                questions.id AS questionId,
+                notes.id AS noteId,
+                notes.title AS noteTitle,
+                questions.question,
+                'multiple_choice' AS kind,
+                COALESCE(answers.answered_at, questions.created_at) AS activityAt
+              FROM multiple_choice_questions AS questions
+              INNER JOIN notes ON notes.id = questions.note_id
+              LEFT JOIN multiple_choice_answers AS answers
+                ON answers.question_id = questions.id
+              WHERE
+                questions.resolved_at IS NULL
+                AND notes.status IN ('not_started', 'in_progress')
+                AND notes.deleted_at IS NULL
             )
             ORDER BY activityAt DESC
             LIMIT 3
@@ -577,7 +689,7 @@ const makeService = (databasePath: string): DatabaseService => ({
               notes.status
             FROM notes
             LEFT JOIN note_summaries AS summaries ON summaries.note_id = notes.id
-            WHERE notes.id = ?
+            WHERE notes.id = ? AND notes.deleted_at IS NULL
           `)
           .get(noteId);
 
@@ -590,20 +702,39 @@ const makeService = (databasePath: string): DatabaseService => ({
           .all(noteId)
           .map(({ label }) => label);
         const questions = database
-          .query<NoteQuestionRow, [string]>(`
-            SELECT
-              questions.id,
-              questions.question,
-              questions.resolved_at AS resolvedAt,
-              CASE WHEN answers.question_id IS NULL THEN 0 ELSE 1 END AS hasAnswer,
-              CASE WHEN evaluations.question_id IS NULL THEN 0 ELSE 1 END AS hasFeedback
-            FROM subjective_questions AS questions
-            LEFT JOIN subjective_answers AS answers ON answers.question_id = questions.id
-            LEFT JOIN subjective_evaluations AS evaluations ON evaluations.question_id = questions.id
-            WHERE questions.note_id = ?
-            ORDER BY questions.created_at DESC
+          .query<NoteQuestionRow, [string, string]>(`
+            SELECT id, kind, question, resolvedAt, hasAnswer, hasFeedback
+            FROM (
+              SELECT
+                questions.id,
+                'subjective' AS kind,
+                questions.question,
+                questions.resolved_at AS resolvedAt,
+                CASE WHEN answers.question_id IS NULL THEN 0 ELSE 1 END AS hasAnswer,
+                CASE WHEN evaluations.question_id IS NULL THEN 0 ELSE 1 END AS hasFeedback,
+                questions.created_at AS createdAt
+              FROM subjective_questions AS questions
+              LEFT JOIN subjective_answers AS answers ON answers.question_id = questions.id
+              LEFT JOIN subjective_evaluations AS evaluations ON evaluations.question_id = questions.id
+              WHERE questions.note_id = ?
+
+              UNION ALL
+
+              SELECT
+                questions.id,
+                'multiple_choice' AS kind,
+                questions.question,
+                questions.resolved_at AS resolvedAt,
+                CASE WHEN answers.question_id IS NULL THEN 0 ELSE 1 END AS hasAnswer,
+                CASE WHEN answers.question_id IS NULL THEN 0 ELSE 1 END AS hasFeedback,
+                questions.created_at AS createdAt
+              FROM multiple_choice_questions AS questions
+              LEFT JOIN multiple_choice_answers AS answers ON answers.question_id = questions.id
+              WHERE questions.note_id = ?
+            )
+            ORDER BY createdAt DESC
           `)
-          .all(noteId)
+          .all(noteId, noteId)
           .map((question) => ({
             ...question,
             hasAnswer: question.hasAnswer === 1,
@@ -618,9 +749,10 @@ const makeService = (databasePath: string): DatabaseService => ({
     withDatabase(
       databasePath,
       (database) => {
-        const row = database
+        const subjective = database
           .query<QuestionSessionRow, [string]>(`
             SELECT
+              'subjective' AS kind,
               questions.id AS questionId,
               notes.id AS noteId,
               notes.title AS noteTitle,
@@ -634,50 +766,152 @@ const makeService = (databasePath: string): DatabaseService => ({
             LEFT JOIN note_summaries AS summaries ON summaries.note_id = notes.id
             LEFT JOIN subjective_answers AS answers ON answers.question_id = questions.id
             LEFT JOIN subjective_evaluations AS evaluations ON evaluations.question_id = questions.id
-            WHERE questions.id = ?
+            WHERE questions.id = ? AND notes.deleted_at IS NULL
           `)
           .get(questionId);
 
-        return row ? questionSessionSchema.parse(row) : undefined;
+        if (subjective) {
+          return questionSessionSchema.parse(subjective);
+        }
+
+        const multipleChoice = database
+          .query<MultipleChoiceQuestionSessionRow, [string]>(`
+            SELECT
+              'multiple_choice' AS kind,
+              questions.id AS questionId,
+              notes.id AS noteId,
+              notes.title AS noteTitle,
+              summaries.content AS summary,
+              questions.question,
+              questions.correct_choice_order AS correctId,
+              answers.choice_order AS selectedId,
+              questions.resolved_at AS resolvedAt
+            FROM multiple_choice_questions AS questions
+            INNER JOIN notes ON notes.id = questions.note_id
+            LEFT JOIN note_summaries AS summaries ON summaries.note_id = notes.id
+            LEFT JOIN multiple_choice_answers AS answers
+              ON answers.question_id = questions.id
+            WHERE questions.id = ? AND notes.deleted_at IS NULL
+          `)
+          .get(questionId);
+
+        if (!multipleChoice) {
+          return undefined;
+        }
+
+        const choices = database
+          .query<MultipleChoiceChoiceRow, [string]>(`
+            SELECT
+              choice_order AS "order",
+              option,
+              explanation
+            FROM multiple_choice_choices
+            WHERE question_id = ?
+            ORDER BY choice_order
+          `)
+          .all(questionId);
+
+        return questionSessionSchema.parse({ ...multipleChoice, choices });
       },
       "Could not read question.",
     ),
-  resolveSubjectiveQuestion: (questionId) =>
+  setMultipleChoiceAnswer: (questionId, selectedId) =>
     withDatabase(
       databasePath,
       (database) => {
         const question = database
-          .query<{ readonly id: string }, [string]>(
-            "SELECT id FROM subjective_questions WHERE id = ?",
-          )
+          .query<
+            { readonly correctId: number; readonly noteId: string },
+            [string]
+          >(`
+            SELECT
+              questions.correct_choice_order AS correctId,
+              questions.note_id AS noteId
+            FROM multiple_choice_questions AS questions
+            INNER JOIN notes ON notes.id = questions.note_id
+            WHERE questions.id = ? AND notes.deleted_at IS NULL
+          `)
           .get(questionId);
-        if (!question) throw new Error("Question not found.");
+        const choice = database
+          .query<{ readonly choiceOrder: number }, [string, number]>(`
+            SELECT choice_order AS choiceOrder
+            FROM multiple_choice_choices
+            WHERE question_id = ? AND choice_order = ?
+          `)
+          .get(questionId, selectedId);
 
-        database
-          .query(
-            "UPDATE subjective_questions SET resolved_at = ? WHERE id = ?",
-          )
-          .run(new Date().toISOString(), questionId);
+        if (!question || !choice) {
+          throw new Error("Multiple-choice question or choice not found.");
+        }
+
+        database.transaction(() => {
+          database.query(`
+            INSERT INTO multiple_choice_answers (question_id, choice_order, answered_at)
+            VALUES (?, ?, ?)
+            ON CONFLICT(question_id) DO UPDATE SET
+              choice_order = excluded.choice_order,
+              answered_at = excluded.answered_at
+          `).run(questionId, selectedId, new Date().toISOString());
+          database.query(`
+            UPDATE notes
+            SET status = 'in_progress'
+            WHERE id = ? AND status = 'not_started'
+          `).run(question.noteId);
+        })();
+
+        return {
+          questionId,
+          selectedId,
+          correct: selectedId === question.correctId,
+        };
+      },
+      "Could not set multiple-choice answer.",
+    ),
+  resolveQuestion: (questionId) =>
+    withDatabase(
+      databasePath,
+      (database) => {
+        const kind = findStoredQuestionKind(database, questionId);
+        if (!kind) throw new Error("Question not found.");
+
+        const resolvedAt = new Date().toISOString();
+        if (kind === "subjective") {
+          database
+            .query(
+              "UPDATE subjective_questions SET resolved_at = ? WHERE id = ?",
+            )
+            .run(resolvedAt, questionId);
+        } else {
+          database
+            .query(
+              "UPDATE multiple_choice_questions SET resolved_at = ? WHERE id = ?",
+            )
+            .run(resolvedAt, questionId);
+        }
         return { questionId, resolved: true as const };
       },
       "Could not resolve question.",
     ),
-  reopenSubjectiveQuestion: (questionId) =>
+  reopenQuestion: (questionId) =>
     withDatabase(
       databasePath,
       (database) => {
-        const question = database
-          .query<{ readonly id: string }, [string]>(
-            "SELECT id FROM subjective_questions WHERE id = ?",
-          )
-          .get(questionId);
-        if (!question) throw new Error("Question not found.");
+        const kind = findStoredQuestionKind(database, questionId);
+        if (!kind) throw new Error("Question not found.");
 
-        database
-          .query(
-            "UPDATE subjective_questions SET resolved_at = NULL WHERE id = ?",
-          )
-          .run(questionId);
+        if (kind === "subjective") {
+          database
+            .query(
+              "UPDATE subjective_questions SET resolved_at = NULL WHERE id = ?",
+            )
+            .run(questionId);
+        } else {
+          database
+            .query(
+              "UPDATE multiple_choice_questions SET resolved_at = NULL WHERE id = ?",
+            )
+            .run(questionId);
+        }
         return { questionId, resolved: false as const };
       },
       "Could not reopen question.",

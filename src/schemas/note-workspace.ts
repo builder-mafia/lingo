@@ -18,7 +18,7 @@ export const workspacePromptSchema = z.object({
   noteId: noteIdSchema,
   noteTitle: noteTitleSchema,
   question: z.string().trim().min(1),
-  kind: z.enum(["unanswered", "feedback_ready"]),
+  kind: z.enum(["unanswered", "feedback_ready", "multiple_choice"]),
   activityAt: z.string().datetime(),
 });
 

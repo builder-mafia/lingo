@@ -1,3 +1,4 @@
+import { Check } from "lucide-react";
 import { Link, useLoaderData } from "react-router";
 
 import type { NoteOverview } from "../../../schemas/question-session";
@@ -45,7 +46,17 @@ export const NoteOverviewPage = () => {
               <Link className={styles.question} to={routePaths.question(note.id, question.id)} key={question.id}>
                 <span className={styles.openMark} aria-hidden="true" />
                 <strong>{question.question}</strong>
-                <span>{question.hasFeedback ? "피드백 확인" : question.hasAnswer ? "피드백 기다리는 중" : "답해보기"} →</span>
+                <span>
+                  {question.kind === "multiple_choice"
+                    ? question.hasAnswer
+                      ? "결과 다시 보기"
+                      : "선택해보기"
+                    : question.hasFeedback
+                      ? "피드백 확인"
+                      : question.hasAnswer
+                        ? "피드백 기다리는 중"
+                        : "답해보기"}
+                </span>
               </Link>
             ))}
             {openQuestions.length === 0 ? <p className={styles.empty}>현재 이어갈 질문이 없습니다.</p> : null}
@@ -60,9 +71,9 @@ export const NoteOverviewPage = () => {
           <div className={styles.questions}>
             {resolvedQuestions.map((question) => (
               <Link className={styles.question} to={routePaths.question(note.id, question.id)} key={question.id}>
-                <span className={styles.resolvedMark} aria-hidden="true">✓</span>
+                <Check className={styles.resolvedMark} aria-hidden="true" />
                 <strong>{question.question}</strong>
-                <span>다시 보기 →</span>
+                <span>다시 보기</span>
               </Link>
             ))}
             {resolvedQuestions.length === 0 ? <p className={styles.empty}>아직 정리한 질문이 없습니다.</p> : null}

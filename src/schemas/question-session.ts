@@ -1,10 +1,12 @@
 import { z } from "zod";
 
+import { multipleChoiceChoiceSchema } from "./multiple-choice";
 import { noteIdSchema, noteLabelSchema, noteTitleSchema } from "./note";
 import { noteStatusSchema } from "./note-status";
 
 export const noteQuestionItemSchema = z.object({
   id: z.string().uuid(),
+  kind: z.enum(["subjective", "multiple_choice"]),
   question: z.string().trim().min(1),
   resolvedAt: z.string().datetime().nullable(),
   hasAnswer: z.boolean(),
@@ -20,16 +22,39 @@ export const noteOverviewSchema = z.object({
   questions: z.array(noteQuestionItemSchema),
 });
 
-export const questionSessionSchema = z.object({
+const questionSessionBaseSchema = z.object({
   questionId: z.string().uuid(),
   noteId: noteIdSchema,
   noteTitle: noteTitleSchema,
   summary: z.string().nullable(),
   question: z.string().trim().min(1),
-  answer: z.string().nullable(),
-  feedback: z.string().nullable(),
   resolvedAt: z.string().datetime().nullable(),
 });
 
+export const subjectiveQuestionSessionSchema = questionSessionBaseSchema.extend({
+  kind: z.literal("subjective"),
+  answer: z.string().nullable(),
+  feedback: z.string().nullable(),
+});
+
+export const multipleChoiceQuestionSessionSchema =
+  questionSessionBaseSchema.extend({
+    kind: z.literal("multiple_choice"),
+    choices: z.array(multipleChoiceChoiceSchema).min(2),
+    correctId: z.number().int().positive(),
+    selectedId: z.number().int().positive().nullable(),
+  });
+
+export const questionSessionSchema = z.discriminatedUnion("kind", [
+  subjectiveQuestionSessionSchema,
+  multipleChoiceQuestionSessionSchema,
+]);
+
 export type NoteOverview = z.infer<typeof noteOverviewSchema>;
 export type QuestionSession = z.infer<typeof questionSessionSchema>;
+export type SubjectiveQuestionSession = z.infer<
+  typeof subjectiveQuestionSessionSchema
+>;
+export type MultipleChoiceQuestionSession = z.infer<
+  typeof multipleChoiceQuestionSessionSchema
+>;

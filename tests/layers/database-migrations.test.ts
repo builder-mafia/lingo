@@ -47,13 +47,19 @@ describe("database migrations", () => {
       expect(
         database
           .query<
-            { readonly id: string; readonly title: string; readonly status: string },
+            {
+              readonly deletedAt: string | null;
+              readonly id: string;
+              readonly status: string;
+              readonly title: string;
+            },
             [string]
           >(
-            "SELECT id, title, status FROM notes WHERE id = ?",
+            "SELECT id, title, status, deleted_at AS deletedAt FROM notes WHERE id = ?",
           )
           .get(noteId),
       ).toEqual({
+        deletedAt: null,
         id: noteId,
         title: "제목 없는 노트",
         status: "not_started",
@@ -65,6 +71,13 @@ describe("database migrations", () => {
           )
           .get(),
       ).toEqual({ name: "subjective_evaluations" });
+      expect(
+        database
+          .query<{ readonly name: string }, []>(
+            "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'multiple_choice_answers'",
+          )
+          .get(),
+      ).toEqual({ name: "multiple_choice_answers" });
     } finally {
       database.close();
     }
