@@ -36,6 +36,12 @@ export const updateNoteStatus = (noteId: string, status: NoteStatus) =>
     body: JSON.stringify({ status }),
   }).then(readData<{ readonly noteId: string; readonly status: NoteStatus }>);
 
+export const moveNoteToTrash = (noteId: string) =>
+  fetch(`/api/notes/${encodeURIComponent(noteId)}`, {
+    method: "DELETE",
+    headers: { Accept: "application/json" },
+  }).then(readData<{ readonly noteId: string; readonly trashed: true }>);
+
 export const loadNoteOverview = (noteId: string) =>
   fetch(`/api/notes/${encodeURIComponent(noteId)}`, {
     headers: { Accept: "application/json" },
@@ -52,6 +58,22 @@ export const saveQuestionAnswer = (questionId: string, content: string) =>
     headers: { "Content-Type": "application/json", Accept: "application/json" },
     body: JSON.stringify({ content }),
   }).then(readData<{ readonly questionId: string; readonly content: string }>);
+
+export const saveMultipleChoiceAnswer = (
+  questionId: string,
+  selectedId: number,
+) =>
+  fetch(`/api/questions/${encodeURIComponent(questionId)}/choice`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ selectedId }),
+  }).then(
+    readData<{
+      readonly questionId: string;
+      readonly selectedId: number;
+      readonly correct: boolean;
+    }>,
+  );
 
 export const resolveQuestion = (questionId: string) =>
   fetch(`/api/questions/${encodeURIComponent(questionId)}/resolution`, {

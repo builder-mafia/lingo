@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 
+import { setMultipleChoiceAnswerSchema } from "../schemas/multiple-choice";
 import { noteIdSchema } from "../schemas/note";
 import { setNoteStatusSchema, type NoteStatus } from "../schemas/note-status";
 import type {
@@ -19,6 +20,9 @@ export type LocalWebAppApi = {
     noteId: string,
     status: NoteStatus,
   ) => Promise<{ readonly noteId: string; readonly status: NoteStatus }>;
+  readonly trashNote: (
+    noteId: string,
+  ) => Promise<{ readonly noteId: string; readonly trashed: true }>;
   readonly findNoteOverview: (noteId: string) => Promise<NoteOverview | undefined>;
   readonly findQuestionSession: (
     questionId: string,
@@ -27,10 +31,18 @@ export type LocalWebAppApi = {
     questionId: string,
     content: string,
   ) => Promise<{ readonly questionId: string; readonly content: string }>;
-  readonly resolveSubjectiveQuestion: (
+  readonly setMultipleChoiceAnswer: (
+    questionId: string,
+    selectedId: number,
+  ) => Promise<{
+    readonly questionId: string;
+    readonly selectedId: number;
+    readonly correct: boolean;
+  }>;
+  readonly resolveQuestion: (
     questionId: string,
   ) => Promise<{ readonly questionId: string; readonly resolved: true }>;
-  readonly reopenSubjectiveQuestion: (
+  readonly reopenQuestion: (
     questionId: string,
   ) => Promise<{ readonly questionId: string; readonly resolved: false }>;
 };
@@ -115,6 +127,20 @@ export const makeLocalWebApp = ({ webAssets, api }: LocalWebAppConfig) => {
     }
   });
 
+  app.delete("/api/notes/:noteId", async (context) => {
+    const noteId = noteIdSchema.safeParse(context.req.param("noteId"));
+    if (!noteId.success) return context.json(invalidInputResponse, 400);
+
+    try {
+      return context.json({
+        ok: true,
+        data: await api.trashNote(noteId.data),
+      });
+    } catch {
+      return context.json(requestFailedResponse, 500);
+    }
+  });
+
   app.get("/api/notes/:noteId", async (context) => {
     const noteId = noteIdSchema.safeParse(context.req.param("noteId"));
     if (!noteId.success) return context.json(invalidInputResponse, 400);
@@ -165,6 +191,28 @@ export const makeLocalWebApp = ({ webAssets, api }: LocalWebAppConfig) => {
     }
   });
 
+  app.put("/api/questions/:questionId/choice", async (context) => {
+    const questionId = noteIdSchema.safeParse(context.req.param("questionId"));
+    const input = setMultipleChoiceAnswerSchema.safeParse(
+      await context.req.json().catch(() => undefined),
+    );
+    if (!questionId.success || !input.success) {
+      return context.json(invalidInputResponse, 400);
+    }
+
+    try {
+      return context.json({
+        ok: true,
+        data: await api.setMultipleChoiceAnswer(
+          questionId.data,
+          input.data.selectedId,
+        ),
+      });
+    } catch {
+      return context.json(requestFailedResponse, 500);
+    }
+  });
+
   app.patch("/api/questions/:questionId/resolution", async (context) => {
     const questionId = noteIdSchema.safeParse(context.req.param("questionId"));
     if (!questionId.success) return context.json(invalidInputResponse, 400);
@@ -172,7 +220,7 @@ export const makeLocalWebApp = ({ webAssets, api }: LocalWebAppConfig) => {
     try {
       return context.json({
         ok: true,
-        data: await api.resolveSubjectiveQuestion(questionId.data),
+        data: await api.resolveQuestion(questionId.data),
       });
     } catch {
       return context.json(requestFailedResponse, 500);
@@ -186,7 +234,7 @@ export const makeLocalWebApp = ({ webAssets, api }: LocalWebAppConfig) => {
     try {
       return context.json({
         ok: true,
-        data: await api.reopenSubjectiveQuestion(questionId.data),
+        data: await api.reopenQuestion(questionId.data),
       });
     } catch {
       return context.json(requestFailedResponse, 500);

@@ -20,7 +20,7 @@
 .question strong { color: var(--color-ink); font-size: 13px; font-weight: 500; }
 .question > span:last-child { color: var(--color-ink-muted); font-size: 11px; }
 .openMark { width: 8px; height: 8px; border: 1px solid var(--color-accent); border-radius: 50%; }
-.resolvedMark { display: grid; place-items: center; width: 14px; height: 14px; border-radius: 50%; color: var(--color-on-accent); background: var(--color-positive); font-size: 8px; }
+.resolvedMark { width: 14px; height: 14px; padding: 2px; border-radius: 50%; color: var(--color-on-accent); background: var(--color-positive); stroke-width: 2.4; }
 .empty { margin: 0; padding: 20px 14px; color: var(--color-ink-subtle); font-size: 12px; }
 .question:active { background: var(--color-surface-active); }
 @media (hover: hover) and (pointer: fine) { .question:hover { background: var(--color-surface-hover); } }

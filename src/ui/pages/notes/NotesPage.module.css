@@ -42,10 +42,11 @@
 .rowLink { position: absolute; z-index: 1; inset: 0; }
 .rowLink:focus-visible { outline-offset: -3px; }
 .noteIdentity { display: flex; align-items: center; gap: 12px; min-width: 0; padding-right: 22px; }
-.noteIcon { flex: 0 0 auto; color: var(--color-ink-subtle); font-size: 16px; }
+.noteIcon { width: 16px; height: 16px; flex: 0 0 16px; color: var(--color-ink-subtle); stroke-width: 1.7; }
 .noteIdentity > div { display: grid; min-width: 0; gap: 2px; }
 .noteIdentity strong { overflow: hidden; color: var(--color-ink-strong); font-size: 14px; font-weight: 550; text-overflow: ellipsis; white-space: nowrap; }
 .noteIdentity div > span { overflow: hidden; color: var(--color-ink-muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.noteIdentity div > .rowError { color: var(--color-danger); }
 .questionCount, .noteRow time { padding-left: 12px; font-variant-numeric: tabular-nums; }
 .labels { display: flex; gap: 4px; min-width: 0; padding-left: 12px; overflow: hidden; }
 .labels span { max-width: 96px; padding: 2px 7px; overflow: hidden; border: 1px solid var(--color-border); border-radius: 999px; color: var(--color-ink-muted); background: var(--color-surface-raised); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
@@ -73,6 +74,36 @@
 .promptEmpty span { font-size: 12px; line-height: 1.6; }
 
 .noteRow:has(.rowLink:active) { background: var(--color-surface-active); }
+.noteRow[data-popup-open] { background: var(--color-surface-active); }
+.menuPositioner { z-index: 50; outline: 0; }
+.contextMenu {
+  min-width: 176px;
+  padding: 6px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 8px;
+  color: var(--color-ink);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-popup);
+  transform-origin: var(--transform-origin);
+  transition: opacity 140ms ease, transform 140ms ease;
+}
+.contextMenu[data-starting-style],
+.contextMenu[data-ending-style] { opacity: 0; transform: scale(0.97); }
+.contextMenuItem {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 38px;
+  padding: 0 10px;
+  border-radius: 5px;
+  outline: 0;
+  color: var(--color-danger);
+  font-size: 13px;
+  cursor: default;
+}
+.contextMenuItem svg { width: 16px; height: 16px; flex: 0 0 16px; stroke-width: 1.8; }
+.contextMenuItem[data-highlighted] { background: var(--color-surface-hover); }
+.contextMenuItem[data-disabled] { opacity: 0.55; }
 
 @media (hover: hover) and (pointer: fine) {
   .noteRow:hover { background: var(--color-surface-hover); }

@@ -89,16 +89,21 @@ export const makeLocalHttpServerLayer = (config: LocalHttpServerConfig) =>
           ),
         setNoteStatus: (noteId, status) =>
           Effect.runPromise(database.setNoteStatus(noteId, status)),
+        trashNote: (noteId) => Effect.runPromise(database.trashNote(noteId)),
         findNoteOverview: (noteId) =>
           Effect.runPromise(database.findNoteOverview(noteId)),
         findQuestionSession: (questionId) =>
           Effect.runPromise(database.findQuestionSession(questionId)),
         setSubjectiveAnswer: (questionId, content) =>
           Effect.runPromise(database.setSubjectiveAnswer(questionId, content)),
-        resolveSubjectiveQuestion: (questionId) =>
-          Effect.runPromise(database.resolveSubjectiveQuestion(questionId)),
-        reopenSubjectiveQuestion: (questionId) =>
-          Effect.runPromise(database.reopenSubjectiveQuestion(questionId)),
+        setMultipleChoiceAnswer: (questionId, selectedId) =>
+          Effect.runPromise(
+            database.setMultipleChoiceAnswer(questionId, selectedId),
+          ),
+        resolveQuestion: (questionId) =>
+          Effect.runPromise(database.resolveQuestion(questionId)),
+        reopenQuestion: (questionId) =>
+          Effect.runPromise(database.reopenQuestion(questionId)),
       };
 
       return makeService(config, api);

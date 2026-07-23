@@ -51,11 +51,11 @@ test("lists real note workspace data and updates workflow status", async () => {
         const sessionAfterRetry = yield* database.findQuestionSession(
           question.questionId,
         );
-        const updated = yield* database.resolveSubjectiveQuestion(
+        const updated = yield* database.resolveQuestion(
           question.questionId,
         );
         const afterResolve = yield* database.listNoteWorkspace();
-        const reopened = yield* database.reopenSubjectiveQuestion(
+        const reopened = yield* database.reopenQuestion(
           question.questionId,
         );
         const afterReopen = yield* database.listNoteWorkspace();

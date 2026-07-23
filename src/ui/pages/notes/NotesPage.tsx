@@ -1,21 +1,16 @@
-import { useMemo } from "react";
-import { Link, useLoaderData, useSearchParams } from "react-router";
+import { useCallback, useMemo } from "react";
+import { Link, useLoaderData, useRevalidator, useSearchParams } from "react-router";
 
 import { routePaths } from "../../app/route-paths";
 import { NoteSearch } from "../../features/note-search/NoteSearch";
-import { NoteStatusSelect } from "../../features/note-status/NoteStatusSelect";
-import type { WorkspaceData } from "../../shared/api/workspace";
-import { toSummaryPreview } from "../../shared/markdown/summary-preview";
+import { moveNoteToTrash, type WorkspaceData } from "../../shared/api/workspace";
+import { NoteRow } from "./NoteRow";
 import styles from "./NotesPage.module.css";
-
-const formatDate = (value: string) =>
-  new Intl.DateTimeFormat("ko-KR", { month: "short", day: "numeric" }).format(
-    new Date(value),
-  );
 
 export const NotesPage = () => {
   const { notes, prompts } = useLoaderData() as WorkspaceData;
   const [searchParams, setSearchParams] = useSearchParams();
+  const revalidator = useRevalidator();
   const query = searchParams.get("q") ?? "";
   const status = searchParams.get("status") ?? "all";
   const sort = searchParams.get("sort") ?? "recent";
@@ -44,6 +39,14 @@ export const NotesPage = () => {
         return right.updatedAt.localeCompare(left.updatedAt);
       });
   }, [notes, query, sort, status]);
+
+  const removeNote = useCallback(
+    async (noteId: string) => {
+      await moveNoteToTrash(noteId);
+      revalidator.revalidate();
+    },
+    [revalidator],
+  );
 
   return (
     <div className={styles.page}>
@@ -86,27 +89,7 @@ export const NotesPage = () => {
             <span role="columnheader">상태</span>
           </div>
           {visibleNotes.map((note) => (
-            <div className={styles.noteRow} role="row" key={note.id}>
-              <Link className={styles.rowLink} to={routePaths.note(note.id)} aria-label={`${note.title} 노트 열기`} />
-              <div className={styles.noteIdentity} role="cell">
-                <span className={styles.noteIcon} aria-hidden="true">◇</span>
-                <div>
-                  <strong>{note.title}</strong>
-                  <span>
-                    {note.summary
-                      ? toSummaryPreview(note.summary)
-                      : "아직 요약이 없습니다."}
-                  </span>
-                </div>
-              </div>
-              <span className={styles.questionCount} role="cell">{note.openQuestionCount}</span>
-              <time role="cell" dateTime={note.updatedAt}>{formatDate(note.updatedAt)}</time>
-              <div className={styles.labels} role="cell">
-                {note.labels.slice(0, 2).map((label) => <span key={label}>{label}</span>)}
-                {note.labels.length > 2 ? <span>+{note.labels.length - 2}</span> : null}
-              </div>
-              <div role="cell"><NoteStatusSelect noteId={note.id} status={note.status} openQuestionCount={note.openQuestionCount} /></div>
-            </div>
+            <NoteRow note={note} onRemove={removeNote} key={note.id} />
           ))}
           {visibleNotes.length === 0 ? (
             <div className={styles.empty}>
@@ -131,8 +114,20 @@ export const NotesPage = () => {
             <Link className={styles.prompt} to={routePaths.question(prompt.noteId, prompt.questionId)} key={prompt.questionId}>
               <span>{prompt.noteTitle}</span>
               <strong>{prompt.question}</strong>
-              <p>{prompt.kind === "feedback_ready" ? "새 피드백을 확인하고 이 질문을 정리할 수 있어요." : "아직 답하지 않은 질문이에요. 지금 떠오르는 말부터 적어보세요."}</p>
-              <span className={styles.promptAction}>{prompt.kind === "feedback_ready" ? "피드백 보기" : "답해보기"} →</span>
+              <p>
+                {prompt.kind === "feedback_ready"
+                  ? "새 피드백을 확인하고 이 질문을 정리할 수 있어요."
+                  : prompt.kind === "multiple_choice"
+                    ? "선택지를 비교하며 지금의 이해를 바로 확인해보세요."
+                    : "아직 답하지 않은 질문이에요. 지금 떠오르는 말부터 적어보세요."}
+              </p>
+              <span className={styles.promptAction}>
+                {prompt.kind === "feedback_ready"
+                  ? "피드백 보기"
+                  : prompt.kind === "multiple_choice"
+                    ? "선택지 보기"
+                    : "답해보기"}
+              </span>
             </Link>
           ))}
           {prompts.length === 0 ? (

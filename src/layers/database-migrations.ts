@@ -117,11 +117,30 @@ const addWorkspaceState = (database: SqliteDatabase) => {
   );
 };
 
+const addNoteTrash = (database: SqliteDatabase) => {
+  database.run("ALTER TABLE notes ADD COLUMN deleted_at TEXT");
+};
+
+const addMultipleChoiceAnswers = (database: SqliteDatabase) => {
+  database.run(`
+    CREATE TABLE multiple_choice_answers (
+      question_id TEXT PRIMARY KEY NOT NULL,
+      choice_order INTEGER NOT NULL,
+      answered_at TEXT NOT NULL,
+      FOREIGN KEY(question_id) REFERENCES multiple_choice_questions(id),
+      FOREIGN KEY(question_id, choice_order)
+        REFERENCES multiple_choice_choices(question_id, choice_order)
+    )
+  `);
+};
+
 const databaseMigrations: readonly DatabaseMigration[] = [
   { version: 1, migrate: createInitialSchema },
   { version: 2, migrate: renameProblemsToQuestions },
   { version: 3, migrate: addNoteMetadata },
   { version: 4, migrate: addWorkspaceState },
+  { version: 5, migrate: addNoteTrash },
+  { version: 6, migrate: addMultipleChoiceAnswers },
 ];
 
 export const LATEST_DATABASE_VERSION =

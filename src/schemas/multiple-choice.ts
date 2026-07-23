@@ -32,6 +32,13 @@ export const createMultipleChoiceQuestionSchema = z
     }
   });
 
+export const setMultipleChoiceAnswerSchema = z.object({
+  selectedId: z.number().int().positive(),
+});
+
 export type CreateMultipleChoiceQuestion = z.infer<
   typeof createMultipleChoiceQuestionSchema
+>;
+export type SetMultipleChoiceAnswer = z.infer<
+  typeof setMultipleChoiceAnswerSchema
 >;

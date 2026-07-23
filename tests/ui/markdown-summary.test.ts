@@ -18,7 +18,7 @@ describe("Markdown note summaries", () => {
   });
 
   test("renders Markdown only in lazy note detail routes", async () => {
-    const [packageJson, markdown, overview, question, notes] =
+    const [packageJson, markdown, overview, question, notes, noteRow] =
       await Promise.all([
         Bun.file(new URL("../../package.json", import.meta.url)).json(),
         readSource("src/ui/shared/markdown/MarkdownContent.tsx"),
@@ -27,6 +27,7 @@ describe("Markdown note summaries", () => {
           "src/ui/pages/question-session/QuestionSessionPage.tsx",
         ),
         readSource("src/ui/pages/notes/NotesPage.tsx"),
+        readSource("src/ui/pages/notes/NoteRow.tsx"),
       ]);
 
     expect(packageJson.dependencies["react-markdown"]).toBeDefined();
@@ -35,8 +36,9 @@ describe("Markdown note summaries", () => {
     expect(markdown).not.toContain("rehypeRaw");
     expect(overview).toContain("<MarkdownContent");
     expect(question).toContain("<MarkdownContent");
-    expect(notes).toContain("toSummaryPreview(note.summary)");
+    expect(noteRow).toContain("toSummaryPreview(note.summary)");
     expect(notes).not.toContain("<MarkdownContent");
+    expect(noteRow).not.toContain("<MarkdownContent");
   });
 
   test("teaches agents to persist summaries as structured Markdown", async () => {
