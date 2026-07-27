@@ -134,6 +134,28 @@ const addMultipleChoiceAnswers = (database: SqliteDatabase) => {
   `);
 };
 
+const renameNoteSummariesToContents = (database: SqliteDatabase) => {
+  const legacyTable = database
+    .query<{ readonly name: string }, []>(
+      "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'note_summaries'",
+    )
+    .get();
+
+  if (legacyTable) {
+    database.run("ALTER TABLE note_summaries RENAME TO note_contents");
+    return;
+  }
+
+  database.run(`
+    CREATE TABLE IF NOT EXISTS note_contents (
+      note_id TEXT PRIMARY KEY NOT NULL,
+      content TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY(note_id) REFERENCES notes(id)
+    )
+  `);
+};
+
 const databaseMigrations: readonly DatabaseMigration[] = [
   { version: 1, migrate: createInitialSchema },
   { version: 2, migrate: renameProblemsToQuestions },
@@ -141,6 +163,7 @@ const databaseMigrations: readonly DatabaseMigration[] = [
   { version: 4, migrate: addWorkspaceState },
   { version: 5, migrate: addNoteTrash },
   { version: 6, migrate: addMultipleChoiceAnswers },
+  { version: 7, migrate: renameNoteSummariesToContents },
 ];
 
 export const LATEST_DATABASE_VERSION =

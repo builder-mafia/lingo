@@ -29,7 +29,7 @@ export const NotesPage = () => {
       .filter((note) =>
         !normalizedQuery
           ? true
-          : `${note.title} ${note.summary ?? ""}`
+          : `${note.title} ${note.content ?? ""}`
               .toLocaleLowerCase("ko-KR")
               .includes(normalizedQuery),
       )

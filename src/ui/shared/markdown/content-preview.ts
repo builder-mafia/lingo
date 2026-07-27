@@ -3,7 +3,7 @@ const image = /!\[([^\]]*)\]\([^)]*\)/g;
 const link = /\[([^\]]+)\]\([^)]*\)/g;
 const htmlTag = /<[^>]*>/g;
 
-export const toSummaryPreview = (markdown: string) =>
+export const toContentPreview = (markdown: string) =>
   markdown
     .replace(fencedCodeBlock, " ")
     .replace(image, "$1")

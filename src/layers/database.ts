@@ -9,7 +9,7 @@ import {
   type CreateNote,
   type Note,
 } from "../schemas/note";
-import { noteSummarySchema, type NoteSummary } from "../schemas/note-summary";
+import { noteContentSchema, type NoteContent } from "../schemas/note-content";
 import { type CreateMultipleChoiceQuestion } from "../schemas/multiple-choice";
 import { type CreateSubjectiveQuestion } from "../schemas/subjective";
 import { noteStatusSchema, type NoteStatus } from "../schemas/note-status";
@@ -48,13 +48,13 @@ export type UnevaluatedSubjectiveAnswer = {
 export interface DatabaseService {
   readonly createNote: (input: CreateNote) => Effect.Effect<Note, CliError>;
   readonly findNote: (noteId: string) => Effect.Effect<Note | undefined, CliError>;
-  readonly setNoteSummary: (
+  readonly setNoteContent: (
     noteId: string,
     content: string,
-  ) => Effect.Effect<NoteSummary, CliError>;
-  readonly findNoteSummary: (
+  ) => Effect.Effect<NoteContent, CliError>;
+  readonly findNoteContent: (
     noteId: string,
-  ) => Effect.Effect<NoteSummary | undefined, CliError>;
+  ) => Effect.Effect<NoteContent | undefined, CliError>;
   readonly addMultipleChoiceQuestion: (
     noteId: string,
     question: CreateMultipleChoiceQuestion,
@@ -138,7 +138,7 @@ type NoteLabelRow = {
   readonly label: string;
 };
 
-type NoteSummaryRow = {
+type NoteContentRow = {
   readonly noteId: string;
   readonly content: string;
   readonly updatedAt: string;
@@ -147,7 +147,7 @@ type NoteSummaryRow = {
 type NoteWorkspaceRow = {
   readonly id: string;
   readonly title: string;
-  readonly summary: string | null;
+  readonly content: string | null;
   readonly status: string;
   readonly openQuestionCount: number;
   readonly updatedAt: string;
@@ -165,7 +165,7 @@ type WorkspacePromptRow = {
 type NoteOverviewRow = {
   readonly id: string;
   readonly title: string;
-  readonly summary: string | null;
+  readonly content: string | null;
   readonly status: string;
 };
 
@@ -183,7 +183,7 @@ type QuestionSessionRow = {
   readonly questionId: string;
   readonly noteId: string;
   readonly noteTitle: string;
-  readonly summary: string | null;
+  readonly content: string | null;
   readonly question: string;
   readonly answer: string | null;
   readonly feedback: string | null;
@@ -199,7 +199,7 @@ type MultipleChoiceQuestionSessionRow = {
   readonly questionId: string;
   readonly resolvedAt: string | null;
   readonly selectedId: number | null;
-  readonly summary: string | null;
+  readonly content: string | null;
 };
 
 type MultipleChoiceChoiceRow = {
@@ -329,11 +329,11 @@ const makeService = (databasePath: string): DatabaseService => ({
       },
       "Could not read note.",
     ),
-  setNoteSummary: (noteId, content) =>
+  setNoteContent: (noteId, content) =>
     withDatabase(
       databasePath,
       (database) => {
-        const summary = noteSummarySchema.parse({
+        const stored = noteContentSchema.parse({
           noteId,
           content,
           updatedAt: new Date().toISOString(),
@@ -341,38 +341,38 @@ const makeService = (databasePath: string): DatabaseService => ({
 
         database
           .query(`
-            INSERT INTO note_summaries (note_id, content, updated_at)
+            INSERT INTO note_contents (note_id, content, updated_at)
             VALUES (?, ?, ?)
             ON CONFLICT(note_id) DO UPDATE SET
               content = excluded.content,
               updated_at = excluded.updated_at
           `)
-          .run(summary.noteId, summary.content, summary.updatedAt);
+          .run(stored.noteId, stored.content, stored.updatedAt);
 
-        return summary;
+        return stored;
       },
-      "Could not set note summary.",
+      "Could not set note content.",
     ),
-  findNoteSummary: (noteId) =>
+  findNoteContent: (noteId) =>
     withDatabase(
       databasePath,
       (database) => {
         const row = database
-          .query<NoteSummaryRow, [string]>(
+          .query<NoteContentRow, [string]>(
             `
               SELECT
                 note_id AS noteId,
                 content,
                 updated_at AS updatedAt
-              FROM note_summaries
+              FROM note_contents
               WHERE note_id = ?
             `,
           )
           .get(noteId);
 
-        return row ? noteSummarySchema.parse(row) : undefined;
+        return row ? noteContentSchema.parse(row) : undefined;
       },
-      "Could not read note summary.",
+      "Could not read note content.",
     ),
   addMultipleChoiceQuestion: (noteId, question) =>
     withDatabase(
@@ -497,7 +497,7 @@ const makeService = (databasePath: string): DatabaseService => ({
             SELECT
               notes.id,
               notes.title,
-              summaries.content AS summary,
+              contents.content AS content,
               notes.status,
               (
                 SELECT COUNT(*)
@@ -510,7 +510,7 @@ const makeService = (databasePath: string): DatabaseService => ({
               ) AS openQuestionCount,
               MAX(
                 notes.created_at,
-                COALESCE(summaries.updated_at, notes.created_at),
+                COALESCE(contents.updated_at, notes.created_at),
                 COALESCE((
                   SELECT MAX(created_at)
                   FROM subjective_questions
@@ -544,7 +544,7 @@ const makeService = (databasePath: string): DatabaseService => ({
                 ), notes.created_at)
               ) AS updatedAt
             FROM notes
-            LEFT JOIN note_summaries AS summaries ON summaries.note_id = notes.id
+            LEFT JOIN note_contents AS contents ON contents.note_id = notes.id
             WHERE notes.deleted_at IS NULL
             ORDER BY updatedAt DESC, notes.created_at DESC
           `)
@@ -685,10 +685,10 @@ const makeService = (databasePath: string): DatabaseService => ({
             SELECT
               notes.id,
               notes.title,
-              summaries.content AS summary,
+              contents.content AS content,
               notes.status
             FROM notes
-            LEFT JOIN note_summaries AS summaries ON summaries.note_id = notes.id
+            LEFT JOIN note_contents AS contents ON contents.note_id = notes.id
             WHERE notes.id = ? AND notes.deleted_at IS NULL
           `)
           .get(noteId);
@@ -756,14 +756,14 @@ const makeService = (databasePath: string): DatabaseService => ({
               questions.id AS questionId,
               notes.id AS noteId,
               notes.title AS noteTitle,
-              summaries.content AS summary,
+              contents.content AS content,
               questions.question,
               answers.content AS answer,
               evaluations.feedback,
               questions.resolved_at AS resolvedAt
             FROM subjective_questions AS questions
             INNER JOIN notes ON notes.id = questions.note_id
-            LEFT JOIN note_summaries AS summaries ON summaries.note_id = notes.id
+            LEFT JOIN note_contents AS contents ON contents.note_id = notes.id
             LEFT JOIN subjective_answers AS answers ON answers.question_id = questions.id
             LEFT JOIN subjective_evaluations AS evaluations ON evaluations.question_id = questions.id
             WHERE questions.id = ? AND notes.deleted_at IS NULL
@@ -781,14 +781,14 @@ const makeService = (databasePath: string): DatabaseService => ({
               questions.id AS questionId,
               notes.id AS noteId,
               notes.title AS noteTitle,
-              summaries.content AS summary,
+              contents.content AS content,
               questions.question,
               questions.correct_choice_order AS correctId,
               answers.choice_order AS selectedId,
               questions.resolved_at AS resolvedAt
             FROM multiple_choice_questions AS questions
             INNER JOIN notes ON notes.id = questions.note_id
-            LEFT JOIN note_summaries AS summaries ON summaries.note_id = notes.id
+            LEFT JOIN note_contents AS contents ON contents.note_id = notes.id
             LEFT JOIN multiple_choice_answers AS answers
               ON answers.question_id = questions.id
             WHERE questions.id = ? AND notes.deleted_at IS NULL

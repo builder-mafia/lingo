@@ -6,7 +6,7 @@ import { Link } from "react-router";
 import type { NoteWorkspaceItem } from "../../../schemas/note-workspace";
 import { routePaths } from "../../app/route-paths";
 import { NoteStatusSelect } from "../../features/note-status/NoteStatusSelect";
-import { toSummaryPreview } from "../../shared/markdown/summary-preview";
+import { toContentPreview } from "../../shared/markdown/content-preview";
 import styles from "./NotesPage.module.css";
 
 const dateFormatter = new Intl.DateTimeFormat("ko-KR", {
@@ -53,9 +53,9 @@ export const NoteRow = memo(function NoteRow({ note, onRemove }: NoteRowProps) {
               <span className={styles.rowError} role="alert">{message}</span>
             ) : (
               <span>
-                {note.summary
-                  ? toSummaryPreview(note.summary)
-                  : "아직 요약이 없습니다."}
+                {note.content
+                  ? toContentPreview(note.content)
+                  : "아직 정리된 내용이 없습니다."}
               </span>
             )}
           </div>

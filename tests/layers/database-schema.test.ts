@@ -3,7 +3,7 @@ import { expect, test } from "bun:test";
 
 import { initializeDatabaseSchema } from "../../src/layers/database";
 
-test("database schema enforces note summary foreign keys", () => {
+test("database schema enforces note content foreign keys", () => {
   const database = new SqliteDatabase(":memory:");
 
   try {
@@ -15,11 +15,11 @@ test("database schema enforces note summary foreign keys", () => {
     expect(() =>
       database
         .query(
-          "INSERT INTO note_summaries (note_id, content, updated_at) VALUES (?, ?, ?)",
+          "INSERT INTO note_contents (note_id, content, updated_at) VALUES (?, ?, ?)",
         )
         .run(
           "f26a9922-c4a0-4de0-90fa-1e1a6cc46405",
-          "orphan summary",
+          "orphan content",
           "2026-07-12T00:00:00.000Z",
         ),
     ).toThrow();

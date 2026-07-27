@@ -9,11 +9,22 @@ describe("Lingo agent skill", () => {
 
     expect(skill).toMatch(/^---\nname: lingo\ndescription: .+\n---/);
     expect(skill).toContain("lingo note create");
-    expect(skill).toContain("lingo note summary set");
+    expect(skill).toContain("lingo note content set");
+    expect(skill).toContain("lingo note content get");
     expect(skill).toContain("lingo question add");
     expect(skill).toContain("lingo answer list");
     expect(skill).toContain("lingo evaluation set");
     expect(skill).toContain("references/cli.md");
+    expect(skill).not.toContain("lingo note summary set");
+  });
+
+  test("creates durable content with useful evidence and sources", async () => {
+    const skill = await readProjectFile("skills/lingo/SKILL.md");
+
+    expect(skill).toContain("infer the user's current understanding");
+    expect(skill).toContain("authoritative sources");
+    expect(skill).toContain("Sources");
+    expect(skill).toContain("Do not write a transcript");
   });
 
   test("publishes the skills CLI installation command", async () => {

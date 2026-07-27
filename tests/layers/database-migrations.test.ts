@@ -14,6 +14,62 @@ const readDatabaseVersion = (database: SqliteDatabase) =>
     .get()?.user_version;
 
 describe("database migrations", () => {
+  test("renames note summaries to contents without losing stored text", () => {
+    const database = new SqliteDatabase(":memory:");
+    const noteId = "ba6ff1df-6c59-4c27-a371-2fc445e643e5";
+
+    try {
+      database.run("PRAGMA foreign_keys = ON");
+      database.run(`
+        CREATE TABLE notes (
+          id TEXT PRIMARY KEY NOT NULL,
+          title TEXT NOT NULL,
+          status TEXT NOT NULL,
+          deleted_at TEXT,
+          created_at TEXT NOT NULL
+        )
+      `);
+      database.run(`
+        CREATE TABLE note_summaries (
+          note_id TEXT PRIMARY KEY NOT NULL,
+          content TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY(note_id) REFERENCES notes(id)
+        )
+      `);
+      database
+        .query(
+          "INSERT INTO notes (id, title, status, created_at) VALUES (?, ?, ?, ?)",
+        )
+        .run(noteId, "기존 노트", "not_started", "2026-07-01T00:00:00.000Z");
+      database
+        .query(
+          "INSERT INTO note_summaries (note_id, content, updated_at) VALUES (?, ?, ?)",
+        )
+        .run(noteId, "보존할 기존 내용", "2026-07-01T00:00:00.000Z");
+      database.run("PRAGMA user_version = 6");
+
+      runDatabaseMigrations(database);
+
+      expect(
+        database
+          .query<{ readonly content: string }, [string]>(
+            "SELECT content FROM note_contents WHERE note_id = ?",
+          )
+          .get(noteId),
+      ).toEqual({ content: "보존할 기존 내용" });
+      expect(
+        database
+          .query<{ readonly name: string }, []>(
+            "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'note_summaries'",
+          )
+          .get(),
+      ).toBeNull();
+    } finally {
+      database.close();
+    }
+  });
+
   test("initializes a new database at the latest schema version", () => {
     const database = new SqliteDatabase(":memory:");
 

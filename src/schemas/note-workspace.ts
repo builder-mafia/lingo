@@ -6,7 +6,7 @@ import { noteStatusSchema } from "./note-status";
 export const noteWorkspaceItemSchema = z.object({
   id: noteIdSchema,
   title: noteTitleSchema,
-  summary: z.string().nullable(),
+  content: z.string().nullable(),
   labels: z.array(noteLabelSchema),
   status: noteStatusSchema,
   openQuestionCount: z.number().int().nonnegative(),

@@ -31,15 +31,15 @@ export const QuestionSessionPage = () => {
 
         <aside className={styles.context}>
           <details>
-            <summary>노트 요약</summary>
-            {session.summary ? (
+            <summary>노트 내용</summary>
+            {session.content ? (
               <MarkdownContent
-                className={styles.contextSummary}
+                className={styles.contextContent}
                 compact
-                content={session.summary}
+                content={session.content}
               />
             ) : (
-              <p className={styles.contextEmpty}>아직 정리된 요약이 없습니다.</p>
+              <p className={styles.contextEmpty}>아직 정리된 내용이 없습니다.</p>
             )}
           </details>
           {session.kind === "subjective" && session.answer ? (
