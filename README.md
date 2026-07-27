@@ -93,11 +93,11 @@ lingo note create --data '{
 }
 ```
 
-### 3. 요약과 질문 쌓기
+### 3. 내용과 질문 쌓기
 
 ```bash
-lingo note summary set <note-id> --data '{
-  "content": "캐시된 값과 원본 데이터의 일관성을 언제, 어떻게 맞출지 결정하는 문제"
+lingo note content set <note-id> --data '{
+  "content": "캐시 무효화는 캐시된 값과 원본 데이터의 일관성을 언제, 어떻게 맞출지 결정하는 문제입니다.\n\n- **TTL**은 오래된 값이 남을 수 있는 시간을 제한합니다.\n- **명시적 무효화**는 원본 변경에 반응해 캐시를 갱신합니다."
 }'
 ```
 
@@ -115,7 +115,7 @@ lingo question add <note-id> --data '{
 Lingo는 AI와 사용자가 서로 다른 인터페이스를 사용하도록 역할을 나눕니다.
 
 1. AI 에이전트나 스킬이 대화에서 배운 내용을 `lingo` CLI로 정리합니다.
-2. 노트, 요약, 질문이 로컬 SQLite에 저장됩니다.
+2. 노트 내용과 질문이 로컬 SQLite에 저장됩니다.
 3. 사용자는 `lingo start`로 연 브라우저에서 질문에 자신의 말로 답합니다.
 4. 외부 AI 에이전트가 평가할 답변을 CLI로 읽고 피드백을 다시 저장합니다.
 5. 사용자는 브라우저에서 피드백을 확인하고 다시 답하거나 질문을 정리합니다.
@@ -131,7 +131,8 @@ Lingo는 답변을 대신 만들거나 AI provider를 선택하지 않습니다.
 | 버전 확인 | `lingo --version` |
 | 브라우저 작업공간 열기 | `lingo start` |
 | 노트 만들기 | `lingo note create (--data <json> \| --data-file <path>)` |
-| 노트 요약 저장 | `lingo note summary set <note-id> (--data <json> \| --data-file <path>)` |
+| 노트 내용 저장 | `lingo note content set <note-id> (--data <json> \| --data-file <path>)` |
+| 노트 내용 조회 | `lingo note content get <note-id>` |
 | 질문 추가 | `lingo question add <note-id> (--data <json> \| --data-file <path>)` |
 | 주관식 답변 저장 | `lingo answer set <question-id> (--data <json> \| --data-file <path>)` |
 | 평가가 필요한 답변 조회 | `lingo answer list <note-id>` |
@@ -148,12 +149,18 @@ lingo note create --data '{
 }'
 ```
 
-요약은 현재 이해에 맞게 언제든 갱신할 수 있습니다.
+내용은 현재 이해에 맞게 언제든 전체를 갱신할 수 있습니다.
 
 ```bash
-lingo note summary set <note-id> --data '{
-  "content": "변경 이유가 다른 책임을 분리하고 안정적인 계약으로 연결한다."
+lingo note content set <note-id> --data '{
+  "content": "API 경계를 설계할 때는 변경 이유가 다른 책임을 분리하고, 각 책임을 안정적인 계약으로 연결합니다."
 }'
+```
+
+기존 내용을 더 깊게 정리할 때는 먼저 현재 본문을 읽습니다.
+
+```bash
+lingo note content get <note-id>
 ```
 
 ### Subjective Questions

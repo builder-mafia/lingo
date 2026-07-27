@@ -34,16 +34,24 @@ lingo note create --data '{
 
 `labels` defaults to an empty array. Lingo trims label whitespace and removes duplicates. Capture `data.noteId` and `data.noteUrl` from the response.
 
-## Set or replace a summary
+## Set or replace note content
 
 ```bash
-lingo note summary set <note-id> --data '{
-  "content": "Required non-empty summary"
+lingo note content set <note-id> --data '{
+  "content": "Required non-empty Markdown content"
 }'
 ```
 
-Running the command again replaces the note's current summary.
-The summary content supports Markdown and is rendered as formatted content in note detail views.
+Running the command again replaces the note's complete current content.
+Note content supports Markdown and is rendered as formatted content in note detail views.
+
+## Read note content
+
+```bash
+lingo note content get <note-id>
+```
+
+Use this before deepening an existing note. The command returns `noteId`, `content`, and `updatedAt`.
 
 ## Add a subjective question
 

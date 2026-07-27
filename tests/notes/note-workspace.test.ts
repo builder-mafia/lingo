@@ -19,7 +19,7 @@ test("lists real note workspace data and updates workflow status", async () => {
           title: "Effect 오류 모델",
           labels: ["TypeScript", "Architecture"],
         });
-        yield* database.setNoteSummary(
+        yield* database.setNoteContent(
           note.id,
           "실패 타입을 값으로 다루는 Effect의 오류 모델을 정리한다.",
         );
@@ -82,7 +82,7 @@ test("lists real note workspace data and updates workflow status", async () => {
     expect(result.before[0]).toMatchObject({
       id: result.note.id,
       title: "Effect 오류 모델",
-      summary: "실패 타입을 값으로 다루는 Effect의 오류 모델을 정리한다.",
+      content: "실패 타입을 값으로 다루는 Effect의 오류 모델을 정리한다.",
       labels: ["TypeScript", "Architecture"],
       status: "not_started",
       openQuestionCount: 1,

@@ -1,14 +1,14 @@
 import { describe, expect, test } from "bun:test";
 
-import { toSummaryPreview } from "../../src/ui/shared/markdown/summary-preview";
+import { toContentPreview } from "../../src/ui/shared/markdown/content-preview";
 
 const readSource = (relativePath: string) =>
   Bun.file(new URL(`../../${relativePath}`, import.meta.url)).text();
 
-describe("Markdown note summaries", () => {
+describe("Markdown note content", () => {
   test("keeps list previews readable without rendering every Markdown tree", () => {
     expect(
-      toSummaryPreview(`
+      toContentPreview(`
 ## 핵심
 
 - **브랜치**는 이동한다.
@@ -36,19 +36,19 @@ describe("Markdown note summaries", () => {
     expect(markdown).not.toContain("rehypeRaw");
     expect(overview).toContain("<MarkdownContent");
     expect(question).toContain("<MarkdownContent");
-    expect(noteRow).toContain("toSummaryPreview(note.summary)");
+    expect(noteRow).toContain("toContentPreview(note.content)");
     expect(notes).not.toContain("<MarkdownContent");
     expect(noteRow).not.toContain("<MarkdownContent");
   });
 
-  test("teaches agents to persist summaries as structured Markdown", async () => {
+  test("teaches agents to persist note content as structured Markdown", async () => {
     const [skill, reference] = await Promise.all([
       readSource("skills/lingo/SKILL.md"),
       readSource("skills/lingo/references/cli.md"),
     ]);
 
-    expect(skill).toContain("Write the summary as Markdown");
+    expect(skill).toContain("Write the content as Markdown");
     expect(skill).toContain("Do not add a top-level heading");
-    expect(reference).toContain("summary content supports Markdown");
+    expect(reference).toContain("Note content supports Markdown");
   });
 });

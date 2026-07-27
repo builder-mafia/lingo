@@ -9,12 +9,14 @@ import { createNote } from "./commands/create-note";
 import { setSubjectiveAnswer } from "./commands/set-subjective-answer";
 import { listSubjectiveAnswers } from "./commands/list-subjective-answers";
 import { setSubjectiveEvaluation } from "./commands/set-subjective-evaluation";
-import { setNoteSummary } from "./commands/set-note-summary";
+import { getNoteContent } from "./commands/get-note-content";
+import { setNoteContent } from "./commands/set-note-content";
 import { startServer } from "./commands/start-server";
 import { lingoVersion } from "../version";
 
-const noteSummaryUsage =
-  "Usage: lingo note summary set <note-id> (--data <json> | --data-file <path>)";
+const noteContentSetUsage =
+  "Usage: lingo note content set <note-id> (--data <json> | --data-file <path>)";
+const noteContentGetUsage = "Usage: lingo note content get <note-id>";
 const noteCreateUsage =
   "Usage: lingo note create (--data <json> | --data-file <path>)";
 const questionAddUsage =
@@ -172,16 +174,38 @@ export const runCli = (
     );
   }
 
-  if (resource === "note" && type === "summary" && action === "set") {
-    const [noteId, ...summaryInputArgs] = inputArgs;
+  if (resource === "note" && type === "content" && action === "set") {
+    const [noteId, ...contentInputArgs] = inputArgs;
 
     if (noteId === undefined) {
-      console.error(errorResponse(new CliError(noteSummaryUsage)));
+      console.error(errorResponse(new CliError(noteContentSetUsage)));
       return Effect.succeed(1);
     }
 
-    return parseInputOptions(summaryInputArgs, noteSummaryUsage).pipe(
-      Effect.flatMap((inputOptions) => setNoteSummary(noteId, inputOptions)),
+    return parseInputOptions(contentInputArgs, noteContentSetUsage).pipe(
+      Effect.flatMap((inputOptions) => setNoteContent(noteId, inputOptions)),
+      Effect.match({
+        onFailure: (error) => {
+          console.error(errorResponse(error));
+          return 1;
+        },
+        onSuccess: (data) => {
+          console.log(JSON.stringify({ ok: true, data }));
+          return 0;
+        },
+      }),
+    );
+  }
+
+  if (resource === "note" && type === "content" && action === "get") {
+    const [noteId, ...unexpectedArgs] = inputArgs;
+
+    if (noteId === undefined || unexpectedArgs.length > 0) {
+      console.error(errorResponse(new CliError(noteContentGetUsage)));
+      return Effect.succeed(1);
+    }
+
+    return getNoteContent(noteId).pipe(
       Effect.match({
         onFailure: (error) => {
           console.error(errorResponse(error));

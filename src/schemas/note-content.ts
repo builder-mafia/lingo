@@ -4,15 +4,15 @@ import { noteIdSchema } from "./note";
 
 export { noteIdSchema } from "./note";
 
-export const setNoteSummarySchema = z.object({
+export const setNoteContentSchema = z.object({
   content: z.string().trim().min(1),
 });
 
-export const noteSummarySchema = z.object({
+export const noteContentSchema = z.object({
   noteId: noteIdSchema,
   content: z.string().trim().min(1),
   updatedAt: z.string().datetime(),
 });
 
-export type SetNoteSummary = z.infer<typeof setNoteSummarySchema>;
-export type NoteSummary = z.infer<typeof noteSummarySchema>;
+export type SetNoteContent = z.infer<typeof setNoteContentSchema>;
+export type NoteContent = z.infer<typeof noteContentSchema>;

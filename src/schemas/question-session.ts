@@ -16,7 +16,7 @@ export const noteQuestionItemSchema = z.object({
 export const noteOverviewSchema = z.object({
   id: noteIdSchema,
   title: noteTitleSchema,
-  summary: z.string().nullable(),
+  content: z.string().nullable(),
   labels: z.array(noteLabelSchema),
   status: noteStatusSchema,
   questions: z.array(noteQuestionItemSchema),
@@ -26,7 +26,7 @@ const questionSessionBaseSchema = z.object({
   questionId: z.string().uuid(),
   noteId: noteIdSchema,
   noteTitle: noteTitleSchema,
-  summary: z.string().nullable(),
+  content: z.string().nullable(),
   question: z.string().trim().min(1),
   resolvedAt: z.string().datetime().nullable(),
 });

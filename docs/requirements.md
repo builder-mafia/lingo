@@ -4,7 +4,7 @@
 
 Lingo is a local-first system for generating and answering questions from learning notes.
 
-A **note** is a unit containing a summary and questions. A skill creates and enriches a note through the `lingo` CLI, then gives the user a localhost browser URL for solving it.
+A **note** is a unit containing durable content and questions. A skill creates and enriches a note through the `lingo` CLI, then gives the user a localhost browser URL for solving it.
 
 ## Intended flow
 
@@ -23,7 +23,8 @@ Use the resource first, then the minimum action and identifier needed:
 
 - `lingo start`
 - `lingo note create --data <json>`
-- `lingo note summary set <note-id>`
+- `lingo note content set <note-id>`
+- `lingo note content get <note-id>`
 - `lingo question add <note-id>`
 - `lingo answer set <question-id>`
 - `lingo answer list <note-id>`
@@ -35,11 +36,12 @@ Do not put a temporary storage state in a command name or mandatory flag. A stat
 
 1. Start the browser server: `lingo start` binds only to `127.0.0.1:4312`, reports its URL as JSON, exposes `GET /health`, and keeps running until stopped.
 2. Create a note: `lingo note create --data <json>` stores a required non-empty `title` and optional `labels`, then returns that metadata with `noteId`, `createdAt`, and a localhost note URL. Label whitespace and duplicates are removed while preserving the first-seen order.
-3. Set a note summary: `lingo note summary set <note-id> --data <json>` stores or updates the note summary.
-4. Add a question: `lingo question add <note-id> --data <json>` infers a multiple-choice or subjective contract from the JSON shape.
-5. Set an answer: `lingo answer set <question-id> --data <json>` stores or updates an answer for a subjective question.
-6. Read answers needing evaluation: `lingo answer list <note-id>` returns unanswered evaluations with question context.
-7. Store an evaluation: `lingo evaluation set <question-id> --data <json>` stores or updates external AI feedback.
+3. Set note content: `lingo note content set <note-id> --data <json>` stores or replaces the note's Markdown body.
+4. Read note content: `lingo note content get <note-id>` returns the current body before it is deepened or reorganized.
+5. Add a question: `lingo question add <note-id> --data <json>` infers a multiple-choice or subjective contract from the JSON shape.
+6. Set an answer: `lingo answer set <question-id> --data <json>` stores or updates an answer for a subjective question.
+7. Read answers needing evaluation: `lingo answer list <note-id>` returns unanswered evaluations with question context.
+8. Store an evaluation: `lingo evaluation set <question-id> --data <json>` stores or updates external AI feedback.
 
 Structured CLI payloads must accept either:
 

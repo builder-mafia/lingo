@@ -60,7 +60,7 @@
 .context { min-width: 0; }
 .context details { border-bottom: 1px solid var(--color-border); }
 .context summary { padding: 15px 0; color: var(--color-ink); font-size: 12px; font-weight: 550; cursor: default; }
-.contextSummary, .contextEmpty { margin: 0 0 18px; }
+.contextContent, .contextEmpty { margin: 0 0 18px; }
 .contextEmpty { color: var(--color-ink-muted); font-size: 12px; line-height: 1.65; }
 .context > details > p { margin: 0 0 18px; white-space: pre-wrap; color: var(--color-ink-muted); font-size: 12px; line-height: 1.65; }
 .closedActions { display: flex; align-items: center; gap: 12px; margin-top: 26px; font-size: 12px; }

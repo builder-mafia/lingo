@@ -27,12 +27,12 @@ export const NoteOverviewPage = () => {
           <div className={styles.labels}>{note.labels.map((label) => <span key={label}>{label}</span>)}</div>
         </div>
 
-        <section className={styles.section} aria-labelledby="summary-heading">
-          <h2 id="summary-heading">요약</h2>
-          {note.summary ? (
-            <MarkdownContent className={styles.summary} content={note.summary} />
+        <section className={styles.section} aria-labelledby="content-heading">
+          <h2 id="content-heading">내용</h2>
+          {note.content ? (
+            <MarkdownContent className={styles.noteContent} content={note.content} />
           ) : (
-            <p className={styles.mutedSummary}>아직 정리된 요약이 없습니다.</p>
+            <p className={styles.mutedContent}>아직 정리된 내용이 없습니다.</p>
           )}
         </section>
 
