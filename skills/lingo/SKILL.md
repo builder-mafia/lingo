@@ -84,6 +84,8 @@ Create a mixed practice set by default. When generating two or more questions, i
 
 Use subjective questions to test recall, explanation in the user's own words, or application to a new situation. Use multiple-choice questions to test distinctions between similar concepts, decisions under a concrete scenario, or recognition of a likely misconception. Avoid generic checks such as “Do you understand this?” and trivia that does not expose understanding.
 
+Write the `question` field as plain text. Do not use Markdown syntax such as headings, lists, emphasis, links, blockquotes, or inline and fenced code in question prompts. Write multiple-choice `option` values as plain text as well. Preserve exact technical terms without wrapping them in backticks.
+
 ### 2. Create the note
 
 ```bash

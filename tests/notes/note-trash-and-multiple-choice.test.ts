@@ -51,6 +51,78 @@ test("moves notes to trash without deleting their learning data", async () => {
   }
 });
 
+test("lists, restores, and permanently deletes trashed notes", async () => {
+  const databasePath = tempDatabasePath();
+  const runtime = ManagedRuntime.make(makeDatabaseLayer(databasePath));
+
+  try {
+    const result = await runtime.runPromise(
+      Effect.gen(function* () {
+        const database = yield* Database;
+        const note = yield* database.createNote({
+          title: "다시 꺼낼 노트",
+          labels: ["HTTP"],
+        });
+        yield* database.setNoteContent(note.id, "# Cache\n\n응답 저장 정책");
+        const question = yield* database.addSubjectiveQuestion(note.id, {
+          question: "Cache-Control은 무엇을 제어하는가?",
+          referenceAnswer: "캐시 저장과 재사용 정책을 제어한다.",
+        });
+        yield* database.setSubjectiveAnswer(
+          question.questionId,
+          "응답을 저장하고 다시 사용하는 정책을 제어한다.",
+        );
+        yield* database.setSubjectiveEvaluation(
+          question.questionId,
+          "핵심 역할을 설명했다.",
+        );
+
+        const activeRestore = yield* Effect.either(
+          database.restoreNote(note.id),
+        );
+        yield* database.trashNote(note.id);
+        const trashed = yield* database.listTrashedNotes();
+        const restored = yield* database.restoreNote(note.id);
+        const workspaceAfterRestore = yield* database.listNoteWorkspace();
+
+        yield* database.trashNote(note.id);
+        const deleted = yield* database.permanentlyDeleteNote(note.id);
+
+        return {
+          note,
+          activeRestore,
+          trashed,
+          restored,
+          workspaceAfterRestore,
+          deleted,
+          storedAfterDelete: yield* database.findNote(note.id),
+          trashAfterDelete: yield* database.listTrashedNotes(),
+        };
+      }),
+    );
+
+    expect(result.activeRestore._tag).toBe("Left");
+    expect(result.trashed).toEqual([
+      {
+        id: result.note.id,
+        title: "다시 꺼낼 노트",
+        content: "# Cache\n\n응답 저장 정책",
+        deletedAt: expect.any(String),
+      },
+    ]);
+    expect(result.restored).toEqual({ noteId: result.note.id, restored: true });
+    expect(result.workspaceAfterRestore.map(({ id }) => id)).toContain(
+      result.note.id,
+    );
+    expect(result.deleted).toEqual({ noteId: result.note.id, deleted: true });
+    expect(result.storedAfterDelete).toBeUndefined();
+    expect(result.trashAfterDelete).toEqual([]);
+  } finally {
+    await runtime.dispose();
+    rmSync(databasePath, { force: true });
+  }
+});
+
 test("shows, answers, and resolves multiple-choice questions", async () => {
   const databasePath = tempDatabasePath();
   const runtime = ManagedRuntime.make(makeDatabaseLayer(databasePath));

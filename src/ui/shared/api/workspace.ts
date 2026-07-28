@@ -7,6 +7,7 @@ import type {
   NoteOverview,
   QuestionSession,
 } from "../../../schemas/question-session";
+import type { TrashedNote } from "../../../schemas/trashed-note";
 
 type ApiSuccess<Data> = { readonly ok: true; readonly data: Data };
 
@@ -41,6 +42,25 @@ export const moveNoteToTrash = (noteId: string) =>
     method: "DELETE",
     headers: { Accept: "application/json" },
   }).then(readData<{ readonly noteId: string; readonly trashed: true }>);
+
+export type TrashData = readonly TrashedNote[];
+
+export const loadTrash = () =>
+  fetch("/api/trash", { headers: { Accept: "application/json" } }).then(
+    readData<TrashData>,
+  );
+
+export const restoreNote = (noteId: string) =>
+  fetch(`/api/trash/${encodeURIComponent(noteId)}/restore`, {
+    method: "PATCH",
+    headers: { Accept: "application/json" },
+  }).then(readData<{ readonly noteId: string; readonly restored: true }>);
+
+export const permanentlyDeleteNote = (noteId: string) =>
+  fetch(`/api/trash/${encodeURIComponent(noteId)}`, {
+    method: "DELETE",
+    headers: { Accept: "application/json" },
+  }).then(readData<{ readonly noteId: string; readonly deleted: true }>);
 
 export const loadNoteOverview = (noteId: string) =>
   fetch(`/api/notes/${encodeURIComponent(noteId)}`, {

@@ -9,6 +9,7 @@ import {
   resolveQuestion,
   saveMultipleChoiceAnswer,
 } from "../../shared/api/workspace";
+import { NextQuestionLink } from "./NextQuestionLink";
 import styles from "./QuestionSessionPage.module.css";
 
 type MultipleChoiceQuestionProps = {
@@ -171,23 +172,31 @@ export const MultipleChoiceQuestion = ({
       </form>
 
       {answered && !editing && !session.resolvedAt ? (
-        <div className={styles.actions}>
-          <button
-            className={styles.secondaryButton}
-            type="button"
-            onClick={() => setEditing(true)}
-          >
-            다시 선택하기
-          </button>
-          <button
-            className={styles.primaryButton}
-            type="button"
-            onClick={closeQuestion}
-            disabled={submitting}
-          >
-            이 질문은 여기까지
-          </button>
-        </div>
+        <>
+          <div className={styles.actions}>
+            <button
+              className={styles.secondaryButton}
+              type="button"
+              onClick={() => setEditing(true)}
+            >
+              다시 선택하기
+            </button>
+            <button
+              className={styles.primaryButton}
+              type="button"
+              onClick={closeQuestion}
+              disabled={submitting}
+            >
+              이 질문은 여기까지
+            </button>
+          </div>
+          <div className={styles.nextAction}>
+            <NextQuestionLink
+              noteId={session.noteId}
+              nextQuestionId={session.nextQuestionId}
+            />
+          </div>
+        </>
       ) : null}
 
       {session.resolvedAt ? (

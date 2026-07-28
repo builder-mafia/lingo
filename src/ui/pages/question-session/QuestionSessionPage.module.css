@@ -5,7 +5,7 @@
 .main { min-width: 0; }
 .questionLabel { display: flex; align-items: center; gap: 8px; color: var(--color-ink-muted); font-size: 12px; }
 .questionLabel span { width: 8px; height: 8px; border: 1px solid var(--color-accent); border-radius: 50%; }
-.main h1 { max-width: 24ch; margin: 18px 0 40px; color: var(--color-ink-strong); font-size: clamp(26px, 3.2vw, 40px); font-weight: 580; line-height: 1.35; letter-spacing: -0.035em; }
+.main h1 { max-width: 36ch; margin: 16px 0 34px; color: var(--color-ink-strong); font-size: clamp(22px, 2.2vw, 30px); font-weight: 580; line-height: 1.42; letter-spacing: -0.025em; }
 .answerForm, .answer, .feedback, .waiting { padding-top: 28px; border-top: 1px solid var(--color-border); }
 .answerForm > p { margin: 0 0 18px; color: var(--color-ink-muted); font-size: 12px; }
 .answerForm label, .answer h2, .feedback h2 { display: block; margin: 0 0 10px; color: var(--color-ink-strong); font-size: 13px; font-weight: 600; }
@@ -75,12 +75,16 @@
 .closedActions { display: flex; align-items: center; gap: 12px; margin-top: 26px; font-size: 12px; }
 .closedActions a { color: var(--color-accent); text-underline-offset: 3px; }
 .closedActions button { border: 0; color: var(--color-ink-subtle); background: transparent; }
+.nextAction { display: flex; justify-content: flex-end; margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--color-border); }
+.nextQuestionButton { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 0 15px; border: 1px solid var(--color-accent); border-radius: 7px; color: var(--color-on-accent); background: var(--color-accent); font-size: 13px; font-weight: 550; text-decoration: none; transition: background-color 120ms ease, transform 100ms ease; }
+.nextQuestionButton svg { width: 16px; height: 16px; stroke-width: 1.8; }
+.nextQuestionButton:active { transform: scale(0.98); }
 .error { min-height: 20px; margin: 12px 0 0; color: var(--color-danger); font-size: 12px; }
 @starting-style {
   .resultReveal { opacity: 0; transform: translateY(4px); }
   .resultIconReveal { opacity: 0; transform: scale(0.95); }
 }
-@media (hover: hover) and (pointer: fine) { .primaryButton:hover { background: var(--color-accent-hover); } .secondaryButton:hover { border-color: var(--color-border-strong); background: var(--color-surface-hover); } .choice:hover { border-color: var(--color-border-strong); background: var(--color-surface-hover); } }
+@media (hover: hover) and (pointer: fine) { .primaryButton:hover, .nextQuestionButton:hover { background: var(--color-accent-hover); } .secondaryButton:hover { border-color: var(--color-border-strong); background: var(--color-surface-hover); } .choice:hover { border-color: var(--color-border-strong); background: var(--color-surface-hover); } }
 @media (max-width: 820px) { .layout { grid-template-columns: 1fr; gap: 32px; padding: 36px 20px 60px; } .context { order: -1; } .main h1 { margin-bottom: 28px; } }
 @media (prefers-reduced-motion: reduce) {
   .resultReveal,

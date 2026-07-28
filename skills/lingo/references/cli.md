@@ -55,6 +55,8 @@ Use this before deepening an existing note. The command returns `noteId`, `conte
 
 ## Add a subjective question
 
+Question text is plain text, not Markdown. Do not put Markdown formatting in `question` or multiple-choice `choices[].option` values.
+
 ```bash
 lingo question add <note-id> --data '{
   "question": "Required non-empty question",

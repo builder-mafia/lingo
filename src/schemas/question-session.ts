@@ -28,6 +28,7 @@ const questionSessionBaseSchema = z.object({
   noteTitle: noteTitleSchema,
   content: z.string().nullable(),
   question: z.string().trim().min(1),
+  nextQuestionId: z.string().uuid().nullable(),
   resolvedAt: z.string().datetime().nullable(),
 });
 

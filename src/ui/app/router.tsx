@@ -6,6 +6,7 @@ import { NotFoundPage } from "../pages/not-found/NotFoundPage";
 import {
   loadNoteOverview,
   loadQuestionSession,
+  loadTrash,
   loadWorkspace,
 } from "../shared/api/workspace";
 
@@ -26,6 +27,15 @@ export const appRoutes: RouteObject[] = [
             "../pages/notes/NotesPage"
           );
           return { Component: NotesPage };
+        },
+      },
+      {
+        path: "trash",
+        loader: loadTrash,
+        HydrateFallback: RouteHydrationFallback,
+        lazy: async () => {
+          const { TrashPage } = await import("../pages/trash/TrashPage");
+          return { Component: TrashPage };
         },
       },
       {
