@@ -8,6 +8,7 @@ import {
   resolveQuestion,
   saveQuestionAnswer,
 } from "../../shared/api/workspace";
+import { NextQuestionLink } from "./NextQuestionLink";
 import styles from "./QuestionSessionPage.module.css";
 
 type SubjectiveQuestionProps = {
@@ -166,6 +167,15 @@ export const SubjectiveQuestion = ({ session }: SubjectiveQuestionProps) => {
             </div>
           ) : null}
         </section>
+      ) : null}
+
+      {!editing && session.answer && !session.resolvedAt ? (
+        <div className={styles.nextAction}>
+          <NextQuestionLink
+            noteId={session.noteId}
+            nextQuestionId={session.nextQuestionId}
+          />
+        </div>
       ) : null}
 
       {session.resolvedAt ? (

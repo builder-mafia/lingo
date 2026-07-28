@@ -30,4 +30,21 @@ describe("note actions and multiple-choice UI", () => {
     expect(multipleChoice).toContain("선택 확인");
     expect(multipleChoice).toContain("해설");
   });
+
+  test("offers the next question after an answer with a quieter title", async () => {
+    const [subjective, multipleChoice, navigation, styles] = await Promise.all([
+      readSource("src/ui/pages/question-session/SubjectiveQuestion.tsx"),
+      readSource("src/ui/pages/question-session/MultipleChoiceQuestion.tsx"),
+      readSource("src/ui/pages/question-session/NextQuestionLink.tsx"),
+      readSource("src/ui/pages/question-session/QuestionSessionPage.module.css"),
+    ]);
+
+    expect(subjective).toContain("NextQuestionLink");
+    expect(multipleChoice).toContain("NextQuestionLink");
+    expect(navigation).toContain("다음 질문");
+    expect(navigation).toContain("노트로 돌아가기");
+    expect(navigation).toContain("ArrowRight");
+    expect(styles).toContain("font-size: clamp(22px, 2.2vw, 30px);");
+    expect(styles).toContain("max-width: 36ch;");
+  });
 });

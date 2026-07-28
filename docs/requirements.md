@@ -43,7 +43,7 @@ Global flags are standalone root operations. They cannot be combined with one an
 2. Create a note: `lingo note create --data <json>` stores a required non-empty `title` and optional `labels`, then returns that metadata with `noteId`, `createdAt`, and a localhost note URL. Label whitespace and duplicates are removed while preserving the first-seen order.
 3. Set note content: `lingo note content set <note-id> --data <json>` stores or replaces the note's Markdown body.
 4. Read note content: `lingo note content get <note-id>` returns the current body before it is deepened or reorganized.
-5. Add a question: `lingo question add <note-id> --data <json>` infers a multiple-choice or subjective contract from the JSON shape.
+5. Add a question: `lingo question add <note-id> --data <json>` infers a multiple-choice or subjective contract from the JSON shape. Question prompts and multiple-choice options are plain text, not Markdown.
 6. Set an answer: `lingo answer set <question-id> --data <json>` stores or updates an answer for a subjective question.
 7. Read answers needing evaluation: `lingo answer list <note-id>` returns unanswered evaluations with question context.
 8. Store an evaluation: `lingo evaluation set <question-id> --data <json>` stores or updates external AI feedback.
@@ -83,6 +83,8 @@ A multiple-choice question contains:
 ### Subjective
 
 A subjective question stays independent from the multiple-choice schema. It contains question text and a reference answer used by the external evaluator.
+
+After an answer is stored, the question session offers the next unanswered question from the same note. Advancing does not resolve the current question; resolution remains an explicit user decision.
 
 ## Architecture decisions
 

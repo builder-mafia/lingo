@@ -208,6 +208,10 @@ type MultipleChoiceChoiceRow = {
   readonly order: number;
 };
 
+type NextQuestionRow = {
+  readonly questionId: string;
+};
+
 type StoredQuestionKind = "multiple_choice" | "subjective";
 
 export const initializeDatabaseSchema = (database: SqliteDatabase) => {
@@ -273,6 +277,47 @@ const findStoredQuestionKind = (
       )
     `)
     .get(questionId, questionId)?.kind;
+
+const findNextUnansweredQuestionId = (
+  database: SqliteDatabase,
+  noteId: string,
+  currentQuestionId: string,
+) =>
+  database
+    .query<NextQuestionRow, [string, string, string, string]>(`
+      SELECT questionId
+      FROM (
+        SELECT
+          questions.id AS questionId,
+          questions.created_at AS createdAt
+        FROM subjective_questions AS questions
+        LEFT JOIN subjective_answers AS answers
+          ON answers.question_id = questions.id
+        WHERE
+          questions.note_id = ?
+          AND questions.id != ?
+          AND questions.resolved_at IS NULL
+          AND answers.question_id IS NULL
+
+        UNION ALL
+
+        SELECT
+          questions.id AS questionId,
+          questions.created_at AS createdAt
+        FROM multiple_choice_questions AS questions
+        LEFT JOIN multiple_choice_answers AS answers
+          ON answers.question_id = questions.id
+        WHERE
+          questions.note_id = ?
+          AND questions.id != ?
+          AND questions.resolved_at IS NULL
+          AND answers.question_id IS NULL
+      )
+      ORDER BY createdAt ASC, questionId ASC
+      LIMIT 1
+    `)
+    .get(noteId, currentQuestionId, noteId, currentQuestionId)?.questionId ??
+  null;
 
 const makeService = (databasePath: string): DatabaseService => ({
   createNote: (input) =>
@@ -771,7 +816,14 @@ const makeService = (databasePath: string): DatabaseService => ({
           .get(questionId);
 
         if (subjective) {
-          return questionSessionSchema.parse(subjective);
+          return questionSessionSchema.parse({
+            ...subjective,
+            nextQuestionId: findNextUnansweredQuestionId(
+              database,
+              subjective.noteId,
+              subjective.questionId,
+            ),
+          });
         }
 
         const multipleChoice = database
@@ -811,7 +863,15 @@ const makeService = (databasePath: string): DatabaseService => ({
           `)
           .all(questionId);
 
-        return questionSessionSchema.parse({ ...multipleChoice, choices });
+        return questionSessionSchema.parse({
+          ...multipleChoice,
+          choices,
+          nextQuestionId: findNextUnansweredQuestionId(
+            database,
+            multipleChoice.noteId,
+            multipleChoice.questionId,
+          ),
+        });
       },
       "Could not read question.",
     ),

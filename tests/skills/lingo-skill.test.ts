@@ -46,6 +46,15 @@ describe("Lingo agent skill", () => {
     expect(skill).toContain("content, questions, choices, and feedback");
   });
 
+  test("writes question prompts as plain text", async () => {
+    const skill = await readProjectFile("skills/lingo/SKILL.md");
+    const reference = await readProjectFile("skills/lingo/references/cli.md");
+
+    expect(skill).toContain("Write the `question` field as plain text");
+    expect(skill).toContain("Do not use Markdown syntax");
+    expect(reference).toContain("Question text is plain text, not Markdown");
+  });
+
   test("publishes the skills CLI installation command", async () => {
     const readme = await readProjectFile("README.md");
 
