@@ -90,6 +90,12 @@ export const makeLocalHttpServerLayer = (config: LocalHttpServerConfig) =>
         setNoteStatus: (noteId, status) =>
           Effect.runPromise(database.setNoteStatus(noteId, status)),
         trashNote: (noteId) => Effect.runPromise(database.trashNote(noteId)),
+        listTrashedNotes: () =>
+          Effect.runPromise(database.listTrashedNotes()),
+        restoreNote: (noteId) =>
+          Effect.runPromise(database.restoreNote(noteId)),
+        permanentlyDeleteNote: (noteId) =>
+          Effect.runPromise(database.permanentlyDeleteNote(noteId)),
         findNoteOverview: (noteId) =>
           Effect.runPromise(database.findNoteOverview(noteId)),
         findQuestionSession: (questionId) =>

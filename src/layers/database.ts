@@ -12,6 +12,10 @@ import {
 import { noteContentSchema, type NoteContent } from "../schemas/note-content";
 import { type CreateMultipleChoiceQuestion } from "../schemas/multiple-choice";
 import { type CreateSubjectiveQuestion } from "../schemas/subjective";
+import {
+  trashedNoteSchema,
+  type TrashedNote,
+} from "../schemas/trashed-note";
 import { noteStatusSchema, type NoteStatus } from "../schemas/note-status";
 import {
   noteWorkspaceItemSchema,
@@ -88,6 +92,16 @@ export interface DatabaseService {
   readonly trashNote: (
     noteId: string,
   ) => Effect.Effect<{ readonly noteId: string; readonly trashed: true }, CliError>;
+  readonly listTrashedNotes: () => Effect.Effect<
+    readonly TrashedNote[],
+    CliError
+  >;
+  readonly restoreNote: (
+    noteId: string,
+  ) => Effect.Effect<{ readonly noteId: string; readonly restored: true }, CliError>;
+  readonly permanentlyDeleteNote: (
+    noteId: string,
+  ) => Effect.Effect<{ readonly noteId: string; readonly deleted: true }, CliError>;
   readonly listWorkspacePrompts: () => Effect.Effect<
     readonly WorkspacePrompt[],
     CliError
@@ -151,6 +165,13 @@ type NoteWorkspaceRow = {
   readonly status: string;
   readonly openQuestionCount: number;
   readonly updatedAt: string;
+};
+
+type TrashedNoteRow = {
+  readonly id: string;
+  readonly title: string;
+  readonly content: string | null;
+  readonly deletedAt: string;
 };
 
 type WorkspacePromptRow = {
@@ -653,6 +674,123 @@ const makeService = (databasePath: string): DatabaseService => ({
         return { noteId, trashed: true as const };
       },
       "Could not move note to trash.",
+    ),
+  listTrashedNotes: () =>
+    withDatabase(
+      databasePath,
+      (database) => {
+        const rows = database
+          .query<TrashedNoteRow, []>(`
+            SELECT
+              notes.id,
+              notes.title,
+              contents.content,
+              notes.deleted_at AS deletedAt
+            FROM notes
+            LEFT JOIN note_contents AS contents ON contents.note_id = notes.id
+            WHERE notes.deleted_at IS NOT NULL
+            ORDER BY notes.deleted_at DESC, notes.created_at DESC
+          `)
+          .all();
+        const labelQuery = database.query<NoteLabelRow, [string]>(
+          "SELECT label FROM note_labels WHERE note_id = ? ORDER BY position",
+        );
+
+        return rows.map((row) =>
+          trashedNoteSchema.parse({
+            ...row,
+            labels: labelQuery.all(row.id).map(({ label }) => label),
+          }),
+        );
+      },
+      "Could not list trashed notes.",
+    ),
+  restoreNote: (noteId) =>
+    withDatabase(
+      databasePath,
+      (database) => {
+        database
+          .query(
+            "UPDATE notes SET deleted_at = NULL WHERE id = ? AND deleted_at IS NOT NULL",
+          )
+          .run(noteId);
+        const restored = database
+          .query<{ readonly deletedAt: string | null }, [string]>(
+            "SELECT deleted_at AS deletedAt FROM notes WHERE id = ?",
+          )
+          .get(noteId);
+
+        if (!restored || restored.deletedAt !== null) {
+          throw new Error("Trashed note not found.");
+        }
+
+        return { noteId, restored: true as const };
+      },
+      "Could not restore note.",
+    ),
+  permanentlyDeleteNote: (noteId) =>
+    withDatabase(
+      databasePath,
+      (database) => {
+        const trashed = database
+          .query<{ readonly id: string }, [string]>(
+            "SELECT id FROM notes WHERE id = ? AND deleted_at IS NOT NULL",
+          )
+          .get(noteId);
+
+        if (!trashed) {
+          throw new Error("Trashed note not found.");
+        }
+
+        database.transaction(() => {
+          database
+            .query(`
+              DELETE FROM subjective_evaluations
+              WHERE question_id IN (
+                SELECT id FROM subjective_questions WHERE note_id = ?
+              )
+            `)
+            .run(noteId);
+          database
+            .query(`
+              DELETE FROM subjective_answers
+              WHERE question_id IN (
+                SELECT id FROM subjective_questions WHERE note_id = ?
+              )
+            `)
+            .run(noteId);
+          database
+            .query(`
+              DELETE FROM multiple_choice_answers
+              WHERE question_id IN (
+                SELECT id FROM multiple_choice_questions WHERE note_id = ?
+              )
+            `)
+            .run(noteId);
+          database
+            .query(`
+              DELETE FROM multiple_choice_choices
+              WHERE question_id IN (
+                SELECT id FROM multiple_choice_questions WHERE note_id = ?
+              )
+            `)
+            .run(noteId);
+          database
+            .query("DELETE FROM subjective_questions WHERE note_id = ?")
+            .run(noteId);
+          database
+            .query("DELETE FROM multiple_choice_questions WHERE note_id = ?")
+            .run(noteId);
+          database.query("DELETE FROM note_contents WHERE note_id = ?").run(noteId);
+          database.query("DELETE FROM note_labels WHERE note_id = ?").run(noteId);
+          database
+            .query("DELETE FROM notes WHERE id = ? AND deleted_at IS NOT NULL")
+            .run(noteId);
+        })();
+
+        return { noteId, deleted: true as const };
+      },
+      "Could not permanently delete note.",
     ),
   listWorkspacePrompts: () =>
     withDatabase(

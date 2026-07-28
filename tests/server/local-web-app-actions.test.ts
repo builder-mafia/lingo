@@ -12,11 +12,29 @@ const makeApi = () => {
   const calls: string[] = [];
   const api: LocalWebAppApi = {
     listWorkspace: () => Promise.resolve({ notes: [], prompts: [] }),
+    listTrashedNotes: () =>
+      Promise.resolve([
+        {
+          id: noteId,
+          title: "삭제한 노트",
+          content: null,
+          labels: [],
+          deletedAt: "2026-07-28T00:00:00.000Z",
+        },
+      ]),
     setNoteStatus: (_noteId, status) =>
       Promise.resolve({ noteId, status }),
     trashNote: (targetNoteId) => {
       calls.push(`trash:${targetNoteId}`);
       return Promise.resolve({ noteId: targetNoteId, trashed: true });
+    },
+    restoreNote: (targetNoteId) => {
+      calls.push(`restore:${targetNoteId}`);
+      return Promise.resolve({ noteId: targetNoteId, restored: true });
+    },
+    permanentlyDeleteNote: (targetNoteId) => {
+      calls.push(`delete:${targetNoteId}`);
+      return Promise.resolve({ noteId: targetNoteId, deleted: true });
     },
     findNoteOverview: () => Promise.resolve(undefined),
     findQuestionSession: () => Promise.resolve(undefined),
@@ -59,6 +77,35 @@ describe("local web app note and choice actions", () => {
       data: { noteId, trashed: true },
     });
     expect(calls).toEqual([`trash:${noteId}`]);
+  });
+
+  test("lists, restores, and permanently deletes trashed notes", async () => {
+    const { api, calls } = makeApi();
+    const app = makeLocalWebApp({ api, webAssets });
+
+    const listResponse = await app.request("/api/trash");
+    const restoreResponse = await app.request(
+      `/api/trash/${noteId}/restore`,
+      { method: "PATCH" },
+    );
+    const deleteResponse = await app.request(`/api/trash/${noteId}`, {
+      method: "DELETE",
+    });
+
+    expect(listResponse.status).toBe(200);
+    expect(await listResponse.json()).toEqual({
+      ok: true,
+      data: [expect.objectContaining({ id: noteId, title: "삭제한 노트" })],
+    });
+    expect(await restoreResponse.json()).toEqual({
+      ok: true,
+      data: { noteId, restored: true },
+    });
+    expect(await deleteResponse.json()).toEqual({
+      ok: true,
+      data: { noteId, deleted: true },
+    });
+    expect(calls).toEqual([`restore:${noteId}`, `delete:${noteId}`]);
   });
 
   test("stores a multiple-choice selection through the local API", async () => {

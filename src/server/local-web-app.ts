@@ -9,6 +9,7 @@ import type {
 } from "../schemas/note-workspace";
 import type { NoteOverview, QuestionSession } from "../schemas/question-session";
 import { setSubjectiveAnswerSchema } from "../schemas/subjective-answer";
+import type { TrashedNote } from "../schemas/trashed-note";
 import type { WebAssets } from "./web-assets";
 
 export type LocalWebAppApi = {
@@ -23,6 +24,13 @@ export type LocalWebAppApi = {
   readonly trashNote: (
     noteId: string,
   ) => Promise<{ readonly noteId: string; readonly trashed: true }>;
+  readonly listTrashedNotes: () => Promise<readonly TrashedNote[]>;
+  readonly restoreNote: (
+    noteId: string,
+  ) => Promise<{ readonly noteId: string; readonly restored: true }>;
+  readonly permanentlyDeleteNote: (
+    noteId: string,
+  ) => Promise<{ readonly noteId: string; readonly deleted: true }>;
   readonly findNoteOverview: (noteId: string) => Promise<NoteOverview | undefined>;
   readonly findQuestionSession: (
     questionId: string,
@@ -135,6 +143,42 @@ export const makeLocalWebApp = ({ webAssets, api }: LocalWebAppConfig) => {
       return context.json({
         ok: true,
         data: await api.trashNote(noteId.data),
+      });
+    } catch {
+      return context.json(requestFailedResponse, 500);
+    }
+  });
+
+  app.get("/api/trash", async (context) => {
+    try {
+      return context.json({ ok: true, data: await api.listTrashedNotes() });
+    } catch {
+      return context.json(requestFailedResponse, 500);
+    }
+  });
+
+  app.patch("/api/trash/:noteId/restore", async (context) => {
+    const noteId = noteIdSchema.safeParse(context.req.param("noteId"));
+    if (!noteId.success) return context.json(invalidInputResponse, 400);
+
+    try {
+      return context.json({
+        ok: true,
+        data: await api.restoreNote(noteId.data),
+      });
+    } catch {
+      return context.json(requestFailedResponse, 500);
+    }
+  });
+
+  app.delete("/api/trash/:noteId", async (context) => {
+    const noteId = noteIdSchema.safeParse(context.req.param("noteId"));
+    if (!noteId.success) return context.json(invalidInputResponse, 400);
+
+    try {
+      return context.json({
+        ok: true,
+        data: await api.permanentlyDeleteNote(noteId.data),
       });
     } catch {
       return context.json(requestFailedResponse, 500);
