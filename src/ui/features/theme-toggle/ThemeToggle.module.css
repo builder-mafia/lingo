@@ -1,0 +1,35 @@
+.button {
+  display: inline-grid;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: 7px;
+  color: var(--color-ink-muted);
+  background: var(--color-surface);
+  cursor: pointer;
+  transition:
+    color 120ms ease,
+    border-color 120ms ease,
+    background-color 120ms ease;
+}
+
+.button svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .button:hover {
+    border-color: var(--color-border-strong);
+    color: var(--color-ink-strong);
+    background: var(--color-surface-hover);
+  }
+}
+
+.button:active {
+  background: var(--color-surface-active);
+}

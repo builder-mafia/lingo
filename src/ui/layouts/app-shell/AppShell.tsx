@@ -1,6 +1,7 @@
 import { Link, Outlet } from "react-router";
 
 import { routePaths } from "../../app/route-paths";
+import { ThemeToggle } from "../../features/theme-toggle/ThemeToggle";
 import { LingoMark } from "./LingoMark";
 import styles from "./AppShell.module.css";
 
@@ -13,7 +14,10 @@ export const AppShell = () => (
       </Link>
       <div className={styles.divider} aria-hidden="true" />
       <span className={styles.location}>노트</span>
-      <span className={styles.localState}>이 기기에 저장됨</span>
+      <div className={styles.topBarActions}>
+        <span className={styles.localState}>이 기기에 저장됨</span>
+        <ThemeToggle />
+      </div>
     </header>
     <main className={styles.main}>
       <Outlet />

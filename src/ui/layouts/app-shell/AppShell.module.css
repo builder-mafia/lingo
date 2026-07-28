@@ -70,8 +70,14 @@
   font-weight: 500;
 }
 
-.localState {
+.topBarActions {
   margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.localState {
   color: var(--color-ink-subtle);
   font-size: 12px;
 }

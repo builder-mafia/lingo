@@ -1,5 +1,5 @@
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
   --color-canvas: #f7f7f8;
   --color-surface: #ffffff;
   --color-surface-subtle: #f1f2f4;
@@ -24,30 +24,29 @@
   --font-sans: Inter, Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-canvas: #121318;
-    --color-surface: #181a20;
-    --color-surface-subtle: #202229;
-    --color-surface-hover: #282b34;
-    --color-surface-active: #303654;
-    --color-surface-raised: #1d1f26;
-    --color-ink-strong: #f2f3f5;
-    --color-ink: #dee0e5;
-    --color-ink-muted: #9da2ad;
-    --color-ink-subtle: #767c88;
-    --color-border: #363a44;
-    --color-border-strong: #4a505d;
-    --color-accent: #aab5ff;
-    --color-accent-hover: #bec6ff;
-    --color-accent-soft: #272c4c;
-    --color-on-accent: #171b35;
-    --color-focus: #aab5ff;
-    --color-positive: #78b99f;
-    --color-warning: #d4a45d;
-    --color-danger: #e08b91;
-    --shadow-popup: 0 16px 40px rgb(0 0 0 / 34%), 0 2px 10px rgb(0 0 0 / 28%);
-  }
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-canvas: #121318;
+  --color-surface: #181a20;
+  --color-surface-subtle: #202229;
+  --color-surface-hover: #282b34;
+  --color-surface-active: #303654;
+  --color-surface-raised: #1d1f26;
+  --color-ink-strong: #f2f3f5;
+  --color-ink: #dee0e5;
+  --color-ink-muted: #9da2ad;
+  --color-ink-subtle: #767c88;
+  --color-border: #363a44;
+  --color-border-strong: #4a505d;
+  --color-accent: #aab5ff;
+  --color-accent-hover: #bec6ff;
+  --color-accent-soft: #272c4c;
+  --color-on-accent: #171b35;
+  --color-focus: #aab5ff;
+  --color-positive: #78b99f;
+  --color-warning: #d4a45d;
+  --color-danger: #e08b91;
+  --shadow-popup: 0 16px 40px rgb(0 0 0 / 34%), 0 2px 10px rgb(0 0 0 / 28%);
 }
 
 * {
