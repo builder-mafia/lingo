@@ -115,6 +115,7 @@ const buildBinary = async () => {
         "--minify",
         "--sourcemap=inline",
         `--define=LINGO_BUILD_VERSION=${JSON.stringify(packageMetadata.version)}`,
+        "--define=LINGO_STANDALONE=true",
         `--outfile=${outfile}`,
         ...(target === undefined ? [] : [`--target=${target}`]),
       ],

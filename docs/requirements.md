@@ -21,6 +21,9 @@ The local browser/database app must not need to know which AI agent the user use
 
 Use the resource first, then the minimum action and identifier needed:
 
+- `lingo --help` or `lingo -h`
+- `lingo --version`
+- `lingo --update`
 - `lingo start`
 - `lingo note create --data <json>`
 - `lingo note content set <note-id>`
@@ -32,6 +35,8 @@ Use the resource first, then the minimum action and identifier needed:
 
 Do not put a temporary storage state in a command name or mandatory flag. A state filter is added only once multiple meaningful states exist.
 
+Global flags are standalone root operations. They cannot be combined with one another or appended to a resource command. `--help` is concise human-readable English; all other success and error responses remain JSON.
+
 ## Core CLI operations
 
 1. Start the browser server: `lingo start` binds only to `127.0.0.1:4312`, reports its URL as JSON, exposes `GET /health`, and keeps running until stopped.
@@ -42,6 +47,19 @@ Do not put a temporary storage state in a command name or mandatory flag. A stat
 6. Set an answer: `lingo answer set <question-id> --data <json>` stores or updates an answer for a subjective question.
 7. Read answers needing evaluation: `lingo answer list <note-id>` returns unanswered evaluations with question context.
 8. Store an evaluation: `lingo evaluation set <question-id> --data <json>` stores or updates external AI feedback.
+
+## Standalone self-update
+
+`lingo --update` updates an installed standalone executable to the latest stable release from `builder-mafia/lingo` without confirmation. Source runs and future package-manager installations must direct users to their installation method instead of replacing another executable.
+
+- Support macOS and Linux on arm64 and x64.
+- Never install a prerelease or downgrade a newer local version.
+- Reject symbolic links and paths that are not writable; never invoke `sudo`.
+- Use an exclusive lock to prevent concurrent updates.
+- Require the matching release archive and `SHA256SUMS` from the expected GitHub Release URL.
+- Verify the SHA-256 digest and the staged executable's JSON `--version` response before replacement.
+- Stage beside the installed executable and use a same-filesystem atomic rename so any failure preserves the previous binary.
+- Return only the final JSON result on stdout. Update failures use the coarse message `Could not update Lingo.` and expose the stage, request URL/status/body, cause, and stack in `error.details` when available.
 
 Structured CLI payloads must accept either:
 
