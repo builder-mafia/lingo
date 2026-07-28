@@ -82,7 +82,7 @@ src/server/
 | Route | Page | Primary question |
 | --- | --- | --- |
 | `/` | Notes Workspace | 무엇을 모아두었고 지금 무엇을 다시 생각할 수 있는가? |
-| `/notes/:noteId` | Note Overview | 이 주제의 현재 요약, 이어갈 질문, 정리한 질문은 무엇인가? |
+| `/notes/:noteId` | Note Overview | 이 주제의 현재 요약, 질문, 답변 완료 항목은 무엇인가? |
 | `/notes/:noteId/questions/:questionId` | Question Session | 이 질문을 지금 내 언어로 어떻게 설명할 수 있는가? |
 
 route는 `app/router.tsx` 한 곳에서 선언하고 링크는 `app/route-paths.ts`의 생성 함수를 사용한다. 서버는 모든 비 API GET deep link에 같은 `index.html`을 반환하고 실제 페이지 선택은 React Router가 담당한다.
@@ -108,7 +108,7 @@ route는 `app/router.tsx` 한 곳에서 선언하고 링크는 `app/route-paths.
 
 ### Note Overview
 
-- `요약 → 이어갈 질문 → 정리한 질문` 순서를 유지한다.
+- `요약 → 질문 → 답변 완료` 순서를 유지한다.
 - 질문 행은 질문 문장 자체를 주요 링크로 사용한다.
 - 완료는 현재 시점의 정리이며 질문과 답변 이력은 사라지지 않는다.
 
@@ -118,6 +118,7 @@ route는 `app/router.tsx` 한 곳에서 선언하고 링크는 `app/route-paths.
 - 요약과 이전 답변은 기본적으로 접힌 context panel에서 언제든 연다.
 - 답변 저장 후 외부 평가를 기다리는 상태를 명확히 보여주고 가짜 AI spinner를 사용하지 않는다.
 - 피드백 후 `다시 답하기`와 `이 질문은 여기까지` 중 사용자가 선택한다.
+- 답변 제출 후 다음 미응답 질문으로 이동하고, 남은 질문이 없으면 노트로 돌아간다.
 
 ## Shared UI Rules
 

@@ -135,3 +135,45 @@ test("lists real note workspace data and updates workflow status", async () => {
     rmSync(databasePath, { force: true });
   }
 });
+
+test("points an answered session to the next unanswered question", async () => {
+  const databasePath = tempDatabasePath();
+  const runtime = ManagedRuntime.make(makeDatabaseLayer(databasePath));
+
+  try {
+    const result = await runtime.runPromise(
+      Effect.gen(function* () {
+        const database = yield* Database;
+        const note = yield* database.createNote({
+          title: "HTTP cache",
+          labels: [],
+        });
+        const first = yield* database.addSubjectiveQuestion(note.id, {
+          question: "Cache-Control은 무엇을 제어하는가?",
+          referenceAnswer: "응답을 어디에 얼마나 오래 저장할지 제어한다.",
+        });
+        const second = yield* database.addMultipleChoiceQuestion(note.id, {
+          question: "재검증에 사용하는 HTTP header는 무엇인가?",
+          choices: [
+            { order: 1, option: "ETag", explanation: "validator 역할을 한다." },
+            { order: 2, option: "Location", explanation: "redirect 위치를 나타낸다." },
+          ],
+          correctId: 1,
+        });
+
+        yield* database.setSubjectiveAnswer(first.questionId, "저장 정책을 제어한다.");
+        const afterFirst = yield* database.findQuestionSession(first.questionId);
+        yield* database.setMultipleChoiceAnswer(second.questionId, 1);
+        const afterAll = yield* database.findQuestionSession(first.questionId);
+
+        return { second, afterFirst, afterAll };
+      }),
+    );
+
+    expect(result.afterFirst?.nextQuestionId).toBe(result.second.questionId);
+    expect(result.afterAll?.nextQuestionId).toBeNull();
+  } finally {
+    await runtime.dispose();
+    rmSync(databasePath, { force: true });
+  }
+});
