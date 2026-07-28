@@ -54,6 +54,15 @@
 .choiceContent strong { color: var(--color-ink-strong); font-size: 14px; font-weight: 550; line-height: 1.6; }
 .explanation { display: grid; gap: 3px; color: var(--color-ink-muted); font-size: 12px; line-height: 1.6; }
 .explanation > span { color: var(--color-ink-subtle); font-size: 11px; font-weight: 600; }
+.resultReveal,
+.resultIconReveal {
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity 150ms cubic-bezier(0.23, 1, 0.32, 1),
+    transform 150ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.resultIconReveal { display: grid; place-items: center; transform: scale(1); }
 .resultIcon { width: 19px; height: 19px; margin-top: 4px; color: var(--color-ink-subtle); stroke-width: 1.8; }
 .choice[data-result="correct"] .resultIcon { color: var(--color-positive); }
 .choice[data-result="incorrect"] .resultIcon { color: var(--color-danger); }
@@ -67,5 +76,21 @@
 .closedActions a { color: var(--color-accent); text-underline-offset: 3px; }
 .closedActions button { border: 0; color: var(--color-ink-subtle); background: transparent; }
 .error { min-height: 20px; margin: 12px 0 0; color: var(--color-danger); font-size: 12px; }
+@starting-style {
+  .resultReveal { opacity: 0; transform: translateY(4px); }
+  .resultIconReveal { opacity: 0; transform: scale(0.95); }
+}
 @media (hover: hover) and (pointer: fine) { .primaryButton:hover { background: var(--color-accent-hover); } .secondaryButton:hover { border-color: var(--color-border-strong); background: var(--color-surface-hover); } .choice:hover { border-color: var(--color-border-strong); background: var(--color-surface-hover); } }
 @media (max-width: 820px) { .layout { grid-template-columns: 1fr; gap: 32px; padding: 36px 20px 60px; } .context { order: -1; } .main h1 { margin-bottom: 28px; } }
+@media (prefers-reduced-motion: reduce) {
+  .resultReveal,
+  .resultIconReveal {
+    transform: none;
+    transition: opacity 80ms ease !important;
+  }
+
+  @starting-style {
+    .resultReveal,
+    .resultIconReveal { opacity: 0; transform: none; }
+  }
+}

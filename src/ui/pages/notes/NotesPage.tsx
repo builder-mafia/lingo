@@ -7,6 +7,17 @@ import { moveNoteToTrash, type WorkspaceData } from "../../shared/api/workspace"
 import { NoteRow } from "./NoteRow";
 import styles from "./NotesPage.module.css";
 
+const removalMotionDurationMs = 150;
+const reducedRemovalMotionDurationMs = 80;
+
+const waitForRemovalMotion = () =>
+  new Promise<void>((resolve) => {
+    const duration = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      ? reducedRemovalMotionDurationMs
+      : removalMotionDurationMs;
+    window.setTimeout(resolve, duration);
+  });
+
 export const NotesPage = () => {
   const { notes, prompts } = useLoaderData() as WorkspaceData;
   const [searchParams, setSearchParams] = useSearchParams();
@@ -42,7 +53,10 @@ export const NotesPage = () => {
 
   const removeNote = useCallback(
     async (noteId: string) => {
-      await moveNoteToTrash(noteId);
+      await Promise.all([
+        moveNoteToTrash(noteId),
+        waitForRemovalMotion(),
+      ]);
       revalidator.revalidate();
     },
     [revalidator],

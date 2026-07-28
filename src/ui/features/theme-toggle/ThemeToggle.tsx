@@ -32,11 +32,9 @@ export const ThemeToggle = () => {
         setTheme(nextTheme);
       }}
     >
-      {nextTheme === "dark" ? (
-        <Moon aria-hidden="true" />
-      ) : (
-        <Sun aria-hidden="true" />
-      )}
+      <span className={styles.icon} aria-hidden="true">
+        {nextTheme === "dark" ? <Moon /> : <Sun />}
+      </span>
     </Button>
   );
 };

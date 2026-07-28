@@ -126,14 +126,17 @@ export const SubjectiveQuestion = ({ session }: SubjectiveQuestionProps) => {
       ) : null}
 
       {!editing && session.answer ? (
-        <section className={styles.answer} aria-labelledby="answer-heading">
+        <section
+          className={`${styles.answer} ${styles.resultReveal}`}
+          aria-labelledby="answer-heading"
+        >
           <h2 id="answer-heading">내 답변</h2>
           <p>{session.answer}</p>
         </section>
       ) : null}
 
       {!editing && session.answer && !session.feedback && !session.resolvedAt ? (
-        <section className={styles.waiting}>
+        <section className={`${styles.waiting} ${styles.resultReveal}`}>
           <strong>피드백 기다리는 중</strong>
           <p>
             답변은 저장되었습니다. 외부 AI 스킬이 평가를 기록하면 이 화면과
@@ -143,7 +146,10 @@ export const SubjectiveQuestion = ({ session }: SubjectiveQuestionProps) => {
       ) : null}
 
       {!editing && session.feedback ? (
-        <section className={styles.feedback} aria-labelledby="feedback-heading">
+        <section
+          className={`${styles.feedback} ${styles.resultReveal}`}
+          aria-labelledby="feedback-heading"
+        >
           <h2 id="feedback-heading">피드백</h2>
           <p>{session.feedback}</p>
           {!session.resolvedAt ? (

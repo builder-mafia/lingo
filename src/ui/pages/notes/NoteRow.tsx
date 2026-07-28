@@ -39,7 +39,11 @@ export const NoteRow = memo(function NoteRow({ note, onRemove }: NoteRowProps) {
 
   return (
     <ContextMenu.Root>
-      <ContextMenu.Trigger className={styles.noteRow} role="row">
+      <ContextMenu.Trigger
+        className={styles.noteRow}
+        role="row"
+        data-removing={removing ? "" : undefined}
+      >
         <Link
           className={styles.rowLink}
           to={routePaths.note(note.id)}
