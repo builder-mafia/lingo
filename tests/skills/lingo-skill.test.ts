@@ -27,6 +27,25 @@ describe("Lingo agent skill", () => {
     expect(skill).toContain("Do not write a transcript");
   });
 
+  test("creates a mixed practice set by default", async () => {
+    const skill = await readProjectFile("skills/lingo/SKILL.md");
+
+    expect(skill).toContain("at least one subjective question");
+    expect(skill).toContain("at least one multiple-choice question");
+    expect(skill).toContain("three or four choices");
+    expect(skill).toContain("plausible misconception");
+    expect(skill).not.toContain("Default to subjective questions");
+  });
+
+  test("preserves meaning-sensitive terminology from foreign sources", async () => {
+    const skill = await readProjectFile("skills/lingo/SKILL.md");
+
+    expect(skill).toContain("Preserve the original term");
+    expect(skill).toContain("translation would lose precision");
+    expect(skill).toContain("brief Korean explanation");
+    expect(skill).toContain("content, questions, choices, and feedback");
+  });
+
   test("publishes the skills CLI installation command", async () => {
     const readme = await readProjectFile("README.md");
 

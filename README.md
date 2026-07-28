@@ -31,12 +31,53 @@ curl -fsSL https://raw.githubusercontent.com/builder-mafia/lingo/main/install.sh
   sh -s -- --version v0.2.0 --install-dir "$HOME/bin"
 ```
 
-설치 스크립트는 운영체제와 CPU에 맞는 실행 파일을 선택하고 `SHA256SUMS`로 검증한 뒤 기존 `lingo`를 교체합니다. 최신 버전으로 업데이트할 때는 설치 명령을 다시 실행하면 됩니다.
+설치 스크립트는 운영체제와 CPU에 맞는 실행 파일을 선택하고 `SHA256SUMS`로 검증한 뒤 기존 `lingo`를 교체합니다.
 
 지원 환경:
 
 - macOS Apple Silicon, macOS Intel
 - Linux arm64, Linux x64
+
+설치가 끝나면 사용 가능한 명령을 바로 확인할 수 있습니다.
+
+```bash
+lingo --help
+```
+
+### Update
+
+설치 스크립트로 받은 독립 실행 파일은 다음 명령으로 최신 stable GitHub Release까지 업데이트합니다.
+
+```bash
+lingo --update
+```
+
+새 버전이 있으면 다음과 같이 이전 버전과 설치된 버전을 반환합니다.
+
+```json
+{
+  "ok": true,
+  "data": {
+    "updated": true,
+    "previousVersion": "0.2.0",
+    "version": "0.3.0"
+  }
+}
+```
+
+이미 최신 버전이면 실행 파일을 변경하지 않습니다.
+
+```json
+{
+  "ok": true,
+  "data": {
+    "updated": false,
+    "version": "0.3.0"
+  }
+}
+```
+
+업데이트는 현재 운영체제와 CPU에 맞는 자산 및 `SHA256SUMS`를 검증하고, 내려받은 실행 파일의 버전을 확인한 뒤 원래 파일을 원자적으로 교체합니다. 실패하면 기존 실행 파일을 보존하고 단계, URL, 응답 등 진단 정보를 JSON 오류의 `details`에 담습니다. 소스에서 `bun run`으로 실행한 Lingo와 심볼릭 링크·쓰기 권한이 없는 실행 파일은 직접 교체하지 않습니다.
 
 ### Agent Skill
 
@@ -124,11 +165,13 @@ Lingo는 답변을 대신 만들거나 AI provider를 선택하지 않습니다.
 
 ## Commands
 
-모든 CLI 응답은 JSON입니다. 실패하면 JSON 오류를 stderr에 출력하고 0이 아닌 종료 코드를 반환합니다.
+`lingo --help`만 사람이 읽는 텍스트를 출력하며, 나머지 CLI 응답은 JSON입니다. 실패하면 JSON 오류를 stderr에 출력하고 0이 아닌 종료 코드를 반환합니다.
 
 | 목적 | 명령 |
 | --- | --- |
+| 전체 도움말 | `lingo --help` 또는 `lingo -h` |
 | 버전 확인 | `lingo --version` |
+| 최신 stable 버전으로 업데이트 | `lingo --update` |
 | 브라우저 작업공간 열기 | `lingo start` |
 | 노트 만들기 | `lingo note create (--data <json> \| --data-file <path>)` |
 | 노트 내용 저장 | `lingo note content set <note-id> (--data <json> \| --data-file <path>)` |
@@ -262,7 +305,7 @@ lingo question add <note-id> --data-file ./question.json
 입력 규칙:
 
 - 모든 ID는 UUID입니다.
-- 제목, 요약, 질문, 답변, 피드백은 빈 문자열일 수 없습니다.
+- 제목, 내용, 질문, 답변, 피드백은 빈 문자열일 수 없습니다.
 - 객관식 질문은 선택지가 2개 이상이어야 합니다.
 - `choices[].order`는 중복되지 않는 양의 정수입니다.
 - `correctId`는 실제 `choices[].order` 중 하나여야 합니다.

@@ -3,6 +3,7 @@ import { Effect } from "effect";
 import { Database } from "../layers/database";
 import { JsonInput, type JsonInputOptions } from "../layers/json-input";
 import { LocalHttpServer } from "../layers/local-http-server";
+import { SelfUpdater } from "../layers/self-updater";
 import { addQuestion } from "./commands/add-question";
 import { errorResponse, CliError } from "./errors";
 import { createNote } from "./commands/create-note";
@@ -12,6 +13,8 @@ import { setSubjectiveEvaluation } from "./commands/set-subjective-evaluation";
 import { getNoteContent } from "./commands/get-note-content";
 import { setNoteContent } from "./commands/set-note-content";
 import { startServer } from "./commands/start-server";
+import { updateCli } from "./commands/update-cli";
+import { rootHelp } from "./help";
 import { lingoVersion } from "../version";
 
 const noteContentSetUsage =
@@ -26,6 +29,9 @@ const subjectiveAnswerUsage =
 const answerListUsage = "Usage: lingo answer list <note-id>";
 const evaluationUsage =
   "Usage: lingo evaluation set <question-id> (--data <json> | --data-file <path>)";
+const helpUsage = "Usage: lingo --help";
+const updateUsage = "Usage: lingo --update";
+const versionUsage = "Usage: lingo --version";
 
 const parseInputOptions = (
   args: readonly string[],
@@ -76,7 +82,57 @@ const parseInputOptions = (
 
 export const runCli = (
   args: readonly string[],
-): Effect.Effect<number, never, JsonInput | Database | LocalHttpServer> => {
+): Effect.Effect<
+  number,
+  never,
+  JsonInput | Database | LocalHttpServer | SelfUpdater
+> => {
+  if (args[0] === "--help" || args[0] === "-h") {
+    if (args.length !== 1) {
+      console.error(errorResponse(new CliError(helpUsage)));
+      return Effect.succeed(1);
+    }
+    console.log(rootHelp.trimEnd());
+    return Effect.succeed(0);
+  }
+
+  if (
+    args
+      .slice(1)
+      .some((argument) => argument === "--help" || argument === "-h")
+  ) {
+    console.error(
+      errorResponse(
+        new CliError(args[0] === "--update" ? updateUsage : helpUsage),
+      ),
+    );
+    return Effect.succeed(1);
+  }
+
+  if (args[0] === "--update") {
+    if (args.length !== 1) {
+      console.error(errorResponse(new CliError(updateUsage)));
+      return Effect.succeed(1);
+    }
+    return updateCli().pipe(
+      Effect.match({
+        onFailure: (error) => {
+          console.error(errorResponse(error));
+          return 1;
+        },
+        onSuccess: (data) => {
+          console.log(JSON.stringify({ ok: true, data }));
+          return 0;
+        },
+      }),
+    );
+  }
+
+  if (args[0] === "--version" && args.length !== 1) {
+    console.error(errorResponse(new CliError(versionUsage)));
+    return Effect.succeed(1);
+  }
+
   if (args.length === 1 && args[0] === "--version") {
     console.log(
       JSON.stringify({ ok: true, data: { version: lingoVersion } }),
