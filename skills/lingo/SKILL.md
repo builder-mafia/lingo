@@ -71,7 +71,9 @@ Choose one cohesive topic and prepare:
 - the Markdown content;
 - two to five questions unless the user explicitly asks for a note without practice.
 
-Prefer questions that require explanation in the user's own words or application to a new situation. Avoid generic checks such as “Do you understand this?” and trivia that does not expose understanding.
+Create a mixed practice set by default. When generating two or more questions, include at least one subjective question and at least one multiple-choice question. Deviate only when the user requests one format or the topic cannot support plausible choices without inventing misleading alternatives. If the user requests exactly one question, choose its format from the learning goal.
+
+Use subjective questions to test recall, explanation in the user's own words, or application to a new situation. Use multiple-choice questions to test distinctions between similar concepts, decisions under a concrete scenario, or recognition of a likely misconception. Avoid generic checks such as “Do you understand this?” and trivia that does not expose understanding.
 
 ### 2. Create the note
 
@@ -91,15 +93,17 @@ Prefer `--data-file` for substantive Markdown so shell quoting cannot corrupt it
 
 ### 4. Add questions
 
-Default to subjective questions because they expose whether the user can explain or apply the idea.
+For a subjective question, treat `referenceAnswer` as an evaluation rubric. Keep it accurate, self-contained, and hidden from any response meant to test the user.
 
 ```bash
 lingo question add <note-id> --data '{"question":"Why can time-based cache expiration still return stale data?","referenceAnswer":"The source may change before the expiration window ends, so the cache remains valid by time while already outdated relative to the source."}'
 ```
 
-Use multiple choice only when distinguishing plausible alternatives is useful. Make every distractor plausible and explain why each choice is right or wrong.
+For a multiple-choice question, provide three or four choices when the topic supports them. Give every choice a unique positive `order` and an `explanation` of why it is right or wrong, then set `correctId` to the correct order. Make each distractor reflect a plausible misconception or incomplete model. Keep choices similar in length and structure so wording does not reveal the answer.
 
-Treat `referenceAnswer` as an evaluation rubric. Keep it accurate, self-contained, and hidden from any response meant to test the user.
+```bash
+lingo question add <note-id> --data '{"question":"Which situation can still expose stale cache data?","choices":[{"order":1,"option":"The source changes before the TTL expires","explanation":"The cached value remains valid by time even though the source has changed."},{"order":2,"option":"Every read bypasses the cache","explanation":"Bypassing the cache reads the source directly, so this is not stale cache data."},{"order":3,"option":"The cache entry is removed on every source update","explanation":"Successful invalidation removes the stale entry before the next read."}],"correctId":1}'
+```
 
 ### 5. Return the result
 
