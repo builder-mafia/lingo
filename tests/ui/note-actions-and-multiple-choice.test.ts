@@ -47,4 +47,15 @@ describe("note actions and multiple-choice UI", () => {
     expect(styles).toContain("font-size: clamp(22px, 2.2vw, 30px);");
     expect(styles).toContain("max-width: 36ch;");
   });
+
+  test("uses direct question section labels", async () => {
+    const overview = await readSource(
+      "src/ui/pages/note-overview/NoteOverviewPage.tsx",
+    );
+
+    expect(overview).toContain('<h2 id="open-heading">질문</h2>');
+    expect(overview).toContain('<h2 id="resolved-heading">답변 완료</h2>');
+    expect(overview).not.toContain("이어갈 질문");
+    expect(overview).not.toContain("정리한 질문");
+  });
 });

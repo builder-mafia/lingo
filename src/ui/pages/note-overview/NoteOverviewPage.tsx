@@ -38,7 +38,7 @@ export const NoteOverviewPage = () => {
 
         <section className={styles.section} aria-labelledby="open-heading">
           <div className={styles.sectionHeading}>
-            <h2 id="open-heading">이어갈 질문</h2>
+            <h2 id="open-heading">질문</h2>
             <span>{openQuestions.length}</span>
           </div>
           <div className={styles.questions}>
@@ -59,13 +59,13 @@ export const NoteOverviewPage = () => {
                 </span>
               </Link>
             ))}
-            {openQuestions.length === 0 ? <p className={styles.empty}>현재 이어갈 질문이 없습니다.</p> : null}
+            {openQuestions.length === 0 ? <p className={styles.empty}>현재 질문이 없습니다.</p> : null}
           </div>
         </section>
 
         <section className={styles.section} aria-labelledby="resolved-heading">
           <div className={styles.sectionHeading}>
-            <h2 id="resolved-heading">정리한 질문</h2>
+            <h2 id="resolved-heading">답변 완료</h2>
             <span>{resolvedQuestions.length}</span>
           </div>
           <div className={styles.questions}>
@@ -76,7 +76,7 @@ export const NoteOverviewPage = () => {
                 <span>다시 보기</span>
               </Link>
             ))}
-            {resolvedQuestions.length === 0 ? <p className={styles.empty}>아직 정리한 질문이 없습니다.</p> : null}
+            {resolvedQuestions.length === 0 ? <p className={styles.empty}>답변 완료된 질문이 없습니다.</p> : null}
           </div>
         </section>
       </main>
