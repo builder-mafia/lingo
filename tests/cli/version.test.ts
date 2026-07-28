@@ -19,6 +19,6 @@ test("lingo --version reports the package version as JSON", async () => {
   expect(stderr).toBe("");
   expect(JSON.parse(stdout)).toEqual({
     ok: true,
-    data: { version: "0.2.0" },
+    data: { version: "0.3.0" },
   });
 });
