@@ -20,12 +20,16 @@ describe("trash management UI", () => {
   });
 
   test("uses a Base UI alert dialog before permanent deletion", async () => {
-    const page = await readSource("src/ui/pages/trash/TrashPage.tsx");
+    const [page, row] = await Promise.all([
+      readSource("src/ui/pages/trash/TrashPage.tsx"),
+      readSource("src/ui/pages/trash/TrashNoteRow.tsx"),
+    ]);
 
-    expect(page).toContain('from "@base-ui/react/alert-dialog"');
-    expect(page).toContain("RotateCcw");
-    expect(page).toContain("Trash2");
-    expect(page).toContain("복원");
-    expect(page).toContain("영구 삭제");
+    expect(page).toContain('from "./TrashNoteRow"');
+    expect(row).toContain('from "@base-ui/react/alert-dialog"');
+    expect(row).toContain("RotateCcw");
+    expect(row).toContain("Trash2");
+    expect(row).toContain("복원");
+    expect(row).toContain("영구 삭제");
   });
 });

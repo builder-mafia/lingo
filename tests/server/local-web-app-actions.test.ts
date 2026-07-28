@@ -18,7 +18,6 @@ const makeApi = () => {
           id: noteId,
           title: "삭제한 노트",
           content: null,
-          labels: [],
           deletedAt: "2026-07-28T00:00:00.000Z",
         },
       ]),

@@ -77,6 +77,9 @@ test("lists, restores, and permanently deletes trashed notes", async () => {
           "핵심 역할을 설명했다.",
         );
 
+        const activeRestore = yield* Effect.either(
+          database.restoreNote(note.id),
+        );
         yield* database.trashNote(note.id);
         const trashed = yield* database.listTrashedNotes();
         const restored = yield* database.restoreNote(note.id);
@@ -87,6 +90,7 @@ test("lists, restores, and permanently deletes trashed notes", async () => {
 
         return {
           note,
+          activeRestore,
           trashed,
           restored,
           workspaceAfterRestore,
@@ -97,14 +101,14 @@ test("lists, restores, and permanently deletes trashed notes", async () => {
       }),
     );
 
+    expect(result.activeRestore._tag).toBe("Left");
     expect(result.trashed).toEqual([
-      expect.objectContaining({
+      {
         id: result.note.id,
         title: "다시 꺼낼 노트",
         content: "# Cache\n\n응답 저장 정책",
-        labels: ["HTTP"],
         deletedAt: expect.any(String),
-      }),
+      },
     ]);
     expect(result.restored).toEqual({ noteId: result.note.id, restored: true });
     expect(result.workspaceAfterRestore.map(({ id }) => id)).toContain(

@@ -340,6 +340,67 @@ const findNextUnansweredQuestionId = (
     .get(noteId, currentQuestionId, noteId, currentQuestionId)?.questionId ??
   null;
 
+const permanentNoteDeleteStatements = [
+  `
+    DELETE FROM subjective_evaluations
+    WHERE question_id IN (
+      SELECT id FROM subjective_questions WHERE note_id = ?
+    )
+  `,
+  `
+    DELETE FROM subjective_answers
+    WHERE question_id IN (
+      SELECT id FROM subjective_questions WHERE note_id = ?
+    )
+  `,
+  `
+    DELETE FROM multiple_choice_answers
+    WHERE question_id IN (
+      SELECT id FROM multiple_choice_questions WHERE note_id = ?
+    )
+  `,
+  `
+    DELETE FROM multiple_choice_choices
+    WHERE question_id IN (
+      SELECT id FROM multiple_choice_questions WHERE note_id = ?
+    )
+  `,
+  "DELETE FROM subjective_questions WHERE note_id = ?",
+  "DELETE FROM multiple_choice_questions WHERE note_id = ?",
+  "DELETE FROM note_contents WHERE note_id = ?",
+  "DELETE FROM note_labels WHERE note_id = ?",
+  "DELETE FROM notes WHERE id = ? AND deleted_at IS NOT NULL",
+] as const;
+
+const requireTrashedNote = (database: SqliteDatabase, noteId: string) => {
+  const trashed = database
+    .query<{ readonly id: string }, [string]>(
+      "SELECT id FROM notes WHERE id = ? AND deleted_at IS NOT NULL",
+    )
+    .get(noteId);
+
+  if (!trashed) {
+    throw new Error("Trashed note not found.");
+  }
+};
+
+const restoreTrashedNote = (database: SqliteDatabase, noteId: string) =>
+  database.transaction(() => {
+    requireTrashedNote(database, noteId);
+    database
+      .query("UPDATE notes SET deleted_at = NULL WHERE id = ?")
+      .run(noteId);
+  })();
+
+const deleteTrashedNote = (database: SqliteDatabase, noteId: string) =>
+  database.transaction(() => {
+    requireTrashedNote(database, noteId);
+
+    for (const statement of permanentNoteDeleteStatements) {
+      database.query(statement).run(noteId);
+    }
+  })();
+
 const makeService = (databasePath: string): DatabaseService => ({
   createNote: (input) =>
     withDatabase(
@@ -692,16 +753,8 @@ const makeService = (databasePath: string): DatabaseService => ({
             ORDER BY notes.deleted_at DESC, notes.created_at DESC
           `)
           .all();
-        const labelQuery = database.query<NoteLabelRow, [string]>(
-          "SELECT label FROM note_labels WHERE note_id = ? ORDER BY position",
-        );
 
-        return rows.map((row) =>
-          trashedNoteSchema.parse({
-            ...row,
-            labels: labelQuery.all(row.id).map(({ label }) => label),
-          }),
-        );
+        return rows.map((row) => trashedNoteSchema.parse(row));
       },
       "Could not list trashed notes.",
     ),
@@ -709,20 +762,7 @@ const makeService = (databasePath: string): DatabaseService => ({
     withDatabase(
       databasePath,
       (database) => {
-        database
-          .query(
-            "UPDATE notes SET deleted_at = NULL WHERE id = ? AND deleted_at IS NOT NULL",
-          )
-          .run(noteId);
-        const restored = database
-          .query<{ readonly deletedAt: string | null }, [string]>(
-            "SELECT deleted_at AS deletedAt FROM notes WHERE id = ?",
-          )
-          .get(noteId);
-
-        if (!restored || restored.deletedAt !== null) {
-          throw new Error("Trashed note not found.");
-        }
+        restoreTrashedNote(database, noteId);
 
         return { noteId, restored: true as const };
       },
@@ -732,61 +772,7 @@ const makeService = (databasePath: string): DatabaseService => ({
     withDatabase(
       databasePath,
       (database) => {
-        const trashed = database
-          .query<{ readonly id: string }, [string]>(
-            "SELECT id FROM notes WHERE id = ? AND deleted_at IS NOT NULL",
-          )
-          .get(noteId);
-
-        if (!trashed) {
-          throw new Error("Trashed note not found.");
-        }
-
-        database.transaction(() => {
-          database
-            .query(`
-              DELETE FROM subjective_evaluations
-              WHERE question_id IN (
-                SELECT id FROM subjective_questions WHERE note_id = ?
-              )
-            `)
-            .run(noteId);
-          database
-            .query(`
-              DELETE FROM subjective_answers
-              WHERE question_id IN (
-                SELECT id FROM subjective_questions WHERE note_id = ?
-              )
-            `)
-            .run(noteId);
-          database
-            .query(`
-              DELETE FROM multiple_choice_answers
-              WHERE question_id IN (
-                SELECT id FROM multiple_choice_questions WHERE note_id = ?
-              )
-            `)
-            .run(noteId);
-          database
-            .query(`
-              DELETE FROM multiple_choice_choices
-              WHERE question_id IN (
-                SELECT id FROM multiple_choice_questions WHERE note_id = ?
-              )
-            `)
-            .run(noteId);
-          database
-            .query("DELETE FROM subjective_questions WHERE note_id = ?")
-            .run(noteId);
-          database
-            .query("DELETE FROM multiple_choice_questions WHERE note_id = ?")
-            .run(noteId);
-          database.query("DELETE FROM note_contents WHERE note_id = ?").run(noteId);
-          database.query("DELETE FROM note_labels WHERE note_id = ?").run(noteId);
-          database
-            .query("DELETE FROM notes WHERE id = ? AND deleted_at IS NOT NULL")
-            .run(noteId);
-        })();
+        deleteTrashedNote(database, noteId);
 
         return { noteId, deleted: true as const };
       },
