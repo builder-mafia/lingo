@@ -49,6 +49,15 @@ Write the content as Markdown:
 
 Keep practice questions separate from the content. Content may name an unresolved point when that context matters, but do not duplicate the question bank inside the body.
 
+## Preserve precise terminology
+
+Preserve the original term when organizing material from a foreign-language source if translation would lose precision, change its scope, or make an established concept harder to recognize. Apply this to important technical keywords, coined concepts, API and specification terms, identifiers, and proper nouns.
+
+- Add a brief Korean explanation on first use only when it improves understanding; do not replace the original term with an awkward or invented translation.
+- Keep meaning-sensitive terminology consistent across content, questions, choices, and feedback.
+- Translate the surrounding explanation for readability while leaving the precise term intact.
+- Use a familiar standard Korean term when it carries the same meaning more clearly; preserving every foreign word is not the goal.
+
 ## Strengthen the content with sources
 
 When related articles or documentation can materially improve accuracy, context, or persuasiveness, research them before writing. Prefer authoritative sources such as official documentation, standards, original research, and first-party technical articles. Use secondary sources only when they add a useful explanation or perspective.
