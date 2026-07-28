@@ -48,6 +48,8 @@ Global flags are standalone root operations. They cannot be combined with one an
 7. Read answers needing evaluation: `lingo answer list <note-id>` returns unanswered evaluations with question context.
 8. Store an evaluation: `lingo evaluation set <question-id> --data <json>` stores or updates external AI feedback.
 
+The browser workspace uses soft deletion for notes. Removing a note moves it to a local trash view without deleting its content, questions, answers, or feedback. The user can restore it or explicitly confirm permanent deletion; only permanent deletion removes the full note graph from SQLite.
+
 ## Standalone self-update
 
 `lingo --update` updates an installed standalone executable to the latest stable release from `builder-mafia/lingo` without confirmation. Source runs and future package-manager installations must direct users to their installation method instead of replacing another executable.

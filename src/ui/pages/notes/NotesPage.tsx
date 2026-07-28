@@ -1,3 +1,4 @@
+import { Trash2 } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import { Link, useLoaderData, useRevalidator, useSearchParams } from "react-router";
 
@@ -52,11 +53,17 @@ export const NotesPage = () => {
     <div className={styles.page}>
       <section className={styles.workspace} aria-labelledby="notes-heading">
         <header className={styles.headingRow}>
-          <div>
+          <div className={styles.headingTitle}>
             <h1 id="notes-heading">노트</h1>
             <span>{notes.length}개</span>
           </div>
-          <NoteSearch value={query} onChange={(value) => updateParam("q", value)} />
+          <div className={styles.headingActions}>
+            <Link className={styles.trashLink} to={routePaths.trash}>
+              <Trash2 aria-hidden="true" />
+              <span>휴지통</span>
+            </Link>
+            <NoteSearch value={query} onChange={(value) => updateParam("q", value)} />
+          </div>
         </header>
 
         <div className={styles.toolbar}>

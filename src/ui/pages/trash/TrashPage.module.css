@@ -1,0 +1,75 @@
+.page {
+  width: min(100%, 1120px);
+  margin: 0 auto;
+  padding: 36px 28px 64px;
+}
+
+.header { display: grid; gap: 24px; }
+.backLink { display: inline-flex; align-items: center; gap: 7px; width: fit-content; min-height: 36px; margin-left: -8px; padding: 0 8px; border-radius: 6px; color: var(--color-ink-muted); font-size: 13px; font-weight: 500; text-decoration: none; }
+.backLink svg { width: 16px; height: 16px; stroke-width: 1.8; }
+.backLink:active { background: var(--color-surface-active); }
+.header > div { display: grid; gap: 7px; }
+.titleRow { display: flex; align-items: baseline; gap: 9px; }
+.titleRow h1 { margin: 0; color: var(--color-ink-strong); font-size: 25px; font-weight: 600; letter-spacing: -0.025em; }
+.titleRow span { color: var(--color-ink-subtle); font-size: 13px; }
+.header p { margin: 0; color: var(--color-ink-muted); font-size: 13px; line-height: 1.6; }
+
+.list { margin-top: 28px; overflow: hidden; border: 1px solid var(--color-border); border-radius: 10px; background: var(--color-surface); }
+.listHeader, .noteRow { display: grid; grid-template-columns: minmax(320px, 1fr) 160px 220px; align-items: center; }
+.listHeader { min-height: 38px; padding: 0 14px; border-bottom: 1px solid var(--color-border); color: var(--color-ink-subtle); background: var(--color-surface-raised); font-size: 11px; font-weight: 500; }
+.listHeader > span:not(:first-child) { padding-left: 12px; }
+.noteRow { min-height: 76px; padding: 0 14px; border-bottom: 1px solid var(--color-border); color: var(--color-ink-muted); font-size: 12px; }
+.noteRow:last-child { border-bottom: 0; }
+.noteIdentity { display: flex; align-items: center; gap: 12px; min-width: 0; padding-right: 24px; }
+.noteIdentity > svg { width: 16px; height: 16px; flex: 0 0 16px; color: var(--color-ink-subtle); stroke-width: 1.7; }
+.noteIdentity > div { display: grid; min-width: 0; gap: 3px; }
+.noteIdentity strong, .noteIdentity span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.noteIdentity strong { color: var(--color-ink-strong); font-size: 14px; font-weight: 550; }
+.noteIdentity span { color: var(--color-ink-muted); }
+.noteIdentity .error { color: var(--color-danger); }
+.noteRow time { padding-left: 12px; font-variant-numeric: tabular-nums; }
+.actions { display: flex; justify-content: flex-end; gap: 8px; padding-left: 12px; }
+.restoreButton, .deleteButton, .cancelButton, .confirmDeleteButton { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 36px; padding: 0 11px; border: 1px solid var(--color-border); border-radius: 6px; color: var(--color-ink); background: var(--color-surface); font-family: inherit; font-size: 12px; font-weight: 500; white-space: nowrap; }
+.restoreButton svg, .deleteButton svg { width: 15px; height: 15px; stroke-width: 1.8; }
+.deleteButton { color: var(--color-danger); }
+.restoreButton:active, .cancelButton:active { background: var(--color-surface-active); }
+.deleteButton:active, .confirmDeleteButton:active { background: color-mix(in srgb, var(--color-danger) 14%, var(--color-surface)); }
+.restoreButton:disabled, .deleteButton:disabled { opacity: 0.55; }
+
+.backdrop { position: fixed; z-index: 60; inset: 0; background: color-mix(in srgb, var(--color-canvas) 42%, transparent); backdrop-filter: blur(3px); transition: opacity 140ms ease; }
+.dialog { position: fixed; z-index: 61; top: 50%; left: 50%; display: grid; gap: 24px; width: min(420px, calc(100vw - 32px)); padding: 22px; border: 1px solid var(--color-border-strong); border-radius: 10px; color: var(--color-ink); background: var(--color-surface-raised); box-shadow: var(--shadow-popup); transform: translate(-50%, -50%); transition: opacity 140ms ease, transform 140ms ease; }
+.backdrop[data-starting-style], .backdrop[data-ending-style] { opacity: 0; }
+.dialog[data-starting-style], .dialog[data-ending-style] { opacity: 0; transform: translate(-50%, -48%) scale(0.98); }
+.dialog > div:first-child { display: grid; gap: 8px; }
+.dialogTitle { margin: 0; color: var(--color-ink-strong); font-size: 16px; font-weight: 600; letter-spacing: -0.015em; }
+.dialogDescription { margin: 0; color: var(--color-ink-muted); font-size: 13px; line-height: 1.65; }
+.dialogActions { display: flex; justify-content: flex-end; gap: 8px; }
+.confirmDeleteButton { border-color: var(--color-danger); color: var(--color-danger); }
+
+.empty { display: grid; justify-items: center; gap: 7px; margin-top: 28px; padding: 72px 24px; border: 1px solid var(--color-border); border-radius: 10px; color: var(--color-ink-muted); background: var(--color-surface); text-align: center; }
+.empty svg { width: 22px; height: 22px; margin-bottom: 5px; color: var(--color-ink-subtle); stroke-width: 1.6; }
+.empty strong { color: var(--color-ink); font-size: 14px; font-weight: 550; }
+.empty span { font-size: 13px; }
+
+@media (hover: hover) and (pointer: fine) {
+  .backLink:hover, .restoreButton:hover, .cancelButton:hover { background: var(--color-surface-hover); }
+  .restoreButton:hover, .deleteButton:hover, .cancelButton:hover { border-color: var(--color-border-strong); }
+  .deleteButton:hover, .confirmDeleteButton:hover { background: color-mix(in srgb, var(--color-danger) 9%, var(--color-surface)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop, .dialog { transition: none; }
+}
+
+@media (max-width: 720px) {
+  .page { padding: 24px 12px 44px; }
+  .listHeader, .noteRow { grid-template-columns: minmax(0, 1fr) 190px; }
+  .listHeader > span:nth-child(2), .noteRow time { display: none; }
+  .noteIdentity { padding-right: 12px; }
+}
+
+@media (max-width: 520px) {
+  .listHeader { display: none; }
+  .noteRow { grid-template-columns: 1fr; gap: 14px; padding: 16px 14px; }
+  .actions { justify-content: flex-start; padding-left: 28px; }
+}

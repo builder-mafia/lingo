@@ -12,6 +12,10 @@ import {
 import { noteContentSchema, type NoteContent } from "../schemas/note-content";
 import { type CreateMultipleChoiceQuestion } from "../schemas/multiple-choice";
 import { type CreateSubjectiveQuestion } from "../schemas/subjective";
+import {
+  trashedNoteSchema,
+  type TrashedNote,
+} from "../schemas/trashed-note";
 import { noteStatusSchema, type NoteStatus } from "../schemas/note-status";
 import {
   noteWorkspaceItemSchema,
@@ -88,6 +92,16 @@ export interface DatabaseService {
   readonly trashNote: (
     noteId: string,
   ) => Effect.Effect<{ readonly noteId: string; readonly trashed: true }, CliError>;
+  readonly listTrashedNotes: () => Effect.Effect<
+    readonly TrashedNote[],
+    CliError
+  >;
+  readonly restoreNote: (
+    noteId: string,
+  ) => Effect.Effect<{ readonly noteId: string; readonly restored: true }, CliError>;
+  readonly permanentlyDeleteNote: (
+    noteId: string,
+  ) => Effect.Effect<{ readonly noteId: string; readonly deleted: true }, CliError>;
   readonly listWorkspacePrompts: () => Effect.Effect<
     readonly WorkspacePrompt[],
     CliError
@@ -151,6 +165,13 @@ type NoteWorkspaceRow = {
   readonly status: string;
   readonly openQuestionCount: number;
   readonly updatedAt: string;
+};
+
+type TrashedNoteRow = {
+  readonly id: string;
+  readonly title: string;
+  readonly content: string | null;
+  readonly deletedAt: string;
 };
 
 type WorkspacePromptRow = {
@@ -318,6 +339,67 @@ const findNextUnansweredQuestionId = (
     `)
     .get(noteId, currentQuestionId, noteId, currentQuestionId)?.questionId ??
   null;
+
+const permanentNoteDeleteStatements = [
+  `
+    DELETE FROM subjective_evaluations
+    WHERE question_id IN (
+      SELECT id FROM subjective_questions WHERE note_id = ?
+    )
+  `,
+  `
+    DELETE FROM subjective_answers
+    WHERE question_id IN (
+      SELECT id FROM subjective_questions WHERE note_id = ?
+    )
+  `,
+  `
+    DELETE FROM multiple_choice_answers
+    WHERE question_id IN (
+      SELECT id FROM multiple_choice_questions WHERE note_id = ?
+    )
+  `,
+  `
+    DELETE FROM multiple_choice_choices
+    WHERE question_id IN (
+      SELECT id FROM multiple_choice_questions WHERE note_id = ?
+    )
+  `,
+  "DELETE FROM subjective_questions WHERE note_id = ?",
+  "DELETE FROM multiple_choice_questions WHERE note_id = ?",
+  "DELETE FROM note_contents WHERE note_id = ?",
+  "DELETE FROM note_labels WHERE note_id = ?",
+  "DELETE FROM notes WHERE id = ? AND deleted_at IS NOT NULL",
+] as const;
+
+const requireTrashedNote = (database: SqliteDatabase, noteId: string) => {
+  const trashed = database
+    .query<{ readonly id: string }, [string]>(
+      "SELECT id FROM notes WHERE id = ? AND deleted_at IS NOT NULL",
+    )
+    .get(noteId);
+
+  if (!trashed) {
+    throw new Error("Trashed note not found.");
+  }
+};
+
+const restoreTrashedNote = (database: SqliteDatabase, noteId: string) =>
+  database.transaction(() => {
+    requireTrashedNote(database, noteId);
+    database
+      .query("UPDATE notes SET deleted_at = NULL WHERE id = ?")
+      .run(noteId);
+  })();
+
+const deleteTrashedNote = (database: SqliteDatabase, noteId: string) =>
+  database.transaction(() => {
+    requireTrashedNote(database, noteId);
+
+    for (const statement of permanentNoteDeleteStatements) {
+      database.query(statement).run(noteId);
+    }
+  })();
 
 const makeService = (databasePath: string): DatabaseService => ({
   createNote: (input) =>
@@ -653,6 +735,48 @@ const makeService = (databasePath: string): DatabaseService => ({
         return { noteId, trashed: true as const };
       },
       "Could not move note to trash.",
+    ),
+  listTrashedNotes: () =>
+    withDatabase(
+      databasePath,
+      (database) => {
+        const rows = database
+          .query<TrashedNoteRow, []>(`
+            SELECT
+              notes.id,
+              notes.title,
+              contents.content,
+              notes.deleted_at AS deletedAt
+            FROM notes
+            LEFT JOIN note_contents AS contents ON contents.note_id = notes.id
+            WHERE notes.deleted_at IS NOT NULL
+            ORDER BY notes.deleted_at DESC, notes.created_at DESC
+          `)
+          .all();
+
+        return rows.map((row) => trashedNoteSchema.parse(row));
+      },
+      "Could not list trashed notes.",
+    ),
+  restoreNote: (noteId) =>
+    withDatabase(
+      databasePath,
+      (database) => {
+        restoreTrashedNote(database, noteId);
+
+        return { noteId, restored: true as const };
+      },
+      "Could not restore note.",
+    ),
+  permanentlyDeleteNote: (noteId) =>
+    withDatabase(
+      databasePath,
+      (database) => {
+        deleteTrashedNote(database, noteId);
+
+        return { noteId, deleted: true as const };
+      },
+      "Could not permanently delete note.",
     ),
   listWorkspacePrompts: () =>
     withDatabase(

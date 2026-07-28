@@ -82,6 +82,7 @@ src/server/
 | Route | Page | Primary question |
 | --- | --- | --- |
 | `/` | Notes Workspace | 무엇을 모아두었고 지금 무엇을 다시 생각할 수 있는가? |
+| `/trash` | Trash | 제거한 노트를 복원하거나 영구 삭제할 것인가? |
 | `/notes/:noteId` | Note Overview | 이 주제의 현재 요약, 질문, 답변 완료 항목은 무엇인가? |
 | `/notes/:noteId/questions/:questionId` | Question Session | 이 질문을 지금 내 언어로 어떻게 설명할 수 있는가? |
 
