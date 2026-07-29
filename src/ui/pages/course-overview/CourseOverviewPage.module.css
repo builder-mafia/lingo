@@ -1,0 +1,48 @@
+.page { min-height: calc(100vh - 54px); }
+.breadcrumb { display: flex; align-items: center; justify-content: space-between; min-height: 52px; padding: 0 24px; border-bottom: 1px solid var(--color-border); color: var(--color-ink-subtle); font-size: 12px; }
+.breadcrumb ol { display: flex; align-items: center; gap: 9px; margin: 0; padding: 0; list-style: none; }
+.breadcrumb a { color: var(--color-ink-muted); text-decoration: none; }
+.content { width: min(100% - 48px, 980px); margin: 0 auto; padding: 52px 0 88px; }
+.hero { display: flex; align-items: flex-end; justify-content: space-between; gap: 32px; padding-bottom: 38px; border-bottom: 1px solid var(--color-border); }
+.hero > div { min-width: 0; }
+.eyebrow { display: block; margin-bottom: 8px; color: var(--color-accent); font-size: 12px; font-weight: 600; }
+.hero h1 { margin: 0; color: var(--color-ink-strong); font-size: 29px; font-weight: 600; letter-spacing: -0.035em; }
+.hero p { max-width: 68ch; margin: 12px 0 0; color: var(--color-ink-muted); font-size: 15px; line-height: 1.7; }
+.primaryAction { flex: 0 0 auto; display: inline-flex; align-items: center; min-height: 40px; padding: 0 15px; border: 1px solid var(--color-accent); border-radius: 7px; color: var(--color-on-accent); background: var(--color-accent); font-size: 13px; font-weight: 550; text-decoration: none; transition: background-color 120ms ease, transform 100ms ease; }
+.primaryAction:active { transform: scale(0.98); }
+.curriculum { padding-top: 36px; }
+.curriculum > header { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; }
+.curriculum header > div { display: flex; align-items: baseline; gap: 8px; }
+.curriculum h2 { margin: 0; color: var(--color-ink-strong); font-size: 15px; font-weight: 600; }
+.curriculum header span { color: var(--color-ink-subtle); font-size: 12px; }
+.chapterList { margin-top: 15px; overflow: hidden; border: 1px solid var(--color-border); border-radius: 10px; background: var(--color-surface); }
+.chapter { display: grid; grid-template-columns: 34px 24px minmax(0, 1fr) auto; align-items: center; gap: 10px; min-height: 76px; padding: 10px 16px; border-bottom: 1px solid var(--color-border); text-decoration: none; transition: background-color 120ms ease; }
+.chapter:last-child { border-bottom: 0; }
+.chapter[data-trashed] { opacity: 0.7; background: var(--color-surface-subtle); }
+.chapterNumber { color: var(--color-ink-subtle); font-size: 12px; font-variant-numeric: tabular-nums; }
+.chapterIcon { display: grid; place-items: center; width: 22px; height: 22px; border: 1px solid var(--color-border); border-radius: 6px; color: var(--color-ink-muted); background: var(--color-surface-raised); }
+.chapterIcon svg { width: 13px; height: 13px; stroke-width: 1.9; }
+.chapterIdentity { display: grid; min-width: 0; gap: 3px; }
+.chapterIdentity strong { color: var(--color-ink-strong); font-size: 14px; font-weight: 550; }
+.chapterIdentity > span { overflow: hidden; color: var(--color-ink-muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.chapterFacts { padding-left: 16px; color: var(--color-ink-subtle); font-size: 12px; white-space: nowrap; }
+.chapterFacts a { position: relative; z-index: 1; margin-left: 8px; color: var(--color-accent); text-underline-offset: 3px; }
+.emptyCourse { display: grid; gap: 5px; padding: 36px 18px; color: var(--color-ink-muted); }
+.emptyCourse strong { color: var(--color-ink); font-size: 14px; font-weight: 550; }
+.emptyCourse span { font-size: 12px; }
+.chapter:active { background: var(--color-surface-active); }
+@media (hover: hover) and (pointer: fine) {
+  .primaryAction:hover { background: var(--color-accent-hover); }
+  a.chapter:hover { background: var(--color-surface-hover); }
+}
+@media (max-width: 700px) {
+  .breadcrumb { align-items: flex-start; gap: 12px; padding: 10px 14px; }
+  .breadcrumb ol { flex-wrap: wrap; padding-top: 9px; }
+  .content { width: min(100% - 28px, 980px); padding-top: 36px; }
+  .hero { align-items: stretch; flex-direction: column; gap: 20px; }
+  .primaryAction { align-self: flex-start; }
+  .curriculum > header { align-items: flex-start; flex-direction: column; gap: 5px; }
+  .chapter { grid-template-columns: 26px 22px minmax(0, 1fr); padding: 12px; }
+  .chapterFacts { grid-column: 3; padding-left: 0; }
+  .primaryAction { min-height: 44px; }
+}

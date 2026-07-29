@@ -1,22 +1,25 @@
 ---
 name: lingo
-description: Save learned material as durable local Lingo note content and active-learning questions, then evaluate pending answers with the current AI agent. Use when a user asks to remember or organize what they learned, deepen an existing Lingo note, create practice questions, open the local learning workspace, review pending answers, or write honest feedback through the lingo CLI.
+description: Save learned material as durable local Lingo notes and active-learning questions, design systematic multi-chapter courses, and evaluate pending answers with the current AI agent. Use when a user asks to remember or organize what they learned, study a domain through an ordered curriculum, deepen an existing Lingo note, create practice questions, open the local learning workspace, review pending answers, or write honest feedback through the lingo CLI.
 ---
 
 # Lingo
 
-Use the `lingo` CLI between the active AI agent and the user's local learning workspace. Keep reasoning and research in the active agent. Persist only notes, questions, answers, and feedback through Lingo.
+Use the `lingo` CLI between the active AI agent and the user's local learning workspace. Keep reasoning and research in the active agent. Persist courses, notes, questions, answers, and feedback through Lingo.
 
 ## Before starting
 
 1. Verify `lingo` with `lingo --version`.
 2. If it is missing, stop and give the user the official installation command from the project README. Do not silently install software.
 3. Read [references/cli.md](references/cli.md) before constructing payloads or handling errors.
-4. Use only the CLI. Do not read or modify `~/.lingo/lingo.sqlite` directly.
+4. When creating, deepening, or filling a chapter note, read [references/note-design.md](references/note-design.md) completely before drafting content or questions.
+5. When designing a course, read [references/course-design.md](references/course-design.md) completely before asking discovery questions or proposing a curriculum.
+6. Use only the CLI. Do not read or modify `~/.lingo/lingo.sqlite` directly.
 
 ## Choose the workflow
 
 - **Save new learning:** Create a note, write its content, and add questions.
+- **Study a domain systematically:** Design an ordered course, then fill each chapter note with content and questions.
 - **Deepen known learning:** Read existing content, combine it with the new understanding, and replace it with one coherent body.
 - **Open practice:** Ensure the localhost server is running and return the note URL.
 - **Evaluate answers:** List pending answers, assess each one, and store one feedback result per question.
@@ -25,7 +28,7 @@ Do not invent an existing note ID. If the user refers to an old note but provide
 
 ## Build durable note content
 
-When the user gives no more specific writing direction, infer the user's current understanding from the conversation and create material that will help them reconstruct and extend it later.
+Read [references/note-design.md](references/note-design.md). When the user gives no more specific writing direction, infer the user's current understanding from the conversation and create material that will help them reconstruct and extend it later.
 
 Select only the structure useful to the topic. Include, when relevant:
 
@@ -73,6 +76,8 @@ When related articles or documentation can materially improve accuracy, context,
 
 ### 1. Prepare the note
 
+Prepare an internal **note brief** with the future retrieval need, central model, learner starting point, required evidence and examples, scope boundary, fragile points, and question targets. Ask at most one compact clarification only when the intended use, topic boundary, or depth would materially change the note; otherwise make and state a reasonable assumption.
+
 Choose one cohesive topic and prepare:
 
 - a concrete title naming the concept or decision;
@@ -116,9 +121,11 @@ For a multiple-choice question, provide three or four choices when the topic sup
 lingo question add <note-id> --data '{"question":"Which situation can still expose stale cache data?","choices":[{"order":1,"option":"The source changes before the TTL expires","explanation":"The cached value remains valid by time even though the source has changed."},{"order":2,"option":"Every read bypasses the cache","explanation":"Bypassing the cache reads the source directly, so this is not stale cache data."},{"order":3,"option":"The cache entry is removed on every source update","explanation":"Successful invalidation removes the stale entry before the next read."}],"correctId":1}'
 ```
 
-### 5. Return the result
+### 5. Verify and return the result
 
-Report what was saved and return `data.noteUrl`. Do not dump raw JSON unless asked. Never claim that data was saved if any required command failed.
+For substantive content, read it back with `lingo note content get <note-id>` and apply the **post-save quality gate** in [references/note-design.md](references/note-design.md). Verify that Markdown structure and links survived serialization and that every question tests the intended model.
+
+Report what was saved and return `data.noteUrl`. Do not dump raw JSON unless asked. Never claim that data was saved if any required command failed. If content or question creation partially fails, identify the incomplete operation precisely.
 
 ## Deepen an existing note
 
@@ -128,7 +135,64 @@ Read the current body before writing:
 lingo note content get <note-id>
 ```
 
-Preserve still-valid knowledge, integrate the new material, resolve contradictions where evidence permits, and produce one coherent replacement. Then write the complete body with `lingo note content set`; do not blindly append fragments.
+Preserve still-valid knowledge, integrate the new material, resolve contradictions where evidence permits, and produce one coherent replacement. Then write the complete body with `lingo note content set`; do not blindly append fragments. Keep the original retrieval need cohesive, split independent material into a separate note, and apply the post-save quality gate. Because the current CLI cannot inspect or edit the complete existing question bank, do not claim old questions were rechecked; warn the user when a substantive rewrite may have made them obsolete.
+
+## Design a systematic course
+
+Use a course when the user wants to build capability across a domain rather than save one cohesive topic. A course is an ordered set of chapters, and every chapter is a normal Lingo note with its own Markdown content and questions.
+
+### 1. Discover the learner and constraints
+
+Read [references/course-design.md](references/course-design.md). Infer what the conversation already establishes, then use **minimum viable clarification** for unresolved inputs that could materially change the path:
+
+- the observable capability the user wants;
+- their current level and relevant prerequisites;
+- included and excluded scope;
+- available time, desired depth, version, environment, or deadline.
+
+Ask the unresolved questions together in one compact message and offer defaults. Do not ask the user to repeat known context or design the curriculum for you.
+
+If the learning outcome, starting point, or boundary remains ambiguous enough to produce a substantially different course, **Do not create the course yet.** If the user explicitly delegates these choices or asks to proceed without questions, state a reasonable learner profile, scope, and effort assumption, then continue.
+
+### 2. Research and preview the learning path
+
+Research authoritative sources before fixing the curriculum when the domain has official documentation, standards, or primary references. Work backward from the desired use and establish:
+
+- a concrete learning outcome and final transfer task;
+- the concepts that belong inside and outside the course;
+- the prerequisite order between chapters;
+- one observable objective per chapter that says what the user should be able to explain, distinguish, or apply.
+
+Prefer a small coherent path over an exhaustive catalog. Use at least two chapters. Do not add a separate lesson layer, lock later chapters, or promise mastery from completion.
+
+When the request is broad or the path is substantial, preview a compact curriculum brief with the target learner, outcome, scope, assumptions, ordered chapter objectives, assessment approach, and primary source families. Get the user's approval before creating because the current CLI cannot edit, delete, or reorder a course. Skip redundant confirmation when the user already approved the outline, fully specified the path, or explicitly delegated the decision and asked you to proceed.
+
+### 3. Create the course and chapter notes
+
+```bash
+lingo course create --data-file <course-json-path>
+```
+
+The payload contains `title`, an actionable `goal`, and ordered `chapters` with `title`, `objective`, and optional `labels`. Do not include content or questions in this payload.
+
+Require `ok: true`. Capture `data.courseUrl`. Capture every chapter `noteId` from `data.chapters` before continuing.
+
+### 4. Fill and verify every chapter
+
+For each returned chapter `noteId`, build durable Markdown content using the chapter objective and the same source, terminology, and writing rules used for a standalone note. Then call:
+
+```bash
+lingo note content set <note-id> (--data <json> | --data-file <path>)
+lingo question add <note-id> (--data <json> | --data-file <path>)
+```
+
+Create two to five useful questions per chapter by default, including both subjective and multiple-choice formats when there are two or more questions. Test the chapter objective rather than trivia from the source.
+
+Apply the post-creation quality gate in [references/course-design.md](references/course-design.md). Ensure that each objective is actually enabled by its content and tested by its questions, and that the final chapter includes a cumulative transfer task.
+
+### 5. Report partial failures honestly
+
+Course creation and chapter filling are separate steps. If any content or question command fails, keep the successful course, report the failed chapter IDs and what remains incomplete, and never claim that the whole course is ready. Return `data.courseUrl` when creation succeeded.
 
 ## Open the browser workspace
 

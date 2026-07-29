@@ -13,8 +13,21 @@ export const QuestionSessionPage = () => {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <Link to={routePaths.notes}>노트</Link>
-        <span aria-hidden="true">/</span>
+        {session.courseContext ? (
+          <>
+            <Link to={routePaths.courses}>코스</Link>
+            <span aria-hidden="true">/</span>
+            <Link to={routePaths.course(session.courseContext.courseId)}>{session.courseContext.courseTitle}</Link>
+            <span aria-hidden="true">/</span>
+            <span>{session.courseContext.position}장</span>
+            <span aria-hidden="true">/</span>
+          </>
+        ) : (
+          <>
+            <Link to={routePaths.notes}>노트</Link>
+            <span aria-hidden="true">/</span>
+          </>
+        )}
         <Link to={routePaths.note(session.noteId)}>{session.noteTitle}</Link>
         <span aria-hidden="true">/</span>
         <span>질문</span>

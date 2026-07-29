@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { noteIdSchema, noteLabelSchema, noteTitleSchema } from "./note";
 import { noteStatusSchema } from "./note-status";
+import { courseIdSchema, courseTitleSchema } from "./course";
 
 export const noteWorkspaceItemSchema = z.object({
   id: noteIdSchema,
@@ -11,6 +12,13 @@ export const noteWorkspaceItemSchema = z.object({
   status: noteStatusSchema,
   openQuestionCount: z.number().int().nonnegative(),
   updatedAt: z.string().datetime(),
+  courseContext: z
+    .object({
+      courseId: courseIdSchema,
+      courseTitle: courseTitleSchema,
+      position: z.number().int().positive(),
+    })
+    .nullable(),
 });
 
 export const workspacePromptSchema = z.object({

@@ -64,11 +64,11 @@
   background: var(--color-border-strong);
 }
 
-.location {
-  color: var(--color-ink-muted);
-  font-size: 14px;
-  font-weight: 500;
-}
+.navigation { align-self: stretch; display: flex; align-items: stretch; gap: 4px; }
+.navigation a { position: relative; display: flex; align-items: center; min-width: 54px; padding: 0 10px; color: var(--color-ink-muted); font-size: 14px; font-weight: 500; text-decoration: none; }
+.navigation a::after { position: absolute; right: 10px; bottom: -1px; left: 10px; height: 2px; border-radius: 2px 2px 0 0; background: transparent; content: ""; }
+.navigation a.activeNav { color: var(--color-ink-strong); }
+.navigation a.activeNav::after { background: var(--color-accent); }
 
 .topBarActions {
   margin-left: auto;
@@ -88,6 +88,7 @@
 
 @media (hover: hover) and (pointer: fine) {
   .brand:hover { background: var(--color-surface-hover); }
+  .navigation a:hover { color: var(--color-ink-strong); background: var(--color-surface-hover); }
 }
 
 .brand:active { background: var(--color-surface-active); }

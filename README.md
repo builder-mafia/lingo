@@ -151,6 +151,31 @@ lingo question add <note-id> --data '{
 
 이제 브라우저의 노트 작업공간에서 질문을 열고 답할 수 있습니다.
 
+### 체계적인 코스 만들기
+
+하나의 주제가 아니라 큰 도메인을 순서대로 학습하려면 코스를 만듭니다. 각 장은 기존 노트와 같은 학습 단위라서 Markdown 내용, 주관식·객관식 질문, 답변과 피드백 흐름을 그대로 사용합니다.
+
+```bash
+lingo course create --data '{
+  "title": "Effect 핵심 이해하기",
+  "goal": "동기·비동기 Effect와 오류 모델을 설명하고 실제 코드에 적용한다.",
+  "chapters": [
+    {
+      "title": "동기 Effect",
+      "objective": "Effect.succeed, Effect.fail, Effect.sync의 실행 모델을 구분한다.",
+      "labels": ["Effect", "Basics"]
+    },
+    {
+      "title": "비동기 Effect",
+      "objective": "비동기 작업의 성공, 실패, 취소 흐름을 설명한다.",
+      "labels": ["Effect", "Async"]
+    }
+  ]
+}'
+```
+
+Lingo는 코스와 장별 노트를 한 번에 만들고 `courseUrl`과 각 장의 `noteId`를 반환합니다. AI 에이전트나 스킬은 각 `noteId`에 기존 `note content set`, `question add` 명령으로 학습 자료를 채웁니다. 브라우저의 `코스`에서 전체 경로를 보고, 어느 장이든 자유롭게 열 수 있습니다.
+
 ## How It Works
 
 Lingo는 AI와 사용자가 서로 다른 인터페이스를 사용하도록 역할을 나눕니다.
@@ -173,6 +198,7 @@ Lingo는 답변을 대신 만들거나 AI provider를 선택하지 않습니다.
 | 버전 확인 | `lingo --version` |
 | 최신 stable 버전으로 업데이트 | `lingo --update` |
 | 브라우저 작업공간 열기 | `lingo start` |
+| 순서 있는 코스와 장별 노트 만들기 | `lingo course create (--data <json> \| --data-file <path>)` |
 | 노트 만들기 | `lingo note create (--data <json> \| --data-file <path>)` |
 | 노트 내용 저장 | `lingo note content set <note-id> (--data <json> \| --data-file <path>)` |
 | 노트 내용 조회 | `lingo note content get <note-id>` |
@@ -305,6 +331,7 @@ lingo question add <note-id> --data-file ./question.json
 입력 규칙:
 
 - 모든 ID는 UUID입니다.
+- 코스에는 순서 있는 장이 2개 이상 필요하며 각 장은 제목과 학습 목표를 가집니다.
 - 제목, 내용, 질문, 답변, 피드백은 빈 문자열일 수 없습니다.
 - 객관식 질문은 선택지가 2개 이상이어야 합니다.
 - `choices[].order`는 중복되지 않는 양의 정수입니다.

@@ -77,6 +77,11 @@ export const makeLocalHttpServerLayer = (config: LocalHttpServerConfig) =>
     Effect.gen(function* () {
       const database = yield* Database;
       const api: LocalWebAppApi = {
+        listCourses: () => Effect.runPromise(database.listCourses()),
+        findCourseOverview: (courseId) =>
+          Effect.runPromise(database.findCourseOverview(courseId)),
+        setCourseStatus: (courseId, status) =>
+          Effect.runPromise(database.setCourseStatus(courseId, status)),
         listWorkspace: () =>
           Effect.runPromise(
             Effect.all(

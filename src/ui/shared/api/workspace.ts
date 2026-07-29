@@ -8,6 +8,10 @@ import type {
   QuestionSession,
 } from "../../../schemas/question-session";
 import type { TrashedNote } from "../../../schemas/trashed-note";
+import type {
+  CourseOverview,
+  CourseWorkspaceItem,
+} from "../../../schemas/course-workspace";
 
 type ApiSuccess<Data> = { readonly ok: true; readonly data: Data };
 
@@ -24,6 +28,25 @@ export type WorkspaceData = {
   readonly notes: readonly NoteWorkspaceItem[];
   readonly prompts: readonly WorkspacePrompt[];
 };
+
+export type CoursesData = readonly CourseWorkspaceItem[];
+
+export const loadCourses = () =>
+  fetch("/api/courses", { headers: { Accept: "application/json" } }).then(
+    readData<CoursesData>,
+  );
+
+export const loadCourseOverview = (courseId: string) =>
+  fetch(`/api/courses/${encodeURIComponent(courseId)}`, {
+    headers: { Accept: "application/json" },
+  }).then(readData<CourseOverview>);
+
+export const updateCourseStatus = (courseId: string, status: NoteStatus) =>
+  fetch(`/api/courses/${encodeURIComponent(courseId)}/status`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ status }),
+  }).then(readData<{ readonly courseId: string; readonly status: NoteStatus }>);
 
 export const loadWorkspace = () =>
   fetch("/api/workspace", { headers: { Accept: "application/json" } }).then(

@@ -5,6 +5,8 @@ import { AppErrorPage } from "../pages/app-error/AppErrorPage";
 import { NotFoundPage } from "../pages/not-found/NotFoundPage";
 import {
   loadNoteOverview,
+  loadCourseOverview,
+  loadCourses,
   loadQuestionSession,
   loadTrash,
   loadWorkspace,
@@ -27,6 +29,26 @@ export const appRoutes: RouteObject[] = [
             "../pages/notes/NotesPage"
           );
           return { Component: NotesPage };
+        },
+      },
+      {
+        path: "courses",
+        loader: loadCourses,
+        HydrateFallback: RouteHydrationFallback,
+        lazy: async () => {
+          const { CoursesPage } = await import("../pages/courses/CoursesPage");
+          return { Component: CoursesPage };
+        },
+      },
+      {
+        path: "courses/:courseId",
+        loader: ({ params }) => loadCourseOverview(params.courseId ?? ""),
+        HydrateFallback: RouteHydrationFallback,
+        lazy: async () => {
+          const { CourseOverviewPage } = await import(
+            "../pages/course-overview/CourseOverviewPage"
+          );
+          return { Component: CourseOverviewPage };
         },
       },
       {

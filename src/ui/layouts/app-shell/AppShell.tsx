@@ -1,4 +1,4 @@
-import { Link, Outlet } from "react-router";
+import { Link, NavLink, Outlet } from "react-router";
 
 import { routePaths } from "../../app/route-paths";
 import { ThemeToggle } from "../../features/theme-toggle/ThemeToggle";
@@ -13,7 +13,21 @@ export const AppShell = () => (
         <span className={styles.brandName}>lingo</span>
       </Link>
       <div className={styles.divider} aria-hidden="true" />
-      <span className={styles.location}>노트</span>
+      <nav className={styles.navigation} aria-label="주요 메뉴">
+        <NavLink
+          to={routePaths.notes}
+          end
+          className={({ isActive }) => (isActive ? styles.activeNav : undefined)}
+        >
+          노트
+        </NavLink>
+        <NavLink
+          to={routePaths.courses}
+          className={({ isActive }) => (isActive ? styles.activeNav : undefined)}
+        >
+          코스
+        </NavLink>
+      </nav>
       <div className={styles.topBarActions}>
         <span className={styles.localState}>이 기기에 저장됨</span>
         <ThemeToggle />

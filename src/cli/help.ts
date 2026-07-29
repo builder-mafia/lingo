@@ -5,6 +5,7 @@ Usage:
 
 Commands:
   lingo start
+  lingo course create (--data <json> | --data-file <path>)
   lingo note create (--data <json> | --data-file <path>)
   lingo note content set <note-id> (--data <json> | --data-file <path>)
   lingo note content get <note-id>

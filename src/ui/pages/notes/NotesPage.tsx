@@ -112,14 +112,14 @@ export const NotesPage = () => {
           {visibleNotes.map((note) => (
             <NoteRow note={note} onRemove={removeNote} key={note.id} />
           ))}
-          {visibleNotes.length === 0 ? (
-            <div className={styles.empty}>
-              <strong>{notes.length === 0 ? "아직 저장된 노트가 없습니다." : "조건에 맞는 노트가 없습니다."}</strong>
-              <span>{notes.length === 0 ? "CLI에서 노트를 만들면 이 목록에 바로 나타납니다." : "검색어나 필터를 바꿔보세요."}</span>
-              {notes.length === 0 ? <code>lingo note create --data '{`{"title":"새 주제","labels":[]}`}'</code> : null}
-            </div>
-          ) : null}
         </div>
+        {visibleNotes.length === 0 ? (
+          <div className={styles.empty}>
+            <strong>{notes.length === 0 ? "아직 저장된 노트가 없습니다." : "조건에 맞는 노트가 없습니다."}</strong>
+            <span>{notes.length === 0 ? "CLI에서 노트를 만들면 이 목록에 바로 나타납니다." : "검색어나 필터를 바꿔보세요."}</span>
+            {notes.length === 0 ? <code>lingo note create --data '{`{"title":"새 주제","labels":[]}`}'</code> : null}
+          </div>
+        ) : null}
       </section>
 
       <aside className={styles.promptPanel} aria-labelledby="prompt-heading">

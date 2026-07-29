@@ -4,7 +4,7 @@
 
 Lingo is a local-first system for generating and answering questions from learning notes.
 
-A **note** is a unit containing durable content and questions. A skill creates and enriches a note through the `lingo` CLI, then gives the user a localhost browser URL for solving it.
+A **note** is a unit containing durable content and questions. A **course** is a learning goal and an ordered set of chapters, where each chapter is exactly one note. A skill creates and enriches these units through the `lingo` CLI, then gives the user a localhost browser URL for learning.
 
 ## Intended flow
 
@@ -25,6 +25,7 @@ Use the resource first, then the minimum action and identifier needed:
 - `lingo --version`
 - `lingo --update`
 - `lingo start`
+- `lingo course create --data <json>`
 - `lingo note create --data <json>`
 - `lingo note content set <note-id>`
 - `lingo note content get <note-id>`
@@ -40,13 +41,23 @@ Global flags are standalone root operations. They cannot be combined with one an
 ## Core CLI operations
 
 1. Start the browser server: `lingo start` binds only to `127.0.0.1:4312`, reports its URL as JSON, exposes `GET /health`, and keeps running until stopped.
-2. Create a note: `lingo note create --data <json>` stores a required non-empty `title` and optional `labels`, then returns that metadata with `noteId`, `createdAt`, and a localhost note URL. Label whitespace and duplicates are removed while preserving the first-seen order.
-3. Set note content: `lingo note content set <note-id> --data <json>` stores or replaces the note's Markdown body.
-4. Read note content: `lingo note content get <note-id>` returns the current body before it is deepened or reorganized.
-5. Add a question: `lingo question add <note-id> --data <json>` infers a multiple-choice or subjective contract from the JSON shape. Question prompts and multiple-choice options are plain text, not Markdown.
-6. Set an answer: `lingo answer set <question-id> --data <json>` stores or updates an answer for a subjective question.
-7. Read answers needing evaluation: `lingo answer list <note-id>` returns unanswered evaluations with question context.
-8. Store an evaluation: `lingo evaluation set <question-id> --data <json>` stores or updates external AI feedback.
+2. Create a course: `lingo course create --data <json>` atomically creates a learning goal and at least two ordered chapter notes. It returns a course URL and every chapter note ID; chapter content and questions continue to use the existing note commands.
+3. Create a note: `lingo note create --data <json>` stores a required non-empty `title` and optional `labels`, then returns that metadata with `noteId`, `createdAt`, and a localhost note URL. Label whitespace and duplicates are removed while preserving the first-seen order.
+4. Set note content: `lingo note content set <note-id> --data <json>` stores or replaces the note's Markdown body.
+5. Read note content: `lingo note content get <note-id>` returns the current body before it is deepened or reorganized.
+6. Add a question: `lingo question add <note-id> --data <json>` infers a multiple-choice or subjective contract from the JSON shape. Question prompts and multiple-choice options are plain text, not Markdown.
+7. Set an answer: `lingo answer set <question-id> --data <json>` stores or updates an answer for a subjective question.
+8. Read answers needing evaluation: `lingo answer list <note-id>` returns unanswered evaluations with question context.
+9. Store an evaluation: `lingo evaluation set <question-id> --data <json>` stores or updates external AI feedback.
+
+## Course model
+
+- A course owns `title`, actionable `goal`, workflow `status`, and ordered chapters.
+- A chapter is one normal note plus a course-specific objective and position. It does not duplicate content, questions, answers, or evaluation storage.
+- Creating a course, its chapter notes, labels, and memberships is one SQLite transaction.
+- Answering the first question in any chapter may move a `not_started` course to `in_progress`. Only the user chooses `completed` or `deferred`.
+- Chapter order is recommended, never locked. Completion is not a mastery score, and the UI does not use percentages, XP, streaks, or automatic proficiency claims.
+- MVP intentionally excludes course editing, deletion, chapter insertion/reordering, and a separate lesson layer.
 
 The browser workspace uses soft deletion for notes. Removing a note moves it to a local trash view without deleting its content, questions, answers, or feedback. The user can restore it or explicitly confirm permanent deletion; only permanent deletion removes the full note graph from SQLite.
 

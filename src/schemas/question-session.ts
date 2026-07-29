@@ -3,6 +3,7 @@ import { z } from "zod";
 import { multipleChoiceChoiceSchema } from "./multiple-choice";
 import { noteIdSchema, noteLabelSchema, noteTitleSchema } from "./note";
 import { noteStatusSchema } from "./note-status";
+import { courseNoteContextSchema } from "./course-workspace";
 
 export const noteQuestionItemSchema = z.object({
   id: z.string().uuid(),
@@ -20,6 +21,7 @@ export const noteOverviewSchema = z.object({
   labels: z.array(noteLabelSchema),
   status: noteStatusSchema,
   questions: z.array(noteQuestionItemSchema),
+  courseContext: courseNoteContextSchema.nullable(),
 });
 
 const questionSessionBaseSchema = z.object({
@@ -30,6 +32,7 @@ const questionSessionBaseSchema = z.object({
   question: z.string().trim().min(1),
   nextQuestionId: z.string().uuid().nullable(),
   resolvedAt: z.string().datetime().nullable(),
+  courseContext: courseNoteContextSchema.nullable(),
 });
 
 export const subjectiveQuestionSessionSchema = questionSessionBaseSchema.extend({

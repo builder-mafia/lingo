@@ -7,10 +7,30 @@ import {
 
 const noteId = "7504fbaf-e16c-42c0-91a8-ff9e2f5e4eaa";
 const questionId = "9237cfd4-2883-48dc-a7ac-a23ee3bc3efa";
+const courseId = "11a848e1-d725-4820-aac6-5bb4661f08ef";
 
 const makeApi = () => {
   const calls: string[] = [];
   const api: LocalWebAppApi = {
+    listCourses: () =>
+      Promise.resolve([
+        {
+          id: courseId,
+          title: "Effect 핵심",
+          goal: "Effect의 실행 모델을 익힌다.",
+          status: "not_started",
+          chapterCount: 2,
+          completedChapterCount: 0,
+          openQuestionCount: 3,
+          createdAt: "2026-07-29T00:00:00.000Z",
+          currentChapter: { position: 1, title: "동기 Effect" },
+        },
+      ]),
+    findCourseOverview: () => Promise.resolve(undefined),
+    setCourseStatus: (targetCourseId, status) => {
+      calls.push(`course-status:${targetCourseId}:${status}`);
+      return Promise.resolve({ courseId: targetCourseId, status });
+    },
     listWorkspace: () => Promise.resolve({ notes: [], prompts: [] }),
     listTrashedNotes: () =>
       Promise.resolve([
@@ -62,6 +82,28 @@ const webAssets = {
 };
 
 describe("local web app note and choice actions", () => {
+  test("lists courses and updates course status", async () => {
+    const { api, calls } = makeApi();
+    const app = makeLocalWebApp({ api, webAssets });
+
+    const listResponse = await app.request("/api/courses");
+    const statusResponse = await app.request(`/api/courses/${courseId}/status`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "in_progress" }),
+    });
+
+    expect(await listResponse.json()).toEqual({
+      ok: true,
+      data: [expect.objectContaining({ id: courseId, chapterCount: 2 })],
+    });
+    expect(await statusResponse.json()).toEqual({
+      ok: true,
+      data: { courseId, status: "in_progress" },
+    });
+    expect(calls).toEqual([`course-status:${courseId}:in_progress`]);
+  });
+
   test("moves a note to trash through DELETE /api/notes/:noteId", async () => {
     const { api, calls } = makeApi();
     const app = makeLocalWebApp({ api, webAssets });

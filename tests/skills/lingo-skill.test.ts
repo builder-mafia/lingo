@@ -14,8 +14,39 @@ describe("Lingo agent skill", () => {
     expect(skill).toContain("lingo question add");
     expect(skill).toContain("lingo answer list");
     expect(skill).toContain("lingo evaluation set");
+    expect(skill).toContain("lingo course create");
     expect(skill).toContain("references/cli.md");
     expect(skill).not.toContain("lingo note summary set");
+  });
+
+  test("builds systematic courses as ordered chapter notes", async () => {
+    const skill = await readProjectFile("skills/lingo/SKILL.md");
+    const reference = await readProjectFile("skills/lingo/references/cli.md");
+
+    expect(skill).toContain("Design a systematic course");
+    expect(skill).toContain("learning outcome");
+    expect(skill).toContain("prerequisite order");
+    expect(skill).toContain("Capture every chapter `noteId`");
+    expect(skill).toContain("failed chapter IDs");
+    expect(reference).toContain("## Create a course");
+    expect(reference).toContain('"chapters"');
+  });
+
+  test("requires learner discovery and a quality gate before creating a course", async () => {
+    const skill = await readProjectFile("skills/lingo/SKILL.md");
+    const courseDesign = await readProjectFile(
+      "skills/lingo/references/course-design.md",
+    );
+
+    expect(skill).toContain("references/course-design.md");
+    expect(skill).toContain("Do not create the course yet");
+    expect(skill).toContain("minimum viable clarification");
+    expect(courseDesign).toContain("## Learner discovery");
+    expect(courseDesign).toContain("## Curriculum construction");
+    expect(courseDesign).toContain("## Assessment design");
+    expect(courseDesign).toContain("## Quality gate");
+    expect(courseDesign).toContain("transfer task");
+    expect(courseDesign).toContain("authoritative sources");
   });
 
   test("creates durable content with useful evidence and sources", async () => {
@@ -25,6 +56,28 @@ describe("Lingo agent skill", () => {
     expect(skill).toContain("authoritative sources");
     expect(skill).toContain("Sources");
     expect(skill).toContain("Do not write a transcript");
+  });
+
+  test("synthesizes cohesive notes around a future retrieval need", async () => {
+    const skill = await readProjectFile("skills/lingo/SKILL.md");
+    const noteDesign = await readProjectFile(
+      "skills/lingo/references/note-design.md",
+    );
+
+    expect(skill).toContain("references/note-design.md");
+    expect(skill).toContain("note brief");
+    expect(skill).toContain("post-save quality gate");
+    expect(noteDesign).toContain("## Capture intent");
+    expect(noteDesign).toContain("## Synthesis process");
+    expect(noteDesign).toContain("## Information architecture");
+    expect(noteDesign).toContain("## Evidence and uncertainty");
+    expect(noteDesign).toContain("## Question alignment");
+    expect(noteDesign).toContain("## Quality gate");
+    expect(noteDesign).toContain("future retrieval cue");
+    expect(noteDesign).toContain(
+      "current CLI cannot list, edit, or delete the complete existing question bank",
+    );
+    expect(skill).toContain("do not claim old questions were rechecked");
   });
 
   test("creates a mixed practice set by default", async () => {

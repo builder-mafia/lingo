@@ -30,6 +30,18 @@ import {
   type QuestionSession,
 } from "../schemas/question-session";
 import { runDatabaseMigrations } from "./database-migrations";
+import {
+  createdCourseSchema,
+  type CreateCourse,
+  type CreatedCourse,
+} from "../schemas/course";
+import {
+  courseOverviewSchema,
+  courseNoteContextSchema,
+  courseWorkspaceItemSchema,
+  type CourseOverview,
+  type CourseWorkspaceItem,
+} from "../schemas/course-workspace";
 
 export type StoredMultipleChoiceQuestion = {
   readonly questionId: string;
@@ -50,6 +62,23 @@ export type UnevaluatedSubjectiveAnswer = {
 };
 
 export interface DatabaseService {
+  readonly createCourse: (
+    input: CreateCourse,
+  ) => Effect.Effect<CreatedCourse, CliError>;
+  readonly listCourses: () => Effect.Effect<
+    readonly CourseWorkspaceItem[],
+    CliError
+  >;
+  readonly findCourseOverview: (
+    courseId: string,
+  ) => Effect.Effect<CourseOverview | undefined, CliError>;
+  readonly setCourseStatus: (
+    courseId: string,
+    status: NoteStatus,
+  ) => Effect.Effect<
+    { readonly courseId: string; readonly status: NoteStatus },
+    CliError
+  >;
   readonly createNote: (input: CreateNote) => Effect.Effect<Note, CliError>;
   readonly findNote: (noteId: string) => Effect.Effect<Note | undefined, CliError>;
   readonly setNoteContent: (
@@ -148,6 +177,54 @@ type NoteRow = {
   readonly createdAt: string;
 };
 
+type CourseWorkspaceRow = {
+  readonly id: string;
+  readonly title: string;
+  readonly goal: string;
+  readonly status: string;
+  readonly chapterCount: number;
+  readonly completedChapterCount: number;
+  readonly openQuestionCount: number;
+  readonly createdAt: string;
+  readonly currentChapterPosition: number | null;
+  readonly currentChapterTitle: string | null;
+};
+
+type CourseOverviewRow = {
+  readonly id: string;
+  readonly title: string;
+  readonly goal: string;
+  readonly status: string;
+  readonly createdAt: string;
+};
+
+type CourseChapterOverviewRow = {
+  readonly position: number;
+  readonly noteId: string;
+  readonly title: string;
+  readonly objective: string;
+  readonly status: string;
+  readonly openQuestionCount: number;
+  readonly trashed: number;
+};
+
+type CourseChapterLabelRow = {
+  readonly noteId: string;
+  readonly label: string;
+};
+
+type CourseNoteContextRow = {
+  readonly courseId: string;
+  readonly courseTitle: string;
+  readonly position: number;
+};
+
+type NextCourseChapterRow = {
+  readonly noteId: string;
+  readonly title: string;
+  readonly position: number;
+};
+
 type NoteLabelRow = {
   readonly label: string;
 };
@@ -165,6 +242,9 @@ type NoteWorkspaceRow = {
   readonly status: string;
   readonly openQuestionCount: number;
   readonly updatedAt: string;
+  readonly courseId: string | null;
+  readonly courseTitle: string | null;
+  readonly coursePosition: number | null;
 };
 
 type TrashedNoteRow = {
@@ -340,7 +420,45 @@ const findNextUnansweredQuestionId = (
     .get(noteId, currentQuestionId, noteId, currentQuestionId)?.questionId ??
   null;
 
+const findCourseNoteContext = (
+  database: SqliteDatabase,
+  noteId: string,
+) => {
+  const current = database
+    .query<CourseNoteContextRow, [string]>(`
+      SELECT
+        courses.id AS courseId,
+        courses.title AS courseTitle,
+        chapters.position
+      FROM course_chapters AS chapters
+      INNER JOIN courses ON courses.id = chapters.course_id
+      WHERE chapters.note_id = ?
+    `)
+    .get(noteId);
+  if (!current) return null;
+
+  const nextChapter = database
+    .query<NextCourseChapterRow, [string, number]>(`
+      SELECT
+        notes.id AS noteId,
+        notes.title,
+        chapters.position
+      FROM course_chapters AS chapters
+      INNER JOIN notes ON notes.id = chapters.note_id
+      WHERE
+        chapters.course_id = ?
+        AND chapters.position > ?
+        AND notes.deleted_at IS NULL
+      ORDER BY chapters.position
+      LIMIT 1
+    `)
+    .get(current.courseId, current.position) ?? null;
+
+  return courseNoteContextSchema.parse({ ...current, nextChapter });
+};
+
 const permanentNoteDeleteStatements = [
+  "DELETE FROM course_chapters WHERE note_id = ?",
   `
     DELETE FROM subjective_evaluations
     WHERE question_id IN (
@@ -402,6 +520,211 @@ const deleteTrashedNote = (database: SqliteDatabase, noteId: string) =>
   })();
 
 const makeService = (databasePath: string): DatabaseService => ({
+  createCourse: (input) =>
+    withDatabase(
+      databasePath,
+      (database) => {
+        const createdAt = new Date().toISOString();
+        const courseId = crypto.randomUUID();
+        const chapters = input.chapters.map((chapter, index) => ({
+          noteId: crypto.randomUUID(),
+          position: index + 1,
+          title: chapter.title,
+          objective: chapter.objective,
+          status: "not_started" as const,
+          labels: chapter.labels,
+        }));
+        const insertCourse = database.query(
+          "INSERT INTO courses (id, title, goal, status, created_at) VALUES (?, ?, ?, 'not_started', ?)",
+        );
+        const insertNote = database.query(
+          "INSERT INTO notes (id, title, created_at) VALUES (?, ?, ?)",
+        );
+        const insertLabel = database.query(
+          "INSERT INTO note_labels (note_id, label, position) VALUES (?, ?, ?)",
+        );
+        const insertChapter = database.query(
+          "INSERT INTO course_chapters (course_id, note_id, position, objective) VALUES (?, ?, ?, ?)",
+        );
+
+        database.transaction(() => {
+          insertCourse.run(courseId, input.title, input.goal, createdAt);
+          for (const chapter of chapters) {
+            insertNote.run(chapter.noteId, chapter.title, createdAt);
+            chapter.labels.forEach((label, position) => {
+              insertLabel.run(chapter.noteId, label, position);
+            });
+            insertChapter.run(
+              courseId,
+              chapter.noteId,
+              chapter.position,
+              chapter.objective,
+            );
+          }
+        })();
+
+        return createdCourseSchema.parse({
+          courseId,
+          title: input.title,
+          goal: input.goal,
+          status: "not_started",
+          createdAt,
+          chapterCount: chapters.length,
+          chapters: chapters.map(({ labels: _labels, ...chapter }) => chapter),
+        });
+      },
+      "Could not create course.",
+    ),
+  listCourses: () =>
+    withDatabase(
+      databasePath,
+      (database) =>
+        database
+          .query<CourseWorkspaceRow, []>(`
+            SELECT
+              courses.id,
+              courses.title,
+              courses.goal,
+              courses.status,
+              courses.created_at AS createdAt,
+              (
+                SELECT candidate.position
+                FROM course_chapters AS candidate
+                INNER JOIN notes AS candidate_notes ON candidate_notes.id = candidate.note_id
+                WHERE
+                  candidate.course_id = courses.id
+                  AND candidate_notes.deleted_at IS NULL
+                  AND candidate_notes.status IN ('in_progress', 'not_started')
+                ORDER BY
+                  CASE WHEN candidate_notes.status = 'in_progress' THEN 0 ELSE 1 END,
+                  candidate.position
+                LIMIT 1
+              ) AS currentChapterPosition,
+              (
+                SELECT candidate_notes.title
+                FROM course_chapters AS candidate
+                INNER JOIN notes AS candidate_notes ON candidate_notes.id = candidate.note_id
+                WHERE
+                  candidate.course_id = courses.id
+                  AND candidate_notes.deleted_at IS NULL
+                  AND candidate_notes.status IN ('in_progress', 'not_started')
+                ORDER BY
+                  CASE WHEN candidate_notes.status = 'in_progress' THEN 0 ELSE 1 END,
+                  candidate.position
+                LIMIT 1
+              ) AS currentChapterTitle,
+              COUNT(chapters.note_id) AS chapterCount,
+              COALESCE(SUM(CASE
+                WHEN notes.deleted_at IS NULL AND notes.status = 'completed' THEN 1
+                ELSE 0
+              END), 0)
+                AS completedChapterCount,
+              COALESCE(SUM(
+                CASE WHEN notes.deleted_at IS NULL THEN
+                  (SELECT COUNT(*) FROM subjective_questions
+                    WHERE note_id = chapters.note_id AND resolved_at IS NULL) +
+                  (SELECT COUNT(*) FROM multiple_choice_questions
+                    WHERE note_id = chapters.note_id AND resolved_at IS NULL)
+                ELSE 0 END
+              ), 0) AS openQuestionCount
+            FROM courses
+            LEFT JOIN course_chapters AS chapters ON chapters.course_id = courses.id
+            LEFT JOIN notes ON notes.id = chapters.note_id
+            GROUP BY courses.id
+            ORDER BY courses.created_at DESC
+          `)
+          .all()
+          .map((row) =>
+            courseWorkspaceItemSchema.parse({
+              ...row,
+              currentChapter:
+                row.currentChapterPosition && row.currentChapterTitle
+                  ? {
+                      position: row.currentChapterPosition,
+                      title: row.currentChapterTitle,
+                    }
+                  : null,
+            }),
+          ),
+      "Could not list courses.",
+    ),
+  findCourseOverview: (courseId) =>
+    withDatabase(
+      databasePath,
+      (database) => {
+        const course = database
+          .query<CourseOverviewRow, [string]>(`
+            SELECT id, title, goal, status, created_at AS createdAt
+            FROM courses
+            WHERE id = ?
+          `)
+          .get(courseId);
+        if (!course) return undefined;
+
+        const chapters = database
+          .query<CourseChapterOverviewRow, [string]>(`
+            SELECT
+              chapters.position,
+              notes.id AS noteId,
+              notes.title,
+              chapters.objective,
+              notes.status,
+              (
+                SELECT COUNT(*) FROM subjective_questions
+                WHERE note_id = notes.id AND resolved_at IS NULL
+              ) + (
+                SELECT COUNT(*) FROM multiple_choice_questions
+                WHERE note_id = notes.id AND resolved_at IS NULL
+              ) AS openQuestionCount,
+              CASE WHEN notes.deleted_at IS NULL THEN 0 ELSE 1 END AS trashed
+            FROM course_chapters AS chapters
+            INNER JOIN notes ON notes.id = chapters.note_id
+            WHERE chapters.course_id = ?
+            ORDER BY chapters.position
+          `)
+          .all(courseId);
+        const labelRows = database
+          .query<CourseChapterLabelRow, [string]>(`
+            SELECT labels.note_id AS noteId, labels.label
+            FROM note_labels AS labels
+            INNER JOIN course_chapters AS chapters ON chapters.note_id = labels.note_id
+            WHERE chapters.course_id = ?
+            ORDER BY chapters.position, labels.position
+          `)
+          .all(courseId);
+        const labelsByNote = new Map<string, string[]>();
+        for (const row of labelRows) {
+          const labels = labelsByNote.get(row.noteId) ?? [];
+          labels.push(row.label);
+          labelsByNote.set(row.noteId, labels);
+        }
+
+        return courseOverviewSchema.parse({
+          ...course,
+          chapters: chapters.map((chapter) => ({
+            ...chapter,
+            labels: labelsByNote.get(chapter.noteId) ?? [],
+            trashed: chapter.trashed === 1,
+          })),
+        });
+      },
+      "Could not read course.",
+    ),
+  setCourseStatus: (courseId, status) =>
+    withDatabase(
+      databasePath,
+      (database) => {
+        database.query("UPDATE courses SET status = ? WHERE id = ?").run(status, courseId);
+        const updated = database
+          .query<{ readonly status: string }, [string]>(
+            "SELECT status FROM courses WHERE id = ?",
+          )
+          .get(courseId);
+        if (!updated) throw new Error("Course not found.");
+        return { courseId, status: noteStatusSchema.parse(updated.status) };
+      },
+      "Could not update course status.",
+    ),
   createNote: (input) =>
     withDatabase(
       databasePath,
@@ -577,6 +900,19 @@ const makeService = (databasePath: string): DatabaseService => ({
                 SELECT note_id FROM subjective_questions WHERE id = ?
               )
           `).run(questionId);
+          database.query(`
+            UPDATE courses
+            SET status = 'in_progress'
+            WHERE
+              status = 'not_started'
+              AND id IN (
+                SELECT chapters.course_id
+                FROM course_chapters AS chapters
+                INNER JOIN subjective_questions AS questions
+                  ON questions.note_id = chapters.note_id
+                WHERE questions.id = ?
+              )
+          `).run(questionId);
         })();
         return { questionId, content };
       },
@@ -626,6 +962,9 @@ const makeService = (databasePath: string): DatabaseService => ({
               notes.title,
               contents.content AS content,
               notes.status,
+              courses.id AS courseId,
+              courses.title AS courseTitle,
+              chapters.position AS coursePosition,
               (
                 SELECT COUNT(*)
                 FROM subjective_questions
@@ -672,6 +1011,8 @@ const makeService = (databasePath: string): DatabaseService => ({
               ) AS updatedAt
             FROM notes
             LEFT JOIN note_contents AS contents ON contents.note_id = notes.id
+            LEFT JOIN course_chapters AS chapters ON chapters.note_id = notes.id
+            LEFT JOIN courses ON courses.id = chapters.course_id
             WHERE notes.deleted_at IS NULL
             ORDER BY updatedAt DESC, notes.created_at DESC
           `)
@@ -685,6 +1026,14 @@ const makeService = (databasePath: string): DatabaseService => ({
           noteWorkspaceItemSchema.parse({
             ...row,
             labels: labelQuery.all(row.id).map(({ label }) => label),
+            courseContext:
+              row.courseId && row.courseTitle && row.coursePosition
+                ? {
+                    courseId: row.courseId,
+                    courseTitle: row.courseTitle,
+                    position: row.coursePosition,
+                  }
+                : null,
           }),
         );
       },
@@ -910,7 +1259,12 @@ const makeService = (databasePath: string): DatabaseService => ({
             hasFeedback: question.hasFeedback === 1,
           }));
 
-        return noteOverviewSchema.parse({ ...note, labels, questions });
+        return noteOverviewSchema.parse({
+          ...note,
+          labels,
+          questions,
+          courseContext: findCourseNoteContext(database, noteId),
+        });
       },
       "Could not read note overview.",
     ),
@@ -942,6 +1296,7 @@ const makeService = (databasePath: string): DatabaseService => ({
         if (subjective) {
           return questionSessionSchema.parse({
             ...subjective,
+            courseContext: findCourseNoteContext(database, subjective.noteId),
             nextQuestionId: findNextUnansweredQuestionId(
               database,
               subjective.noteId,
@@ -990,6 +1345,7 @@ const makeService = (databasePath: string): DatabaseService => ({
         return questionSessionSchema.parse({
           ...multipleChoice,
           choices,
+          courseContext: findCourseNoteContext(database, multipleChoice.noteId),
           nextQuestionId: findNextUnansweredQuestionId(
             database,
             multipleChoice.noteId,
@@ -1040,6 +1396,15 @@ const makeService = (databasePath: string): DatabaseService => ({
             UPDATE notes
             SET status = 'in_progress'
             WHERE id = ? AND status = 'not_started'
+          `).run(question.noteId);
+          database.query(`
+            UPDATE courses
+            SET status = 'in_progress'
+            WHERE
+              status = 'not_started'
+              AND id IN (
+                SELECT course_id FROM course_chapters WHERE note_id = ?
+              )
           `).run(question.noteId);
         })();
 
