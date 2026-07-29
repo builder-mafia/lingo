@@ -28,7 +28,7 @@ export PATH="$HOME/.local/bin:$PATH"
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/builder-mafia/lingo/main/install.sh | \
-  sh -s -- --version v0.4.0 --install-dir "$HOME/bin"
+  sh -s -- --version v0.5.0 --install-dir "$HOME/bin"
 ```
 
 설치 스크립트는 운영체제와 CPU에 맞는 실행 파일을 선택하고 `SHA256SUMS`로 검증한 뒤 기존 `lingo`를 교체합니다.
@@ -59,8 +59,8 @@ lingo --update
   "ok": true,
   "data": {
     "updated": true,
-    "previousVersion": "0.3.0",
-    "version": "0.4.0"
+    "previousVersion": "0.4.0",
+    "version": "0.5.0"
   }
 }
 ```
@@ -72,7 +72,7 @@ lingo --update
   "ok": true,
   "data": {
     "updated": false,
-    "version": "0.4.0"
+    "version": "0.5.0"
   }
 }
 ```
