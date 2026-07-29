@@ -32,6 +32,23 @@ describe("Lingo agent skill", () => {
     expect(reference).toContain('"chapters"');
   });
 
+  test("requires learner discovery and a quality gate before creating a course", async () => {
+    const skill = await readProjectFile("skills/lingo/SKILL.md");
+    const courseDesign = await readProjectFile(
+      "skills/lingo/references/course-design.md",
+    );
+
+    expect(skill).toContain("references/course-design.md");
+    expect(skill).toContain("Do not create the course yet");
+    expect(skill).toContain("minimum viable clarification");
+    expect(courseDesign).toContain("## Learner discovery");
+    expect(courseDesign).toContain("## Curriculum construction");
+    expect(courseDesign).toContain("## Assessment design");
+    expect(courseDesign).toContain("## Quality gate");
+    expect(courseDesign).toContain("transfer task");
+    expect(courseDesign).toContain("authoritative sources");
+  });
+
   test("creates durable content with useful evidence and sources", async () => {
     const skill = await readProjectFile("skills/lingo/SKILL.md");
 

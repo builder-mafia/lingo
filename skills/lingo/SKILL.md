@@ -12,7 +12,8 @@ Use the `lingo` CLI between the active AI agent and the user's local learning wo
 1. Verify `lingo` with `lingo --version`.
 2. If it is missing, stop and give the user the official installation command from the project README. Do not silently install software.
 3. Read [references/cli.md](references/cli.md) before constructing payloads or handling errors.
-4. Use only the CLI. Do not read or modify `~/.lingo/lingo.sqlite` directly.
+4. When designing a course, read [references/course-design.md](references/course-design.md) completely before asking discovery questions or proposing a curriculum.
+5. Use only the CLI. Do not read or modify `~/.lingo/lingo.sqlite` directly.
 
 ## Choose the workflow
 
@@ -135,18 +136,33 @@ Preserve still-valid knowledge, integrate the new material, resolve contradictio
 
 Use a course when the user wants to build capability across a domain rather than save one cohesive topic. A course is an ordered set of chapters, and every chapter is a normal Lingo note with its own Markdown content and questions.
 
-### 1. Define the learning path
+### 1. Discover the learner and constraints
 
-Infer or establish:
+Read [references/course-design.md](references/course-design.md). Infer what the conversation already establishes, then use **minimum viable clarification** for unresolved inputs that could materially change the path:
 
-- the user's current level, desired scope, and concrete learning outcome;
-- the concepts that belong in or outside the course;
+- the observable capability the user wants;
+- their current level and relevant prerequisites;
+- included and excluded scope;
+- available time, desired depth, version, environment, or deadline.
+
+Ask the unresolved questions together in one compact message and offer defaults. Do not ask the user to repeat known context or design the curriculum for you.
+
+If the learning outcome, starting point, or boundary remains ambiguous enough to produce a substantially different course, **Do not create the course yet.** If the user explicitly delegates these choices or asks to proceed without questions, state a reasonable learner profile, scope, and effort assumption, then continue.
+
+### 2. Research and preview the learning path
+
+Research authoritative sources before fixing the curriculum when the domain has official documentation, standards, or primary references. Work backward from the desired use and establish:
+
+- a concrete learning outcome and final transfer task;
+- the concepts that belong inside and outside the course;
 - the prerequisite order between chapters;
 - one observable objective per chapter that says what the user should be able to explain, distinguish, or apply.
 
-Research authoritative sources before fixing the curriculum when the domain has official documentation, standards, or primary references. Prefer a small coherent path over an exhaustive catalog. Use at least two chapters. Do not add a separate lesson layer, lock later chapters, or promise mastery from completion.
+Prefer a small coherent path over an exhaustive catalog. Use at least two chapters. Do not add a separate lesson layer, lock later chapters, or promise mastery from completion.
 
-### 2. Create the course and chapter notes
+When the request is broad or the path is substantial, preview a compact curriculum brief with the target learner, outcome, scope, assumptions, ordered chapter objectives, assessment approach, and primary source families. Get the user's approval before creating because the current CLI cannot edit, delete, or reorder a course. Skip redundant confirmation when the user already approved the outline, fully specified the path, or explicitly delegated the decision and asked you to proceed.
+
+### 3. Create the course and chapter notes
 
 ```bash
 lingo course create --data-file <course-json-path>
@@ -156,7 +172,7 @@ The payload contains `title`, an actionable `goal`, and ordered `chapters` with 
 
 Require `ok: true`. Capture `data.courseUrl`. Capture every chapter `noteId` from `data.chapters` before continuing.
 
-### 3. Fill every chapter
+### 4. Fill and verify every chapter
 
 For each returned chapter `noteId`, build durable Markdown content using the chapter objective and the same source, terminology, and writing rules used for a standalone note. Then call:
 
@@ -167,7 +183,9 @@ lingo question add <note-id> (--data <json> | --data-file <path>)
 
 Create two to five useful questions per chapter by default, including both subjective and multiple-choice formats when there are two or more questions. Test the chapter objective rather than trivia from the source.
 
-### 4. Report partial failures honestly
+Apply the post-creation quality gate in [references/course-design.md](references/course-design.md). Ensure that each objective is actually enabled by its content and tested by its questions, and that the final chapter includes a cumulative transfer task.
+
+### 5. Report partial failures honestly
 
 Course creation and chapter filling are separate steps. If any content or question command fails, keep the successful course, report the failed chapter IDs and what remains incomplete, and never claim that the whole course is ready. Return `data.courseUrl` when creation succeeded.
 
