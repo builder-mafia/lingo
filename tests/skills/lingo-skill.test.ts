@@ -58,6 +58,28 @@ describe("Lingo agent skill", () => {
     expect(skill).toContain("Do not write a transcript");
   });
 
+  test("synthesizes cohesive notes around a future retrieval need", async () => {
+    const skill = await readProjectFile("skills/lingo/SKILL.md");
+    const noteDesign = await readProjectFile(
+      "skills/lingo/references/note-design.md",
+    );
+
+    expect(skill).toContain("references/note-design.md");
+    expect(skill).toContain("note brief");
+    expect(skill).toContain("post-save quality gate");
+    expect(noteDesign).toContain("## Capture intent");
+    expect(noteDesign).toContain("## Synthesis process");
+    expect(noteDesign).toContain("## Information architecture");
+    expect(noteDesign).toContain("## Evidence and uncertainty");
+    expect(noteDesign).toContain("## Question alignment");
+    expect(noteDesign).toContain("## Quality gate");
+    expect(noteDesign).toContain("future retrieval cue");
+    expect(noteDesign).toContain(
+      "current CLI cannot list, edit, or delete the complete existing question bank",
+    );
+    expect(skill).toContain("do not claim old questions were rechecked");
+  });
+
   test("creates a mixed practice set by default", async () => {
     const skill = await readProjectFile("skills/lingo/SKILL.md");
 

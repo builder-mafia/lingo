@@ -12,8 +12,9 @@ Use the `lingo` CLI between the active AI agent and the user's local learning wo
 1. Verify `lingo` with `lingo --version`.
 2. If it is missing, stop and give the user the official installation command from the project README. Do not silently install software.
 3. Read [references/cli.md](references/cli.md) before constructing payloads or handling errors.
-4. When designing a course, read [references/course-design.md](references/course-design.md) completely before asking discovery questions or proposing a curriculum.
-5. Use only the CLI. Do not read or modify `~/.lingo/lingo.sqlite` directly.
+4. When creating, deepening, or filling a chapter note, read [references/note-design.md](references/note-design.md) completely before drafting content or questions.
+5. When designing a course, read [references/course-design.md](references/course-design.md) completely before asking discovery questions or proposing a curriculum.
+6. Use only the CLI. Do not read or modify `~/.lingo/lingo.sqlite` directly.
 
 ## Choose the workflow
 
@@ -27,7 +28,7 @@ Do not invent an existing note ID. If the user refers to an old note but provide
 
 ## Build durable note content
 
-When the user gives no more specific writing direction, infer the user's current understanding from the conversation and create material that will help them reconstruct and extend it later.
+Read [references/note-design.md](references/note-design.md). When the user gives no more specific writing direction, infer the user's current understanding from the conversation and create material that will help them reconstruct and extend it later.
 
 Select only the structure useful to the topic. Include, when relevant:
 
@@ -75,6 +76,8 @@ When related articles or documentation can materially improve accuracy, context,
 
 ### 1. Prepare the note
 
+Prepare an internal **note brief** with the future retrieval need, central model, learner starting point, required evidence and examples, scope boundary, fragile points, and question targets. Ask at most one compact clarification only when the intended use, topic boundary, or depth would materially change the note; otherwise make and state a reasonable assumption.
+
 Choose one cohesive topic and prepare:
 
 - a concrete title naming the concept or decision;
@@ -118,9 +121,11 @@ For a multiple-choice question, provide three or four choices when the topic sup
 lingo question add <note-id> --data '{"question":"Which situation can still expose stale cache data?","choices":[{"order":1,"option":"The source changes before the TTL expires","explanation":"The cached value remains valid by time even though the source has changed."},{"order":2,"option":"Every read bypasses the cache","explanation":"Bypassing the cache reads the source directly, so this is not stale cache data."},{"order":3,"option":"The cache entry is removed on every source update","explanation":"Successful invalidation removes the stale entry before the next read."}],"correctId":1}'
 ```
 
-### 5. Return the result
+### 5. Verify and return the result
 
-Report what was saved and return `data.noteUrl`. Do not dump raw JSON unless asked. Never claim that data was saved if any required command failed.
+For substantive content, read it back with `lingo note content get <note-id>` and apply the **post-save quality gate** in [references/note-design.md](references/note-design.md). Verify that Markdown structure and links survived serialization and that every question tests the intended model.
+
+Report what was saved and return `data.noteUrl`. Do not dump raw JSON unless asked. Never claim that data was saved if any required command failed. If content or question creation partially fails, identify the incomplete operation precisely.
 
 ## Deepen an existing note
 
@@ -130,7 +135,7 @@ Read the current body before writing:
 lingo note content get <note-id>
 ```
 
-Preserve still-valid knowledge, integrate the new material, resolve contradictions where evidence permits, and produce one coherent replacement. Then write the complete body with `lingo note content set`; do not blindly append fragments.
+Preserve still-valid knowledge, integrate the new material, resolve contradictions where evidence permits, and produce one coherent replacement. Then write the complete body with `lingo note content set`; do not blindly append fragments. Keep the original retrieval need cohesive, split independent material into a separate note, and apply the post-save quality gate. Because the current CLI cannot inspect or edit the complete existing question bank, do not claim old questions were rechecked; warn the user when a substantive rewrite may have made them obsolete.
 
 ## Design a systematic course
 
