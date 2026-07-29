@@ -3,12 +3,36 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#f8f7f4" />
+    <meta name="theme-color" content="#f7f7f8" />
     <meta
       name="description"
       content="배운 것을 나의 언어로 만드는 사고 도구, Lingo"
     />
     <title>Lingo — 배운 것을, 나의 언어로</title>
+    <script>
+      (() => {
+        let savedTheme = null;
+        try {
+          savedTheme = localStorage.getItem("lingo:theme:v1");
+        } catch {
+          // The operating-system preference remains available without storage.
+        }
+        const theme =
+          savedTheme === "light" || savedTheme === "dark"
+            ? savedTheme
+            : matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light";
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.style.colorScheme = theme;
+        document
+          .querySelector('meta[name="theme-color"]')
+          ?.setAttribute(
+            "content",
+            theme === "dark" ? "#121318" : "#f7f7f8",
+          );
+      })();
+    </script>
   </head>
   <body>
     <div id="lingo-root"></div>

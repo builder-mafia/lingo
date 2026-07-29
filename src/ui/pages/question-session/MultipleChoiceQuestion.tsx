@@ -122,17 +122,23 @@ export const MultipleChoiceQuestion = ({
                   <span className={styles.choiceContent}>
                     <strong>{choice.option}</strong>
                     {answered ? (
-                      <span className={styles.explanation}>
+                      <span
+                        className={`${styles.explanation} ${styles.resultReveal}`}
+                      >
                         <span>해설</span>
                         {choice.explanation}
                       </span>
                     ) : null}
                   </span>
                   {answered && isCorrect ? (
-                    <CheckCircle2 className={styles.resultIcon} aria-label="정답" />
+                    <span className={styles.resultIconReveal}>
+                      <CheckCircle2 className={styles.resultIcon} aria-label="정답" />
+                    </span>
                   ) : null}
                   {answered && isSavedSelection && !isCorrect ? (
-                    <XCircle className={styles.resultIcon} aria-label="선택한 오답" />
+                    <span className={styles.resultIconReveal}>
+                      <XCircle className={styles.resultIcon} aria-label="선택한 오답" />
+                    </span>
                   ) : null}
                 </label>
               );

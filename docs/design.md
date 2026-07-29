@@ -166,7 +166,7 @@ Material의 색상 시스템에서는 색을 고립된 hex 값이 아닌 `surfac
 | `--color-warning` | `#D4A45D` | 주의 |
 | `--color-danger` | `#E08B91` | 삭제·실패 |
 
-기본 테마는 운영체제의 `prefers-color-scheme`을 따른다. 초기 버전에는 별도의 테마 토글을 두지 않는다.
+기본 테마는 운영체제의 `prefers-color-scheme`을 따른다. 상단 헤더의 테마 버튼으로 light와 dark를 즉시 전환하며, 사용자가 고른 값은 이 기기에 저장해 운영체제 설정보다 우선한다. 버튼 아이콘은 전환될 테마를 나타내고 접근 가능한 이름으로 같은 동작을 설명한다.
 
 ## 6. Typography
 

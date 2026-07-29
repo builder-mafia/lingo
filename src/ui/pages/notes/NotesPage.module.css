@@ -41,8 +41,9 @@
 .listHeader { min-height: 38px; padding: 0 12px; border-bottom: 1px solid var(--color-border); color: var(--color-ink-subtle); background: var(--color-surface-raised); font-size: 11px; font-weight: 500; }
 .listHeader > span:not(:first-child) { padding-left: 12px; }
 
-.noteRow { position: relative; min-height: 68px; padding: 0 12px; border-bottom: 1px solid var(--color-border); color: var(--color-ink-muted); font-size: 13px; transition: background-color 120ms ease; }
+.noteRow { position: relative; min-height: 68px; padding: 0 12px; border-bottom: 1px solid var(--color-border); opacity: 1; transform: translateX(0); color: var(--color-ink-muted); font-size: 13px; transition: background-color 120ms ease, opacity 150ms cubic-bezier(0.23, 1, 0.32, 1), transform 150ms cubic-bezier(0.23, 1, 0.32, 1); }
 .noteRow:last-of-type { border-bottom: 0; }
+.noteRow[data-removing] { opacity: 0; transform: translateX(-8px); pointer-events: none; }
 .rowLink { position: absolute; z-index: 1; inset: 0; }
 .rowLink:focus-visible { outline-offset: -3px; }
 .noteIdentity { display: flex; align-items: center; gap: 12px; min-width: 0; padding-right: 22px; }
@@ -134,4 +135,13 @@
   .listHeader > span:nth-child(2), .listHeader > span:nth-child(3), .questionCount, .noteRow time { display: none; }
   .noteIdentity { padding-right: 8px; }
   .empty code { max-width: 100%; overflow-x: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .noteRow {
+    transform: none;
+    transition: opacity 80ms ease !important;
+  }
+
+  .noteRow[data-removing] { transform: none; }
 }
