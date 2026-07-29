@@ -10,4 +10,11 @@ describe("UI route paths", () => {
       "/notes/effect%20basics/questions/typed%20error",
     );
   });
+
+  test("builds course workspace and overview paths", () => {
+    expect(routePaths.courses).toBe("/courses");
+    expect(routePaths.course("effect basics")).toBe(
+      "/courses/effect%20basics",
+    );
+  });
 });

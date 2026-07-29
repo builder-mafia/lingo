@@ -10,9 +10,22 @@ import type {
 import type { NoteOverview, QuestionSession } from "../schemas/question-session";
 import { setSubjectiveAnswerSchema } from "../schemas/subjective-answer";
 import type { TrashedNote } from "../schemas/trashed-note";
+import { courseIdSchema } from "../schemas/course";
+import type {
+  CourseOverview,
+  CourseWorkspaceItem,
+} from "../schemas/course-workspace";
 import type { WebAssets } from "./web-assets";
 
 export type LocalWebAppApi = {
+  readonly listCourses: () => Promise<readonly CourseWorkspaceItem[]>;
+  readonly findCourseOverview: (
+    courseId: string,
+  ) => Promise<CourseOverview | undefined>;
+  readonly setCourseStatus: (
+    courseId: string,
+    status: NoteStatus,
+  ) => Promise<{ readonly courseId: string; readonly status: NoteStatus }>;
   readonly listWorkspace: () => Promise<{
     readonly notes: readonly NoteWorkspaceItem[];
     readonly prompts: readonly WorkspacePrompt[];
@@ -110,6 +123,47 @@ export const makeLocalWebApp = ({ webAssets, api }: LocalWebAppConfig) => {
   app.get("/api/workspace", async (context) => {
     try {
       return context.json({ ok: true, data: await api.listWorkspace() });
+    } catch {
+      return context.json(requestFailedResponse, 500);
+    }
+  });
+
+  app.get("/api/courses", async (context) => {
+    try {
+      return context.json({ ok: true, data: await api.listCourses() });
+    } catch {
+      return context.json(requestFailedResponse, 500);
+    }
+  });
+
+  app.get("/api/courses/:courseId", async (context) => {
+    const courseId = courseIdSchema.safeParse(context.req.param("courseId"));
+    if (!courseId.success) return context.json(invalidInputResponse, 400);
+
+    try {
+      const course = await api.findCourseOverview(courseId.data);
+      return course
+        ? context.json({ ok: true, data: course })
+        : context.json(notFoundResponse, 404);
+    } catch {
+      return context.json(requestFailedResponse, 500);
+    }
+  });
+
+  app.patch("/api/courses/:courseId/status", async (context) => {
+    const courseId = courseIdSchema.safeParse(context.req.param("courseId"));
+    const input = setNoteStatusSchema.safeParse(
+      await context.req.json().catch(() => undefined),
+    );
+    if (!courseId.success || !input.success) {
+      return context.json(invalidInputResponse, 400);
+    }
+
+    try {
+      return context.json({
+        ok: true,
+        data: await api.setCourseStatus(courseId.data, input.data.status),
+      });
     } catch {
       return context.json(requestFailedResponse, 500);
     }

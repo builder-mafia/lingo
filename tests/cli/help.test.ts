@@ -27,6 +27,7 @@ describe("lingo --help", () => {
     expect(long.stdout).toContain("Lingo — turn learning into durable knowledge");
     expect(long.stdout).toContain("Usage:\n  lingo <command> [options]");
     expect(long.stdout).toContain("lingo note content set <note-id>");
+    expect(long.stdout).toContain("lingo course create");
     expect(long.stdout).toContain("lingo answer list <note-id>");
     expect(long.stdout).toContain("--update");
     expect(long.stdout).toContain("Use exactly one of --data or --data-file");

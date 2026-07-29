@@ -34,6 +34,29 @@ lingo note create --data '{
 
 `labels` defaults to an empty array. Lingo trims label whitespace and removes duplicates. Capture `data.noteId` and `data.noteUrl` from the response.
 
+## Create a course
+
+```bash
+lingo course create --data '{
+  "title": "Effect 핵심 이해하기",
+  "goal": "동기·비동기 Effect와 오류 모델을 설명하고 적용한다.",
+  "chapters": [
+    {
+      "title": "동기 Effect",
+      "objective": "Effect.succeed, Effect.fail, Effect.sync의 실행 모델을 구분한다.",
+      "labels": ["Effect", "Basics"]
+    },
+    {
+      "title": "비동기 Effect",
+      "objective": "비동기 작업의 성공, 실패, 취소 흐름을 설명한다.",
+      "labels": ["Effect", "Async"]
+    }
+  ]
+}'
+```
+
+Provide at least two chapters. Array order becomes chapter order; do not add `position` or content to chapter input. Lingo creates the course, chapter notes, labels, and relationships atomically. Capture `data.courseUrl` and every `data.chapters[].noteId`, then populate each note with `note content set` and `question add`.
+
 ## Set or replace note content
 
 ```bash

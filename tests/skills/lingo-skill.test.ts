@@ -14,8 +14,22 @@ describe("Lingo agent skill", () => {
     expect(skill).toContain("lingo question add");
     expect(skill).toContain("lingo answer list");
     expect(skill).toContain("lingo evaluation set");
+    expect(skill).toContain("lingo course create");
     expect(skill).toContain("references/cli.md");
     expect(skill).not.toContain("lingo note summary set");
+  });
+
+  test("builds systematic courses as ordered chapter notes", async () => {
+    const skill = await readProjectFile("skills/lingo/SKILL.md");
+    const reference = await readProjectFile("skills/lingo/references/cli.md");
+
+    expect(skill).toContain("Design a systematic course");
+    expect(skill).toContain("learning outcome");
+    expect(skill).toContain("prerequisite order");
+    expect(skill).toContain("Capture every chapter `noteId`");
+    expect(skill).toContain("failed chapter IDs");
+    expect(reference).toContain("## Create a course");
+    expect(reference).toContain('"chapters"');
   });
 
   test("creates durable content with useful evidence and sources", async () => {

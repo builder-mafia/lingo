@@ -1,11 +1,11 @@
 ---
 name: lingo
-description: Save learned material as durable local Lingo note content and active-learning questions, then evaluate pending answers with the current AI agent. Use when a user asks to remember or organize what they learned, deepen an existing Lingo note, create practice questions, open the local learning workspace, review pending answers, or write honest feedback through the lingo CLI.
+description: Save learned material as durable local Lingo notes and active-learning questions, design systematic multi-chapter courses, and evaluate pending answers with the current AI agent. Use when a user asks to remember or organize what they learned, study a domain through an ordered curriculum, deepen an existing Lingo note, create practice questions, open the local learning workspace, review pending answers, or write honest feedback through the lingo CLI.
 ---
 
 # Lingo
 
-Use the `lingo` CLI between the active AI agent and the user's local learning workspace. Keep reasoning and research in the active agent. Persist only notes, questions, answers, and feedback through Lingo.
+Use the `lingo` CLI between the active AI agent and the user's local learning workspace. Keep reasoning and research in the active agent. Persist courses, notes, questions, answers, and feedback through Lingo.
 
 ## Before starting
 
@@ -17,6 +17,7 @@ Use the `lingo` CLI between the active AI agent and the user's local learning wo
 ## Choose the workflow
 
 - **Save new learning:** Create a note, write its content, and add questions.
+- **Study a domain systematically:** Design an ordered course, then fill each chapter note with content and questions.
 - **Deepen known learning:** Read existing content, combine it with the new understanding, and replace it with one coherent body.
 - **Open practice:** Ensure the localhost server is running and return the note URL.
 - **Evaluate answers:** List pending answers, assess each one, and store one feedback result per question.
@@ -129,6 +130,46 @@ lingo note content get <note-id>
 ```
 
 Preserve still-valid knowledge, integrate the new material, resolve contradictions where evidence permits, and produce one coherent replacement. Then write the complete body with `lingo note content set`; do not blindly append fragments.
+
+## Design a systematic course
+
+Use a course when the user wants to build capability across a domain rather than save one cohesive topic. A course is an ordered set of chapters, and every chapter is a normal Lingo note with its own Markdown content and questions.
+
+### 1. Define the learning path
+
+Infer or establish:
+
+- the user's current level, desired scope, and concrete learning outcome;
+- the concepts that belong in or outside the course;
+- the prerequisite order between chapters;
+- one observable objective per chapter that says what the user should be able to explain, distinguish, or apply.
+
+Research authoritative sources before fixing the curriculum when the domain has official documentation, standards, or primary references. Prefer a small coherent path over an exhaustive catalog. Use at least two chapters. Do not add a separate lesson layer, lock later chapters, or promise mastery from completion.
+
+### 2. Create the course and chapter notes
+
+```bash
+lingo course create --data-file <course-json-path>
+```
+
+The payload contains `title`, an actionable `goal`, and ordered `chapters` with `title`, `objective`, and optional `labels`. Do not include content or questions in this payload.
+
+Require `ok: true`. Capture `data.courseUrl`. Capture every chapter `noteId` from `data.chapters` before continuing.
+
+### 3. Fill every chapter
+
+For each returned chapter `noteId`, build durable Markdown content using the chapter objective and the same source, terminology, and writing rules used for a standalone note. Then call:
+
+```bash
+lingo note content set <note-id> (--data <json> | --data-file <path>)
+lingo question add <note-id> (--data <json> | --data-file <path>)
+```
+
+Create two to five useful questions per chapter by default, including both subjective and multiple-choice formats when there are two or more questions. Test the chapter objective rather than trivia from the source.
+
+### 4. Report partial failures honestly
+
+Course creation and chapter filling are separate steps. If any content or question command fails, keep the successful course, report the failed chapter IDs and what remains incomplete, and never claim that the whole course is ready. Return `data.courseUrl` when creation succeeded.
 
 ## Open the browser workspace
 

@@ -156,6 +156,30 @@ const renameNoteSummariesToContents = (database: SqliteDatabase) => {
   `);
 };
 
+const addCourses = (database: SqliteDatabase) => {
+  database.run(`
+    CREATE TABLE courses (
+      id TEXT PRIMARY KEY NOT NULL,
+      title TEXT NOT NULL,
+      goal TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'not_started'
+        CHECK (status IN ('not_started', 'in_progress', 'completed', 'deferred')),
+      created_at TEXT NOT NULL
+    )
+  `);
+  database.run(`
+    CREATE TABLE course_chapters (
+      course_id TEXT NOT NULL,
+      note_id TEXT NOT NULL UNIQUE,
+      position INTEGER NOT NULL CHECK (position > 0),
+      objective TEXT NOT NULL,
+      PRIMARY KEY(course_id, position),
+      FOREIGN KEY(course_id) REFERENCES courses(id) ON DELETE CASCADE,
+      FOREIGN KEY(note_id) REFERENCES notes(id)
+    )
+  `);
+};
+
 const databaseMigrations: readonly DatabaseMigration[] = [
   { version: 1, migrate: createInitialSchema },
   { version: 2, migrate: renameProblemsToQuestions },
@@ -164,6 +188,7 @@ const databaseMigrations: readonly DatabaseMigration[] = [
   { version: 5, migrate: addNoteTrash },
   { version: 6, migrate: addMultipleChoiceAnswers },
   { version: 7, migrate: renameNoteSummariesToContents },
+  { version: 8, migrate: addCourses },
 ];
 
 export const LATEST_DATABASE_VERSION =

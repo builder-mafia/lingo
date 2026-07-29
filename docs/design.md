@@ -56,7 +56,7 @@ Lingo는 다음에 생각해볼 질문을 2–3개와 이유로 제안할 수 �
 
 ### Note Overview
 
-정보 순서는 `요약 → 질문 → 답변 완료`이다. 저장한 지식을 찾아온 사용자가 먼저 현재 요약을 읽고, 이어서 아직 답할 질문과 답변을 마친 질문을 확인한다.
+정보 순서는 `내용 → 질문 → 답변 완료`이다. 저장한 지식을 찾아온 사용자가 먼저 현재 내용을 읽고, 이어서 아직 답할 질문과 답변을 마친 질문을 확인한다.
 
 ### Question Session
 
@@ -84,6 +84,18 @@ MVP에서는 질문마다 현재 답변 하나와 현재 피드백 하나를 둔
 | 나중에 하기 | 지금의 주의에서 잠시 제외함 | 사용자만 선택 |
 
 완료 또는 나중에 하기 상태의 노트는 우측 질문 후보에서 제외한다. 열린 질문이 있는 노트를 완료할 때는 사실을 알리되 선택을 막지 않는다.
+
+### Courses workspace
+
+코스는 하나의 큰 도메인을 선행 순서에 따라 학습하기 위한 경로다. 새로운 콘텐츠 타입을 만들지 않고 `Course → Chapter(= Note)`로 구성한다. 장의 본문, 질문, 답변, 피드백과 상태는 기존 Note 계약을 그대로 사용한다.
+
+- `/courses`는 `코스 → 장 → 열린 질문 → 만든 날짜 → 상태` 순서의 밀도 높은 목록이다.
+- `/courses/:courseId`는 한 문장 학습 목표와 모든 장의 제목·목표·열린 질문을 순서대로 보여준다.
+- 현재 장은 첫 `진행 중` 장, 없으면 첫 `시작 전` 장으로 제안한다. 이후 장을 잠그지 않는다.
+- 진도율이나 점수 대신 `5장 중 2장 완료`, `열린 질문 3개`처럼 관찰 가능한 사실만 말한다.
+- 코스 완료는 자동 숙달 판정이 아니라 사용자가 고르는 유용한 멈춤이다. 끝내지 않은 장이 있어도 사실을 알리고 선택을 허용한다.
+- 코스에서 만든 장은 Notes에도 그대로 노출하고 `코스명 · n장` 맥락을 조용히 표시한다.
+- Course 수정·삭제·장 추가·재정렬과 별도 Lesson 계층은 실제 필요가 확인되기 전까지 만들지 않는다.
 
 ## 4. Visual Concept: Quiet Precision
 
@@ -259,7 +271,7 @@ Lingo는 분석가형 사고 파트너처럼 짧고 구체적으로 말한다. �
 - 작동하지 않는 내비게이션, 설정, command palette의 선행 구현
 - 정원·연금술 비유의 직접적인 아이콘과 일러스트
 
-## 13. References
+## 14. References
 
 - [Framer DESIGN.md](https://github.com/VoltAgent/awesome-design-md/blob/main/design-md/framer/DESIGN.md)
 - [Material 3: Color overview](https://m3.material.io/styles/color/overview)
@@ -267,7 +279,7 @@ Lingo는 분석가형 사고 파트너처럼 짧고 구체적으로 말한다. �
 - [Google Design: Into the Dark](https://design.google/library/material-design-dark-theme)
 - [Google Design: Designing for Global Accessibility, Part 3](https://design.google/library/designing-global-accessibility-part-iii)
 
-## 14. Document Maintenance
+## 15. Document Maintenance
 
 - 브랜드 약속과 경험 원칙은 안정적인 기준으로 관리한다.
 - 토큰 값은 라이트·다크 화면과 실제 콘텐츠를 함께 검증한 뒤 변경한다.

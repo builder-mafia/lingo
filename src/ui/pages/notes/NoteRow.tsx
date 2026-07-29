@@ -44,12 +44,12 @@ export const NoteRow = memo(function NoteRow({ note, onRemove }: NoteRowProps) {
         role="row"
         data-removing={removing ? "" : undefined}
       >
-        <Link
-          className={styles.rowLink}
-          to={routePaths.note(note.id)}
-          aria-label={`${note.title} 노트 열기`}
-        />
         <div className={styles.noteIdentity} role="cell">
+          <Link
+            className={styles.rowLink}
+            to={routePaths.note(note.id)}
+            aria-label={`${note.title} 노트 열기`}
+          />
           <FileText className={styles.noteIcon} aria-hidden="true" />
           <div>
             <strong>{note.title}</strong>
@@ -57,6 +57,9 @@ export const NoteRow = memo(function NoteRow({ note, onRemove }: NoteRowProps) {
               <span className={styles.rowError} role="alert">{message}</span>
             ) : (
               <span>
+                {note.courseContext
+                  ? `${note.courseContext.courseTitle} · ${note.courseContext.position}장 — `
+                  : ""}
                 {note.content
                   ? toContentPreview(note.content)
                   : "아직 정리된 내용이 없습니다."}

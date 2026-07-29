@@ -14,6 +14,7 @@ import { getNoteContent } from "./commands/get-note-content";
 import { setNoteContent } from "./commands/set-note-content";
 import { startServer } from "./commands/start-server";
 import { updateCli } from "./commands/update-cli";
+import { createCourse } from "./commands/create-course";
 import { rootHelp } from "./help";
 import { lingoVersion } from "../version";
 
@@ -22,6 +23,8 @@ const noteContentSetUsage =
 const noteContentGetUsage = "Usage: lingo note content get <note-id>";
 const noteCreateUsage =
   "Usage: lingo note create (--data <json> | --data-file <path>)";
+const courseCreateUsage =
+  "Usage: lingo course create (--data <json> | --data-file <path>)";
 const questionAddUsage =
   "Usage: lingo question add <note-id> (--data <json> | --data-file <path>)";
 const subjectiveAnswerUsage =
@@ -228,6 +231,29 @@ export const runCli = (
         },
       }),
     );
+  }
+
+  if (resource === "course" && type === "create") {
+    const courseInputArgs = action === undefined ? inputArgs : [action, ...inputArgs];
+
+    return parseInputOptions(courseInputArgs, courseCreateUsage).pipe(
+      Effect.flatMap((inputOptions) => createCourse(inputOptions)),
+      Effect.match({
+        onFailure: (error) => {
+          console.error(errorResponse(error));
+          return 1;
+        },
+        onSuccess: (data) => {
+          console.log(JSON.stringify({ ok: true, data }));
+          return 0;
+        },
+      }),
+    );
+  }
+
+  if (resource === "course") {
+    console.error(errorResponse(new CliError(courseCreateUsage)));
+    return Effect.succeed(1);
   }
 
   if (resource === "note" && type === "content" && action === "set") {

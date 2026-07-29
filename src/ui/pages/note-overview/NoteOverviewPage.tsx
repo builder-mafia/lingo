@@ -1,4 +1,4 @@
-import { Check } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 import { Link, useLoaderData } from "react-router";
 
 import type { NoteOverview } from "../../../schemas/question-session";
@@ -15,8 +15,21 @@ export const NoteOverviewPage = () => {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <Link to={routePaths.notes}>노트</Link>
-        <span aria-hidden="true">/</span>
+        {note.courseContext ? (
+          <>
+            <Link to={routePaths.courses}>코스</Link>
+            <span aria-hidden="true">/</span>
+            <Link to={routePaths.course(note.courseContext.courseId)}>{note.courseContext.courseTitle}</Link>
+            <span aria-hidden="true">/</span>
+            <span>{note.courseContext.position}장</span>
+            <span aria-hidden="true">/</span>
+          </>
+        ) : (
+          <>
+            <Link to={routePaths.notes}>노트</Link>
+            <span aria-hidden="true">/</span>
+          </>
+        )}
         <span>{note.title}</span>
         <div className={styles.status}><NoteStatusSelect noteId={note.id} status={note.status} openQuestionCount={openQuestions.length} /></div>
       </header>
@@ -79,6 +92,17 @@ export const NoteOverviewPage = () => {
             {resolvedQuestions.length === 0 ? <p className={styles.empty}>답변 완료된 질문이 없습니다.</p> : null}
           </div>
         </section>
+        {note.courseContext ? (
+          <nav className={styles.courseActions} aria-label="코스 학습 이동">
+            <Link to={routePaths.course(note.courseContext.courseId)}>코스로 돌아가기</Link>
+            {note.courseContext.nextChapter ? (
+              <Link className={styles.nextChapter} to={routePaths.note(note.courseContext.nextChapter.noteId)}>
+                다음 장 · {note.courseContext.nextChapter.title}
+                <ArrowRight aria-hidden="true" />
+              </Link>
+            ) : null}
+          </nav>
+        ) : null}
       </main>
     </div>
   );
