@@ -1,5 +1,6 @@
 import { memo, type ComponentPropsWithoutRef } from "react";
 import Markdown, { type Components } from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 import styles from "./MarkdownContent.module.css";
 
@@ -27,6 +28,12 @@ const allowedElements = [
   "p",
   "pre",
   "strong",
+  "table",
+  "tbody",
+  "td",
+  "th",
+  "thead",
+  "tr",
   "ul",
 ] as const;
 
@@ -39,10 +46,26 @@ const ExternalLink = ({
   </a>
 );
 
+const ScrollableTable = ({
+  children,
+  node: _node,
+  ...props
+}: ComponentPropsWithoutRef<"table"> & { node?: unknown }) => (
+  <div
+    aria-label="표"
+    className={styles.tableScroller}
+    role="region"
+    tabIndex={0}
+  >
+    <table {...props}>{children}</table>
+  </div>
+);
+
 const components: Components = {
   a: ExternalLink,
   h1: ({ children }) => <h3>{children}</h3>,
   h2: ({ children }) => <h3>{children}</h3>,
+  table: ScrollableTable,
 };
 
 export const MarkdownContent = memo(function MarkdownContent({
@@ -63,6 +86,7 @@ export const MarkdownContent = memo(function MarkdownContent({
       <Markdown
         allowedElements={[...allowedElements]}
         components={components}
+        remarkPlugins={[remarkGfm]}
         skipHtml
       >
         {content}
