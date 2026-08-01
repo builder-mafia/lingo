@@ -116,7 +116,7 @@ Align questions directly with the observable objective:
 | Diagnose | Present a failure or flawed model and ask for the cause and next action. |
 | Choose | Present a tradeoff and require criteria for the decision. |
 
-Use retrieval questions as learning events, not only as completion checks. Create two to five questions per chapter by default and mix subjective and multiple-choice formats as required by `SKILL.md`.
+Use retrieval questions as learning events, not only as completion checks. Create one short question per chapter by default. Keep it to one sentence, one understanding target, and a scope the learner can usually answer in about one minute. Prefer a concise multiple-choice distinction when appropriate; use a subjective question only when the objective genuinely requires explanation, synthesis, or transfer.
 
 Include at least one cumulative **transfer task** in the final chapter. Require the learner to combine ideas from earlier chapters in a small unfamiliar situation. Do not make every chapter depend on a large project the learner cannot complete during review.
 
@@ -183,8 +183,8 @@ After filling the chapters, verify:
 - [ ] Examples, distinctions, and depth match the learner profile.
 - [ ] Terminology and source-sensitive claims are consistent across chapters.
 - [ ] Questions test their chapter objective rather than source trivia.
-- [ ] Each chapter has two to five questions unless the user requested otherwise.
-- [ ] Sets with two or more questions mix subjective and multiple-choice formats.
+- [ ] Each chapter has one short question unless the user requested otherwise.
+- [ ] Each question tests one meaningful target without a long setup.
 - [ ] The final chapter contains a cumulative transfer task.
 - [ ] Every consulted source is directly relevant and correctly linked.
 - [ ] Every required CLI response returned `ok: true`.
@@ -200,4 +200,3 @@ Apply these findings as design evidence, not as rigid templates:
 - [Karpicke & Blunt (2011), Retrieval practice and meaningful learning](https://pubmed.ncbi.nlm.nih.gov/21252317/): retrieval practice supported learning of complex conceptual material.
 - [Dunlosky et al. (2013), Effective learning techniques](https://pubmed.ncbi.nlm.nih.gov/26173288/): practice testing and distributed practice received broad support across learning conditions.
 - [van Gog et al. (2011), Worked examples for novices](https://doi.org/10.1016/j.cedpsych.2010.10.004): worked examples and example-problem pairs reduced load and improved novice learning in the studied task.
-

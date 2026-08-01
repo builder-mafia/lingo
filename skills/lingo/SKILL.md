@@ -1,6 +1,6 @@
 ---
 name: lingo
-description: Save learned material as durable local Lingo notes and active-learning questions, design systematic multi-chapter courses, and evaluate pending answers with the current AI agent. Use when a user asks to remember or organize what they learned, study a domain through an ordered curriculum, deepen an existing Lingo note, create practice questions, open the local learning workspace, review pending answers, or write honest feedback through the lingo CLI.
+description: Save learned material as durable local Lingo notes, optionally create focused active-learning questions, design systematic multi-chapter courses, and evaluate pending answers with the current AI agent. Use when a user asks to remember or organize what they learned, study a domain through an ordered curriculum, deepen an existing Lingo note, create practice questions, open the local learning workspace, review pending answers, or write honest feedback through the lingo CLI.
 ---
 
 # Lingo
@@ -18,8 +18,8 @@ Use the `lingo` CLI between the active AI agent and the user's local learning wo
 
 ## Choose the workflow
 
-- **Save new learning:** Create a note, write its content, and add questions.
-- **Study a domain systematically:** Design an ordered course, then fill each chapter note with content and questions.
+- **Save new learning:** Create a note and write its content. Add a question only when practice is requested.
+- **Study a domain systematically:** Design an ordered course, then fill each chapter note with content and one concise check.
 - **Deepen known learning:** Read existing content, combine it with the new understanding, and replace it with one coherent body.
 - **Open practice:** Ensure the localhost server is running and return the note URL.
 - **Evaluate answers:** List pending answers, assess each one, and store one feedback result per question.
@@ -76,18 +76,18 @@ When related articles or documentation can materially improve accuracy, context,
 
 ### 1. Prepare the note
 
-Prepare an internal **note brief** with the future retrieval need, central model, learner starting point, required evidence and examples, scope boundary, fragile points, and question targets. Ask at most one compact clarification only when the intended use, topic boundary, or depth would materially change the note; otherwise make and state a reasonable assumption.
+Prepare an internal **note brief** with the future retrieval need, central model, learner starting point, required evidence and examples, scope boundary, and fragile points. Include a question target only when the user asks for practice. Ask at most one compact clarification only when the intended use, topic boundary, or depth would materially change the note; otherwise make and state a reasonable assumption.
 
 Choose one cohesive topic and prepare:
 
 - a concrete title naming the concept or decision;
 - zero to three reusable labels;
 - the Markdown content;
-- two to five questions unless the user explicitly asks for a note without practice.
+- zero questions by default.
 
-Create a mixed practice set by default. When generating two or more questions, include at least one subjective question and at least one multiple-choice question. Deviate only when the user requests one format or the topic cannot support plausible choices without inventing misleading alternatives. If the user requests exactly one question, choose its format from the learning goal.
+Only add a question when the user explicitly asks to practice, review, or test their understanding. In that case, create one short question by default unless the user requests a different count. A question should fit in one sentence, test one judgment, and be answerable in roughly one minute without rereading a long setup.
 
-Use subjective questions to test recall, explanation in the user's own words, or application to a new situation. Use multiple-choice questions to test distinctions between similar concepts, decisions under a concrete scenario, or recognition of a likely misconception. Avoid generic checks such as “Do you understand this?” and trivia that does not expose understanding.
+Prefer a concise multiple-choice question for a useful distinction or likely misconception. Use a subjective question only when explanation, synthesis, or transfer is the actual learning goal. Avoid generic checks such as “Do you understand this?”, trivia that does not expose understanding, long scenarios, and questions that repeat the same target in another format.
 
 Write the `question` field as plain text. Do not use Markdown syntax such as headings, lists, emphasis, links, blockquotes, or inline and fenced code in question prompts. Write multiple-choice `option` values as plain text as well. Preserve exact technical terms without wrapping them in backticks.
 
@@ -107,7 +107,7 @@ lingo note content set <note-id> --data '{"content":"A cache needs an explicit c
 
 Prefer `--data-file` for substantive Markdown so shell quoting cannot corrupt it. Describe the learned model rather than the conversation that produced it.
 
-### 4. Add questions
+### 4. Add a question when requested
 
 For a subjective question, treat `referenceAnswer` as an evaluation rubric. Keep it accurate, self-contained, and hidden from any response meant to test the user.
 
@@ -115,7 +115,7 @@ For a subjective question, treat `referenceAnswer` as an evaluation rubric. Keep
 lingo question add <note-id> --data '{"question":"Why can time-based cache expiration still return stale data?","referenceAnswer":"The source may change before the expiration window ends, so the cache remains valid by time while already outdated relative to the source."}'
 ```
 
-For a multiple-choice question, provide three or four choices when the topic supports them. Give every choice a unique positive `order` and an `explanation` of why it is right or wrong, then set `correctId` to the correct order. Make each distractor reflect a plausible misconception or incomplete model. Keep choices similar in length and structure so wording does not reveal the answer.
+For a multiple-choice question, provide two to four concise choices when the topic supports them. Give every choice a unique positive `order` and an `explanation` of why it is right or wrong, then set `correctId` to the correct order. Make each distractor reflect a plausible misconception or incomplete model. Keep choices similar in length and structure so wording does not reveal the answer.
 
 ```bash
 lingo question add <note-id> --data '{"question":"Which situation can still expose stale cache data?","choices":[{"order":1,"option":"The source changes before the TTL expires","explanation":"The cached value remains valid by time even though the source has changed."},{"order":2,"option":"Every read bypasses the cache","explanation":"Bypassing the cache reads the source directly, so this is not stale cache data."},{"order":3,"option":"The cache entry is removed on every source update","explanation":"Successful invalidation removes the stale entry before the next read."}],"correctId":1}'
@@ -123,7 +123,7 @@ lingo question add <note-id> --data '{"question":"Which situation can still expo
 
 ### 5. Verify and return the result
 
-For substantive content, read it back with `lingo note content get <note-id>` and apply the **post-save quality gate** in [references/note-design.md](references/note-design.md). Verify that Markdown structure and links survived serialization and that every question tests the intended model.
+For substantive content, read it back with `lingo note content get <note-id>` and apply the **post-save quality gate** in [references/note-design.md](references/note-design.md). Verify that Markdown structure and links survived serialization and, when a question was requested, that it tests the intended model.
 
 Report what was saved and return `data.noteUrl`. Do not dump raw JSON unless asked. Never claim that data was saved if any required command failed. If content or question creation partially fails, identify the incomplete operation precisely.
 
@@ -139,7 +139,7 @@ Preserve still-valid knowledge, integrate the new material, resolve contradictio
 
 ## Design a systematic course
 
-Use a course when the user wants to build capability across a domain rather than save one cohesive topic. A course is an ordered set of chapters, and every chapter is a normal Lingo note with its own Markdown content and questions.
+Use a course when the user wants to build capability across a domain rather than save one cohesive topic. A course is an ordered set of chapters, and every chapter is a normal Lingo note with its own Markdown content and a concise check.
 
 ### 1. Discover the learner and constraints
 
@@ -186,13 +186,13 @@ lingo note content set <note-id> (--data <json> | --data-file <path>)
 lingo question add <note-id> (--data <json> | --data-file <path>)
 ```
 
-Create two to five useful questions per chapter by default, including both subjective and multiple-choice formats when there are two or more questions. Test the chapter objective rather than trivia from the source.
+Create one short question per chapter by default. Test the chapter objective rather than trivia from the source, and reserve subjective questions for chapters whose objective genuinely requires explanation or transfer. If the user requests a different practice plan, follow it.
 
 Apply the post-creation quality gate in [references/course-design.md](references/course-design.md). Ensure that each objective is actually enabled by its content and tested by its questions, and that the final chapter includes a cumulative transfer task.
 
 ### 5. Report partial failures honestly
 
-Course creation and chapter filling are separate steps. If any content or question command fails, keep the successful course, report the failed chapter IDs and what remains incomplete, and never claim that the whole course is ready. Return `data.courseUrl` when creation succeeded.
+Course creation and chapter filling are separate steps. If any content or required question command fails, keep the successful course, report the failed chapter IDs and what remains incomplete, and never claim that the whole course is ready. Return `data.courseUrl` when creation succeeded.
 
 ## Open the browser workspace
 

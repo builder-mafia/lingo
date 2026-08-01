@@ -154,9 +154,9 @@ Avoid examples that merely rename variables from the source or introduce a large
 
 ## Question alignment
 
-Derive questions after the content model is stable. Every question should expose whether the learner can reconstruct or use something the note intentionally teaches.
+Practice is optional for a standalone note. Do not generate questions merely because a note was created or deepened. When the user explicitly asks to practice, review, or test their understanding, derive the smallest useful check after the content model is stable.
 
-Map questions to the note brief:
+Map the requested question to the note brief:
 
 - test the central mechanism with a self-explanation question;
 - test a likely conflation with a scenario-based multiple-choice question;
@@ -168,7 +168,7 @@ Do not ask the learner to recall an isolated sentence, number, or name unless ex
 
 Make subjective `referenceAnswer` values evaluation rubrics: include essential reasoning, acceptable variants, and the most important misconception to catch when relevant. Make multiple-choice distractors plausible consequences of incomplete models, not jokes or obviously unrelated statements.
 
-Keep question prompts independent of formatting and source wording. A learner should need to retrieve and reconstruct the model rather than recognize a copied phrase.
+Keep the question prompt to one sentence and one understanding target that can usually be answered in about one minute. Keep prompts independent of formatting and source wording. A learner should need to retrieve and reconstruct the model rather than recognize a copied phrase. Avoid long scenarios and multiple questions that test the same target in different formats.
 
 ## Deepen without creating a junk drawer
 
@@ -199,14 +199,14 @@ Before saving, verify:
 - [ ] Version-sensitive or consequential claims are verified when feasible.
 - [ ] Terminology is precise and consistent.
 - [ ] The note contains no transcript language, filler, decorative sections, or forced template headings.
-- [ ] Every planned question maps to the content and a meaningful understanding target.
+- [ ] Every requested question maps to the content and a meaningful understanding target.
 
 After saving substantive content, run `lingo note content get <note-id>` and apply this **post-save quality gate**:
 
 - [ ] The complete Markdown body was stored without quoting or newline corruption.
 - [ ] Headings, lists, tables, code, and links remain readable.
-- [ ] Every required content and question command returned `ok: true`.
-- [ ] Questions do not reveal their answers through wording or option shape.
+- [ ] Every required content command and any requested question command returned `ok: true`.
+- [ ] Requested questions do not reveal their answers through wording or option shape.
 - [ ] Any existing questions that could not be inspected are reported instead of silently treated as current.
 - [ ] The returned note URL and any incomplete operation are reported honestly.
 

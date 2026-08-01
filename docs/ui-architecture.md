@@ -36,8 +36,8 @@ src/ui/
 ├── layouts/
 │   └── app-shell/              # 얇은 top bar와 Outlet
 ├── pages/
-│   ├── notes/                  # 홈 목록과 우측 질문 패널 조합
-│   ├── note-overview/          # 노트 요약과 질문 이력
+│   ├── notes/                  # 홈 노트 목록과 필터
+│   ├── note-overview/          # 노트 내용과 선택적인 질문 이력
 │   ├── question-session/       # 한 질문의 답변 흐름
 │   └── not-found/
 ├── features/
@@ -83,7 +83,7 @@ src/server/
 | --- | --- | --- |
 | `/` | Notes Workspace | 무엇을 모아두었고 지금 무엇을 다시 생각할 수 있는가? |
 | `/trash` | Trash | 제거한 노트를 복원하거나 영구 삭제할 것인가? |
-| `/notes/:noteId` | Note Overview | 이 주제의 현재 요약, 질문, 답변 완료 항목은 무엇인가? |
+| `/notes/:noteId` | Note Overview | 이 주제의 현재 내용과 선택한 연습 이력은 무엇인가? |
 | `/notes/:noteId/questions/:questionId` | Question Session | 이 질문을 지금 내 언어로 어떻게 설명할 수 있는가? |
 
 route는 `app/router.tsx` 한 곳에서 선언하고 링크는 `app/route-paths.ts`의 생성 함수를 사용한다. 서버는 모든 비 API GET deep link에 같은 `index.html`을 반환하고 실제 페이지 선택은 React Router가 담당한다.
@@ -105,13 +105,14 @@ route는 `app/router.tsx` 한 곳에서 선언하고 링크는 `app/route-paths.
 - 검색은 우상단에서 항상 보이고 제목과 요약을 즉시 좁힌다.
 - 열 순서는 `노트`, `열린 질문`, `최근 활동`, `라벨`, `상태`다.
 - 상태는 행 안에서 바꾸되 행 navigation을 일으키지 않는다.
-- 우측 패널은 추상적인 이해 상태가 아닌 실제 질문과 선택 이유를 보여준다.
+- `질문 있는 노트` 필터는 연습이 필요한 항목만 같은 목록에서 좁힌다.
 
 ### Note Overview
 
-- `요약 → 질문 → 답변 완료` 순서를 유지한다.
+- 내용을 먼저 보여주고 질문이 있을 때만 단일 `질문` 섹션을 뒤에 둔다.
 - 질문 행은 질문 문장 자체를 주요 링크로 사용한다.
-- 완료는 현재 시점의 정리이며 질문과 답변 이력은 사라지지 않는다.
+- 열린 질문을 먼저 배치하고 답변한 질문은 같은 목록에서 체크와 낮은 대비로 구분한다.
+- 질문이 없으면 질문 섹션과 빈 상태를 렌더링하지 않는다.
 
 ### Question Session
 
