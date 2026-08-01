@@ -11,6 +11,9 @@ Commands:
   lingo note content get <note-id>
   lingo note memo set <note-id> (--data <json> | --data-file <path>)
   lingo note memo get <note-id>
+  lingo relation add <note-id> (--data <json> | --data-file <path>)
+  lingo relation list <note-id>
+  lingo relation remove <relation-id>
   lingo question add <note-id> (--data <json> | --data-file <path>)
   lingo answer set <question-id> (--data <json> | --data-file <path>)
   lingo answer list <note-id>

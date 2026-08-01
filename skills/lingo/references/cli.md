@@ -92,6 +92,30 @@ Running the command again replaces the current memo while keeping its identity. 
 lingo note memo get <note-id>
 ```
 
+## Connect two notes
+
+```bash
+lingo relation add <note-id> --data '{
+  "targetNoteId": "<target-note-id>"
+}'
+```
+
+The connection is undirected and idempotent. Both notes must exist outside the trash. Do not create relations from shared labels or inferred similarity.
+
+## List a note's relations
+
+```bash
+lingo relation list <note-id>
+```
+
+Each item contains the relation ID and the connected note's title and labels. Relations to trashed notes stay stored but are hidden until the note is restored.
+
+## Remove a relation
+
+```bash
+lingo relation remove <relation-id>
+```
+
 The command returns `noteId` and a nullable `memo`. A missing memo is a successful response with `memo: null`, not an error.
 
 ## Add a subjective question

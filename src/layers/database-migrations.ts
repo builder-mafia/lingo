@@ -193,6 +193,25 @@ const addNoteMemos = (database: SqliteDatabase) => {
   `);
 };
 
+const addNoteRelations = (database: SqliteDatabase) => {
+  database.run(`
+    CREATE TABLE note_relations (
+      id TEXT PRIMARY KEY NOT NULL,
+      note_a_id TEXT NOT NULL,
+      note_b_id TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      CHECK (note_a_id < note_b_id),
+      UNIQUE (note_a_id, note_b_id),
+      FOREIGN KEY(note_a_id) REFERENCES notes(id) ON DELETE CASCADE,
+      FOREIGN KEY(note_b_id) REFERENCES notes(id) ON DELETE CASCADE
+    )
+  `);
+  database.run(`
+    CREATE INDEX note_relations_note_b_idx
+    ON note_relations(note_b_id)
+  `);
+};
+
 const databaseMigrations: readonly DatabaseMigration[] = [
   { version: 1, migrate: createInitialSchema },
   { version: 2, migrate: renameProblemsToQuestions },
@@ -203,6 +222,7 @@ const databaseMigrations: readonly DatabaseMigration[] = [
   { version: 7, migrate: renameNoteSummariesToContents },
   { version: 8, migrate: addCourses },
   { version: 9, migrate: addNoteMemos },
+  { version: 10, migrate: addNoteRelations },
 ];
 
 export const LATEST_DATABASE_VERSION =

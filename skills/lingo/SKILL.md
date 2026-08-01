@@ -5,7 +5,7 @@ description: Save learned material as durable local Lingo notes, optionally crea
 
 # Lingo
 
-Use the `lingo` CLI between the active AI agent and the user's local learning workspace. Keep reasoning and research in the active agent. Persist courses, notes, memos, questions, answers, and feedback through Lingo.
+Use the `lingo` CLI between the active AI agent and the user's local learning workspace. Keep reasoning and research in the active agent. Persist courses, notes, memos, explicit note relations, questions, answers, and feedback through Lingo.
 
 ## Before starting
 
@@ -22,6 +22,7 @@ Use the `lingo` CLI between the active AI agent and the user's local learning wo
 - **Study a domain systematically:** Design an ordered course, then fill each chapter note with content and one concise check.
 - **Deepen known learning:** Read existing content, combine it with the new understanding, and replace it with one coherent body.
 - **Review a memo:** Read the user's scratch text and respond only when feedback is explicitly requested.
+- **Connect known notes:** Add an undirected relation only when the user explicitly asks to connect notes.
 - **Open practice:** Ensure the localhost server is running and return the note URL.
 - **Evaluate answers:** List pending answers, assess each one, and store one feedback result per question.
 
@@ -157,6 +158,20 @@ lingo note memo set <note-id> --data '{"content":"An idea to revisit later."}'
 ```
 
 Preserve the user's wording unless they ask for editing. An empty or whitespace-only `content` value clears the memo.
+
+## Connect notes deliberately
+
+A relation means that two notes are worth revisiting together. Relations are undirected: connecting A to B is the same as connecting B to A.
+
+Do not infer or automatically create relations from shared labels, matching keywords, similar content, course membership, or an AI similarity judgment. Add one only when the user explicitly asks to connect notes or clearly states that two known notes should be revisited together.
+
+```bash
+lingo relation add <note-id> --data '{"targetNoteId":"<target-note-id>"}'
+lingo relation list <note-id>
+lingo relation remove <relation-id>
+```
+
+Both note IDs must come from successful Lingo responses or user-provided Lingo URLs. Never invent an ID. Adding the same pair again is safe and returns the existing relation. Remove a relation only when the user explicitly asks to disconnect the notes.
 
 ## Design a systematic course
 

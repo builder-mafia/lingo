@@ -14,6 +14,9 @@ import { getNoteContent } from "./commands/get-note-content";
 import { setNoteContent } from "./commands/set-note-content";
 import { setNoteMemo } from "./commands/set-note-memo";
 import { getNoteMemo } from "./commands/get-note-memo";
+import { addNoteRelation } from "./commands/add-note-relation";
+import { listNoteRelations } from "./commands/list-note-relations";
+import { removeNoteRelation } from "./commands/remove-note-relation";
 import { startServer } from "./commands/start-server";
 import { updateCli } from "./commands/update-cli";
 import { createCourse } from "./commands/create-course";
@@ -26,6 +29,10 @@ const noteContentGetUsage = "Usage: lingo note content get <note-id>";
 const noteMemoSetUsage =
   "Usage: lingo note memo set <note-id> (--data <json> | --data-file <path>)";
 const noteMemoGetUsage = "Usage: lingo note memo get <note-id>";
+const relationAddUsage =
+  "Usage: lingo relation add <note-id> (--data <json> | --data-file <path>)";
+const relationListUsage = "Usage: lingo relation list <note-id>";
+const relationRemoveUsage = "Usage: lingo relation remove <relation-id>";
 const noteCreateUsage =
   "Usage: lingo note create (--data <json> | --data-file <path>)";
 const courseCreateUsage =
@@ -216,6 +223,67 @@ export const runCli = (
       Effect.match({
         onFailure: (error) => { console.error(errorResponse(error)); return 1; },
         onSuccess: (data) => { console.log(JSON.stringify({ ok: true, data })); return 0; },
+      }),
+    );
+  }
+
+  if (resource === "relation" && type === "add") {
+    const [noteId, ...relationInputArgs] = [action, ...inputArgs];
+    if (noteId === undefined) {
+      console.error(errorResponse(new CliError(relationAddUsage)));
+      return Effect.succeed(1);
+    }
+    return parseInputOptions(relationInputArgs, relationAddUsage).pipe(
+      Effect.flatMap((inputOptions) => addNoteRelation(noteId, inputOptions)),
+      Effect.match({
+        onFailure: (error) => {
+          console.error(errorResponse(error));
+          return 1;
+        },
+        onSuccess: (data) => {
+          console.log(JSON.stringify({ ok: true, data }));
+          return 0;
+        },
+      }),
+    );
+  }
+
+  if (resource === "relation" && type === "list") {
+    const [noteId, ...unexpectedArgs] = [action, ...inputArgs];
+    if (noteId === undefined || unexpectedArgs.length > 0) {
+      console.error(errorResponse(new CliError(relationListUsage)));
+      return Effect.succeed(1);
+    }
+    return listNoteRelations(noteId).pipe(
+      Effect.match({
+        onFailure: (error) => {
+          console.error(errorResponse(error));
+          return 1;
+        },
+        onSuccess: (data) => {
+          console.log(JSON.stringify({ ok: true, data }));
+          return 0;
+        },
+      }),
+    );
+  }
+
+  if (resource === "relation" && type === "remove") {
+    const [relationId, ...unexpectedArgs] = [action, ...inputArgs];
+    if (relationId === undefined || unexpectedArgs.length > 0) {
+      console.error(errorResponse(new CliError(relationRemoveUsage)));
+      return Effect.succeed(1);
+    }
+    return removeNoteRelation(relationId).pipe(
+      Effect.match({
+        onFailure: (error) => {
+          console.error(errorResponse(error));
+          return 1;
+        },
+        onSuccess: (data) => {
+          console.log(JSON.stringify({ ok: true, data }));
+          return 0;
+        },
       }),
     );
   }
