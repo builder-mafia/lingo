@@ -5,16 +5,18 @@ const readSource = (relativePath: string) =>
 
 describe("trash management UI", () => {
   test("loads trash in a lazy route and links to it from notes", async () => {
-    const [router, notes, api] = await Promise.all([
+    const [router, notes, notesMenu, api] = await Promise.all([
       readSource("src/ui/app/router.tsx"),
       readSource("src/ui/pages/notes/NotesPage.tsx"),
+      readSource("src/ui/features/notes-menu/NotesMenu.tsx"),
       readSource("src/ui/shared/api/workspace.ts"),
     ]);
 
     expect(router).toContain('path: "trash"');
     expect(router).toContain("loadTrash");
     expect(router).toContain('import("../pages/trash/TrashPage")');
-    expect(notes).toContain("routePaths.trash");
+    expect(notes).toContain("<NotesMenu />");
+    expect(notesMenu).toContain("routePaths.trash");
     expect(api).toContain("restoreNote");
     expect(api).toContain("permanentlyDeleteNote");
   });

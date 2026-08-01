@@ -19,13 +19,13 @@ export const AppShell = () => (
           end
           className={({ isActive }) => (isActive ? styles.activeNav : undefined)}
         >
-          노트
+          <span>노트</span>
         </NavLink>
         <NavLink
           to={routePaths.courses}
           className={({ isActive }) => (isActive ? styles.activeNav : undefined)}
         >
-          코스
+          <span>코스</span>
         </NavLink>
       </nav>
       <div className={styles.topBarActions}>

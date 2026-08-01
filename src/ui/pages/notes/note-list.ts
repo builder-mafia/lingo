@@ -1,6 +1,7 @@
 import type { NoteWorkspaceItem } from "../../../schemas/note-workspace";
 
 export type NoteListFilters = {
+  readonly label: string;
   readonly openQuestionsOnly: boolean;
   readonly query: string;
   readonly sort: string;
@@ -20,6 +21,9 @@ export const filterAndSortNotes = (
     )
     .filter(
       (note) => !filters.openQuestionsOnly || note.openQuestionCount > 0,
+    )
+    .filter(
+      (note) => filters.label === "all" || note.labels.includes(filters.label),
     )
     .filter((note) =>
       !normalizedQuery

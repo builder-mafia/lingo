@@ -8,11 +8,12 @@ const makeNote = (
   title: string,
   openQuestionCount: number,
   updatedAt: string,
+  labels: readonly string[] = [],
 ): NoteWorkspaceItem => ({
   id,
   title,
   content: null,
-  labels: [],
+  labels: [...labels],
   status: "not_started",
   openQuestionCount,
   updatedAt,
@@ -42,8 +43,55 @@ describe("notes workspace focus filter", () => {
         query: "",
         sort: "recent",
         status: "all",
+        label: "all",
       }).map((note) => note.title),
     ).toEqual(["질문이 있는 노트"]);
+  });
+
+  test("composes label filtering with status, search, and question filters", () => {
+    const matching = {
+      ...makeNote(
+        "8b4af663-b640-40c2-9d59-68523b8861dd",
+        "Effect interruption",
+        1,
+        "2026-08-01T00:00:00.000Z",
+        ["Effect", "Concurrency"],
+      ),
+      status: "in_progress" as const,
+    };
+    const notes = [
+      matching,
+      {
+        ...makeNote(
+          "ad0df4fc-986c-4228-adfa-69806dc7789d",
+          "Effect basics",
+          0,
+          "2026-07-31T00:00:00.000Z",
+          ["Effect"],
+        ),
+        status: "in_progress" as const,
+      },
+      {
+        ...makeNote(
+          "f725ed54-bbf2-4a7a-a615-266120e84a10",
+          "Effect interruption in React",
+          1,
+          "2026-07-30T00:00:00.000Z",
+          ["Frontend"],
+        ),
+        status: "in_progress" as const,
+      },
+    ];
+
+    expect(
+      filterAndSortNotes(notes, {
+        openQuestionsOnly: true,
+        query: "interruption",
+        sort: "recent",
+        status: "in_progress",
+        label: "Effect",
+      }),
+    ).toEqual([matching]);
   });
 
   test("removes the persistent prompt panel in favor of a Base UI filter", async () => {

@@ -65,10 +65,11 @@
 }
 
 .navigation { align-self: stretch; display: flex; align-items: stretch; gap: 4px; }
-.navigation a { position: relative; display: flex; align-items: center; min-width: 54px; padding: 0 10px; color: var(--color-ink-muted); font-size: 14px; font-weight: 500; text-decoration: none; }
-.navigation a::after { position: absolute; right: 10px; bottom: -1px; left: 10px; height: 2px; border-radius: 2px 2px 0 0; background: transparent; content: ""; }
+.navigation a { display: flex; align-items: center; justify-content: center; padding: 0 10px; color: var(--color-ink-muted); font-size: 14px; font-weight: 500; text-decoration: none; }
+.navigation a > span { position: relative; display: flex; align-items: center; height: 100%; }
+.navigation a > span::after { position: absolute; right: 0; bottom: -1px; left: 0; height: 2px; border-radius: 2px 2px 0 0; background: transparent; content: ""; }
 .navigation a.activeNav { color: var(--color-ink-strong); }
-.navigation a.activeNav::after { background: var(--color-accent); }
+.navigation a.activeNav > span::after { background: var(--color-accent); }
 
 .topBarActions {
   margin-left: auto;
