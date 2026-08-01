@@ -3,10 +3,7 @@ import { Hono } from "hono";
 import { setMultipleChoiceAnswerSchema } from "../schemas/multiple-choice";
 import { noteIdSchema } from "../schemas/note";
 import { setNoteStatusSchema, type NoteStatus } from "../schemas/note-status";
-import type {
-  NoteWorkspaceItem,
-  WorkspacePrompt,
-} from "../schemas/note-workspace";
+import type { NoteWorkspaceItem } from "../schemas/note-workspace";
 import type { NoteOverview, QuestionSession } from "../schemas/question-session";
 import { setSubjectiveAnswerSchema } from "../schemas/subjective-answer";
 import type { TrashedNote } from "../schemas/trashed-note";
@@ -28,7 +25,6 @@ export type LocalWebAppApi = {
   ) => Promise<{ readonly courseId: string; readonly status: NoteStatus }>;
   readonly listWorkspace: () => Promise<{
     readonly notes: readonly NoteWorkspaceItem[];
-    readonly prompts: readonly WorkspacePrompt[];
   }>;
   readonly setNoteStatus: (
     noteId: string,

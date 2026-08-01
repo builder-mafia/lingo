@@ -84,13 +84,9 @@ export const makeLocalHttpServerLayer = (config: LocalHttpServerConfig) =>
           Effect.runPromise(database.setCourseStatus(courseId, status)),
         listWorkspace: () =>
           Effect.runPromise(
-            Effect.all(
-              {
-                notes: database.listNoteWorkspace(),
-                prompts: database.listWorkspacePrompts(),
-              },
-              { concurrency: "unbounded" },
-            ),
+            database
+              .listNoteWorkspace()
+              .pipe(Effect.map((notes) => ({ notes }))),
           ),
         setNoteStatus: (noteId, status) =>
           Effect.runPromise(database.setNoteStatus(noteId, status)),

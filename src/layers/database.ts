@@ -19,9 +19,7 @@ import {
 import { noteStatusSchema, type NoteStatus } from "../schemas/note-status";
 import {
   noteWorkspaceItemSchema,
-  workspacePromptSchema,
   type NoteWorkspaceItem,
-  type WorkspacePrompt,
 } from "../schemas/note-workspace";
 import {
   noteOverviewSchema,
@@ -131,10 +129,6 @@ export interface DatabaseService {
   readonly permanentlyDeleteNote: (
     noteId: string,
   ) => Effect.Effect<{ readonly noteId: string; readonly deleted: true }, CliError>;
-  readonly listWorkspacePrompts: () => Effect.Effect<
-    readonly WorkspacePrompt[],
-    CliError
-  >;
   readonly findNoteOverview: (
     noteId: string,
   ) => Effect.Effect<NoteOverview | undefined, CliError>;
@@ -252,15 +246,6 @@ type TrashedNoteRow = {
   readonly title: string;
   readonly content: string | null;
   readonly deletedAt: string;
-};
-
-type WorkspacePromptRow = {
-  readonly questionId: string;
-  readonly noteId: string;
-  readonly noteTitle: string;
-  readonly question: string;
-  readonly kind: string;
-  readonly activityAt: string;
 };
 
 type NoteOverviewRow = {
@@ -1126,73 +1111,6 @@ const makeService = (databasePath: string): DatabaseService => ({
         return { noteId, deleted: true as const };
       },
       "Could not permanently delete note.",
-    ),
-  listWorkspacePrompts: () =>
-    withDatabase(
-      databasePath,
-      (database) =>
-        database
-          .query<WorkspacePromptRow, []>(`
-            SELECT * FROM (
-              SELECT
-                questions.id AS questionId,
-                notes.id AS noteId,
-                notes.title AS noteTitle,
-                questions.question,
-                'feedback_ready' AS kind,
-                evaluations.updated_at AS activityAt
-              FROM subjective_questions AS questions
-              INNER JOIN notes ON notes.id = questions.note_id
-              INNER JOIN subjective_evaluations AS evaluations
-                ON evaluations.question_id = questions.id
-              WHERE
-                questions.resolved_at IS NULL
-                AND notes.status IN ('not_started', 'in_progress')
-                AND notes.deleted_at IS NULL
-
-              UNION ALL
-
-              SELECT
-                questions.id AS questionId,
-                notes.id AS noteId,
-                notes.title AS noteTitle,
-                questions.question,
-                'unanswered' AS kind,
-                questions.created_at AS activityAt
-              FROM subjective_questions AS questions
-              INNER JOIN notes ON notes.id = questions.note_id
-              LEFT JOIN subjective_answers AS answers
-                ON answers.question_id = questions.id
-              WHERE
-                questions.resolved_at IS NULL
-                AND answers.question_id IS NULL
-                AND notes.status IN ('not_started', 'in_progress')
-                AND notes.deleted_at IS NULL
-
-              UNION ALL
-
-              SELECT
-                questions.id AS questionId,
-                notes.id AS noteId,
-                notes.title AS noteTitle,
-                questions.question,
-                'multiple_choice' AS kind,
-                COALESCE(answers.answered_at, questions.created_at) AS activityAt
-              FROM multiple_choice_questions AS questions
-              INNER JOIN notes ON notes.id = questions.note_id
-              LEFT JOIN multiple_choice_answers AS answers
-                ON answers.question_id = questions.id
-              WHERE
-                questions.resolved_at IS NULL
-                AND notes.status IN ('not_started', 'in_progress')
-                AND notes.deleted_at IS NULL
-            )
-            ORDER BY activityAt DESC
-            LIMIT 3
-          `)
-          .all()
-          .map((row) => workspacePromptSchema.parse(row)),
-      "Could not list questions.",
     ),
   findNoteOverview: (noteId) =>
     withDatabase(

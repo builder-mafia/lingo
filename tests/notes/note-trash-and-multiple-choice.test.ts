@@ -34,7 +34,6 @@ test("moves notes to trash without deleting their learning data", async () => {
           workspace: yield* database.listNoteWorkspace(),
           overview: yield* database.findNoteOverview(note.id),
           question: yield* database.findQuestionSession(question.questionId),
-          prompts: yield* database.listWorkspacePrompts(),
         };
       }),
     );
@@ -44,7 +43,6 @@ test("moves notes to trash without deleting their learning data", async () => {
     expect(result.workspace.map(({ title }) => title)).toEqual(["남아 있는 노트"]);
     expect(result.overview).toBeUndefined();
     expect(result.question).toBeUndefined();
-    expect(result.prompts).toEqual([]);
   } finally {
     await runtime.dispose();
     rmSync(databasePath, { force: true });
@@ -156,7 +154,6 @@ test("shows, answers, and resolves multiple-choice questions", async () => {
         const sessionBefore = yield* database.findQuestionSession(
           question.questionId,
         );
-        const promptsBefore = yield* database.listWorkspacePrompts();
         const answer = yield* database.setMultipleChoiceAnswer(
           question.questionId,
           1,
@@ -172,7 +169,6 @@ test("shows, answers, and resolves multiple-choice questions", async () => {
           question,
           overviewBefore,
           sessionBefore,
-          promptsBefore,
           answer,
           sessionAfter,
           resolved,
@@ -203,12 +199,6 @@ test("shows, answers, and resolves multiple-choice questions", async () => {
         ],
       }),
     );
-    expect(result.promptsBefore).toEqual([
-      expect.objectContaining({
-        questionId: result.question.questionId,
-        kind: "multiple_choice",
-      }),
-    ]);
     expect(result.answer).toEqual({
       questionId: result.question.questionId,
       selectedId: 1,

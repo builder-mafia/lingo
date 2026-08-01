@@ -21,14 +21,4 @@ export const noteWorkspaceItemSchema = z.object({
     .nullable(),
 });
 
-export const workspacePromptSchema = z.object({
-  questionId: z.string().uuid(),
-  noteId: noteIdSchema,
-  noteTitle: noteTitleSchema,
-  question: z.string().trim().min(1),
-  kind: z.enum(["unanswered", "feedback_ready", "multiple_choice"]),
-  activityAt: z.string().datetime(),
-});
-
 export type NoteWorkspaceItem = z.infer<typeof noteWorkspaceItemSchema>;
-export type WorkspacePrompt = z.infer<typeof workspacePromptSchema>;

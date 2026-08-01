@@ -59,7 +59,7 @@ test("dev:ui starts Vite with its local API backend", async () => {
     const response = await waitForWorkspace(`http://127.0.0.1:${uiPort}`);
     expect(await response.json()).toEqual({
       ok: true,
-      data: { notes: [], prompts: [] },
+      data: { notes: [] },
     });
   } finally {
     child.kill();

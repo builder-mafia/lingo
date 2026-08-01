@@ -31,7 +31,7 @@ const makeApi = () => {
       calls.push(`course-status:${targetCourseId}:${status}`);
       return Promise.resolve({ courseId: targetCourseId, status });
     },
-    listWorkspace: () => Promise.resolve({ notes: [], prompts: [] }),
+    listWorkspace: () => Promise.resolve({ notes: [] }),
     listTrashedNotes: () =>
       Promise.resolve([
         {

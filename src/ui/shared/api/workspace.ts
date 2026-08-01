@@ -1,8 +1,5 @@
 import type { NoteStatus } from "../../../schemas/note-status";
-import type {
-  NoteWorkspaceItem,
-  WorkspacePrompt,
-} from "../../../schemas/note-workspace";
+import type { NoteWorkspaceItem } from "../../../schemas/note-workspace";
 import type {
   NoteOverview,
   QuestionSession,
@@ -26,7 +23,6 @@ const readData = async <Data>(response: Response): Promise<Data> => {
 
 export type WorkspaceData = {
   readonly notes: readonly NoteWorkspaceItem[];
-  readonly prompts: readonly WorkspacePrompt[];
 };
 
 export type CoursesData = readonly CourseWorkspaceItem[];
