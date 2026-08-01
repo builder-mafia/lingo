@@ -76,6 +76,24 @@ lingo note content get <note-id>
 
 Use this before deepening an existing note. The command returns `noteId`, `content`, and `updatedAt`.
 
+## Set or clear a note memo
+
+```bash
+lingo note memo set <note-id> --data '{
+  "content": "Freeform user-owned scratch text"
+}'
+```
+
+Running the command again replaces the current memo while keeping its identity. An empty or whitespace-only `content` value clears the memo. Preserve the user's spacing and wording unless they ask for editing.
+
+## Read a note memo
+
+```bash
+lingo note memo get <note-id>
+```
+
+The command returns `noteId` and a nullable `memo`. A missing memo is a successful response with `memo: null`, not an error.
+
 ## Add a subjective question
 
 Question text is plain text, not Markdown. Do not put Markdown formatting in `question` or multiple-choice `choices[].option` values.

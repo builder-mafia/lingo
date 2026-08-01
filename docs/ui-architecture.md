@@ -43,6 +43,7 @@ src/ui/
 ├── features/
 │   ├── note-search/            # URL 검색과 Notes 전용 Cmd/Ctrl+F
 │   ├── note-filters/           # 상태·label·정렬 URL 상태
+│   ├── note-memo/              # 메모 입력과 직렬화된 자동 저장
 │   └── note-status/            # Base UI 상태 선택과 저장
 ├── shared/
 │   └── api/                    # fetch, response schema, 오류 정규화
@@ -109,7 +110,10 @@ route는 `app/router.tsx` 한 곳에서 선언하고 링크는 `app/route-paths.
 
 ### Note Overview
 
-- 내용을 먼저 보여주고 질문이 있을 때만 단일 `질문` 섹션을 뒤에 둔다.
+- `내용 → 메모 → 질문` 순서를 유지한다.
+- 메모 입력 상태와 직렬화된 자동 저장 요청은 `note-memo` feature가 소유한다.
+- 앱 안에 AI 피드백 동작을 추가하지 않고, 저장 실패 시 초안을 유지하며 재시도를 제공한다.
+- 질문이 있을 때만 단일 `질문` 섹션을 뒤에 둔다.
 - 질문 행은 질문 문장 자체를 주요 링크로 사용한다.
 - 열린 질문을 먼저 배치하고 답변한 질문은 같은 목록에서 체크와 낮은 대비로 구분한다.
 - 질문이 없으면 질문 섹션과 빈 상태를 렌더링하지 않는다.

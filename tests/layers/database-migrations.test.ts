@@ -82,6 +82,55 @@ describe("database migrations", () => {
     }
   });
 
+  test("adds one cascading memo row per note", () => {
+    const database = new SqliteDatabase(":memory:");
+    const noteId = "25aa185c-76c3-48ca-8e98-4b984242defc";
+
+    try {
+      initializeDatabaseSchema(database);
+      expect(readDatabaseVersion(database)).toBe(9);
+      database
+        .query("INSERT INTO notes (id, title, created_at) VALUES (?, ?, ?)")
+        .run(noteId, "메모가 있는 노트", "2026-08-01T00:00:00.000Z");
+      database
+        .query(
+          "INSERT INTO note_memos (id, note_id, content, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+        )
+        .run(
+          crypto.randomUUID(),
+          noteId,
+          "남겨둘 생각",
+          "2026-08-01T00:00:00.000Z",
+          "2026-08-01T00:00:00.000Z",
+        );
+
+      expect(() =>
+        database
+          .query(
+            "INSERT INTO note_memos (id, note_id, content, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+          )
+          .run(
+            crypto.randomUUID(),
+            noteId,
+            "두 번째 메모",
+            "2026-08-01T00:00:00.000Z",
+            "2026-08-01T00:00:00.000Z",
+          ),
+      ).toThrow();
+
+      database.query("DELETE FROM notes WHERE id = ?").run(noteId);
+      expect(
+        database
+          .query<{ readonly count: number }, []>(
+            "SELECT COUNT(*) AS count FROM note_memos",
+          )
+          .get(),
+      ).toEqual({ count: 0 });
+    } finally {
+      database.close();
+    }
+  });
+
   test("upgrades an unversioned database without losing existing data", () => {
     const database = new SqliteDatabase(":memory:");
     const noteId = "c30d9828-4ea7-441f-bf02-94e5c18ec655";

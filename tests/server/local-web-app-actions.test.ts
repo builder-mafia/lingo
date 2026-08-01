@@ -56,6 +56,10 @@ const makeApi = () => {
       return Promise.resolve({ noteId: targetNoteId, deleted: true });
     },
     findNoteOverview: () => Promise.resolve(undefined),
+    setNoteMemo: (targetNoteId, content) => {
+      calls.push(`memo:${targetNoteId}:${content}`);
+      return Promise.resolve({ noteId: targetNoteId, memo: null });
+    },
     findQuestionSession: () => Promise.resolve(undefined),
     setSubjectiveAnswer: (targetQuestionId, content) =>
       Promise.resolve({ questionId: targetQuestionId, content }),
@@ -165,6 +169,24 @@ describe("local web app note and choice actions", () => {
       data: { questionId, selectedId: 2, correct: true },
     });
     expect(calls).toEqual([`choice:${questionId}:2`]);
+  });
+
+  test("stores note memo text through PUT /api/notes/:noteId/memo", async () => {
+    const { api, calls } = makeApi();
+    const app = makeLocalWebApp({ api, webAssets });
+
+    const response = await app.request(`/api/notes/${noteId}/memo`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content: "비동기 경계를 다시 실험한다." }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      ok: true,
+      data: { noteId, memo: null },
+    });
+    expect(calls).toEqual([`memo:${noteId}:비동기 경계를 다시 실험한다.`]);
   });
 
   test("rejects an invalid multiple-choice selection", async () => {

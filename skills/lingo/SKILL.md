@@ -5,7 +5,7 @@ description: Save learned material as durable local Lingo notes, optionally crea
 
 # Lingo
 
-Use the `lingo` CLI between the active AI agent and the user's local learning workspace. Keep reasoning and research in the active agent. Persist courses, notes, questions, answers, and feedback through Lingo.
+Use the `lingo` CLI between the active AI agent and the user's local learning workspace. Keep reasoning and research in the active agent. Persist courses, notes, memos, questions, answers, and feedback through Lingo.
 
 ## Before starting
 
@@ -21,6 +21,7 @@ Use the `lingo` CLI between the active AI agent and the user's local learning wo
 - **Save new learning:** Create a note and write its content. Add a question only when practice is requested.
 - **Study a domain systematically:** Design an ordered course, then fill each chapter note with content and one concise check.
 - **Deepen known learning:** Read existing content, combine it with the new understanding, and replace it with one coherent body.
+- **Review a memo:** Read the user's scratch text and respond only when feedback is explicitly requested.
 - **Open practice:** Ensure the localhost server is running and return the note URL.
 - **Evaluate answers:** List pending answers, assess each one, and store one feedback result per question.
 
@@ -136,6 +137,26 @@ lingo note content get <note-id>
 ```
 
 Preserve still-valid knowledge, integrate the new material, resolve contradictions where evidence permits, and produce one coherent replacement. Then write the complete body with `lingo note content set`; do not blindly append fragments. Keep the original retrieval need cohesive, split independent material into a separate note, and apply the post-save quality gate. Because the current CLI cannot inspect or edit the complete existing question bank, do not claim old questions were rechecked; warn the user when a substantive rewrite may have made them obsolete.
+
+## Work with user memos
+
+A memo is **user-owned scratch space**, separate from agent-authored note content. Do not copy generated note content into the memo, rewrite it during normal note creation, or automatically evaluate every memo.
+
+Read a memo only when the user asks to revisit, organize, or review their own thoughts:
+
+```bash
+lingo note memo get <note-id>
+```
+
+Provide analysis or coaching only when the user explicitly asks for feedback. Respond in the conversation; Lingo has no memo-feedback field and the local app does not invoke an AI provider.
+
+Write a memo only when the user explicitly asks the agent to store their scratch thought there:
+
+```bash
+lingo note memo set <note-id> --data '{"content":"An idea to revisit later."}'
+```
+
+Preserve the user's wording unless they ask for editing. An empty or whitespace-only `content` value clears the memo.
 
 ## Design a systematic course
 

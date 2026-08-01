@@ -62,4 +62,22 @@ describe("note actions and multiple-choice UI", () => {
     expect(overview).not.toContain("현재 질문이 없습니다.");
     expect(overview).not.toContain("답변 완료된 질문이 없습니다.");
   });
+
+  test("autosaves a lightweight note memo without an AI feedback control", async () => {
+    const [overview, editor, api] = await Promise.all([
+      readSource("src/ui/pages/note-overview/NoteOverviewPage.tsx"),
+      readSource("src/ui/features/note-memo/NoteMemoEditor.tsx"),
+      readSource("src/ui/shared/api/workspace.ts"),
+    ]);
+
+    expect(overview).toContain("NoteMemoEditor");
+    expect(overview).toContain("initialMemo={note.memo?.content ?? \"\"}");
+    expect(editor).toContain("떠오른 생각을 적어두세요.");
+    expect(editor).toContain("AUTOSAVE_DELAY_MS = 650");
+    expect(editor).toContain("onBlur={flush}");
+    expect(editor).toContain('aria-live="polite"');
+    expect(editor).toContain("saveChainRef");
+    expect(editor).not.toContain("AI 피드백");
+    expect(api).toContain("saveNoteMemo");
+  });
 });
