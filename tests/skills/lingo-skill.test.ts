@@ -80,14 +80,23 @@ describe("Lingo agent skill", () => {
     expect(skill).toContain("do not claim old questions were rechecked");
   });
 
-  test("creates a mixed practice set by default", async () => {
-    const skill = await readProjectFile("skills/lingo/SKILL.md");
+  test("keeps practice optional and concise", async () => {
+    const [skill, courseDesign] = await Promise.all([
+      readProjectFile("skills/lingo/SKILL.md"),
+      readProjectFile("skills/lingo/references/course-design.md"),
+    ]);
 
-    expect(skill).toContain("at least one subjective question");
-    expect(skill).toContain("at least one multiple-choice question");
-    expect(skill).toContain("three or four choices");
-    expect(skill).toContain("plausible misconception");
-    expect(skill).not.toContain("Default to subjective questions");
+    expect(skill).toContain("zero questions by default");
+    expect(skill).toContain(
+      "Only add a question when the user explicitly asks to practice, review, or test their understanding",
+    );
+    expect(skill).toContain("one short question by default");
+    expect(skill).toContain("one sentence");
+    expect(skill).toContain("roughly one minute");
+    expect(skill).not.toContain("at least one subjective question");
+    expect(skill).not.toContain("at least one multiple-choice question");
+    expect(courseDesign).toContain("one short question per chapter by default");
+    expect(courseDesign).not.toContain("two to five questions per chapter");
   });
 
   test("preserves meaning-sensitive terminology from foreign sources", async () => {

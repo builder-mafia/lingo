@@ -48,14 +48,18 @@ describe("note actions and multiple-choice UI", () => {
     expect(styles).toContain("max-width: 36ch;");
   });
 
-  test("uses direct question section labels", async () => {
+  test("keeps open and resolved questions in one optional section", async () => {
     const overview = await readSource(
       "src/ui/pages/note-overview/NoteOverviewPage.tsx",
     );
 
-    expect(overview).toContain('<h2 id="open-heading">질문</h2>');
-    expect(overview).toContain('<h2 id="resolved-heading">답변 완료</h2>');
-    expect(overview).not.toContain("이어갈 질문");
-    expect(overview).not.toContain("정리한 질문");
+    expect(overview).toContain("note.questions.length > 0 ? (");
+    expect(overview).toContain('<h2 id="questions-heading">질문</h2>');
+    expect(overview).toContain("openQuestions.map");
+    expect(overview).toContain("resolvedQuestions.map");
+    expect(overview).toContain('aria-label="답변 완료"');
+    expect(overview).not.toContain('id="resolved-heading"');
+    expect(overview).not.toContain("현재 질문이 없습니다.");
+    expect(overview).not.toContain("답변 완료된 질문이 없습니다.");
   });
 });

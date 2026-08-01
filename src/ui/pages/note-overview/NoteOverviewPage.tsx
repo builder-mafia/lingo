@@ -49,49 +49,39 @@ export const NoteOverviewPage = () => {
           )}
         </section>
 
-        <section className={styles.section} aria-labelledby="open-heading">
-          <div className={styles.sectionHeading}>
-            <h2 id="open-heading">질문</h2>
-            <span>{openQuestions.length}</span>
-          </div>
-          <div className={styles.questions}>
-            {openQuestions.map((question) => (
-              <Link className={styles.question} to={routePaths.question(note.id, question.id)} key={question.id}>
-                <span className={styles.openMark} aria-hidden="true" />
-                <strong>{question.question}</strong>
-                <span>
-                  {question.kind === "multiple_choice"
-                    ? question.hasAnswer
-                      ? "결과 다시 보기"
-                      : "선택해보기"
-                    : question.hasFeedback
-                      ? "피드백 확인"
-                      : question.hasAnswer
-                        ? "피드백 기다리는 중"
-                        : "답해보기"}
-                </span>
-              </Link>
-            ))}
-            {openQuestions.length === 0 ? <p className={styles.empty}>현재 질문이 없습니다.</p> : null}
-          </div>
-        </section>
-
-        <section className={styles.section} aria-labelledby="resolved-heading">
-          <div className={styles.sectionHeading}>
-            <h2 id="resolved-heading">답변 완료</h2>
-            <span>{resolvedQuestions.length}</span>
-          </div>
-          <div className={styles.questions}>
-            {resolvedQuestions.map((question) => (
-              <Link className={styles.question} to={routePaths.question(note.id, question.id)} key={question.id}>
-                <Check className={styles.resolvedMark} aria-hidden="true" />
-                <strong>{question.question}</strong>
-                <span>다시 보기</span>
-              </Link>
-            ))}
-            {resolvedQuestions.length === 0 ? <p className={styles.empty}>답변 완료된 질문이 없습니다.</p> : null}
-          </div>
-        </section>
+        {note.questions.length > 0 ? (
+          <section className={styles.section} aria-labelledby="questions-heading">
+            <h2 id="questions-heading">질문</h2>
+            <div className={styles.questions}>
+              {openQuestions.map((question) => (
+                <Link className={styles.question} to={routePaths.question(note.id, question.id)} key={question.id}>
+                  <span className={styles.openMark} aria-hidden="true" />
+                  <strong>{question.question}</strong>
+                  <span>
+                    {question.kind === "multiple_choice"
+                      ? question.hasAnswer
+                        ? "결과 다시 보기"
+                        : "선택해보기"
+                      : question.hasFeedback
+                        ? "피드백 확인"
+                        : question.hasAnswer
+                          ? "피드백 기다리는 중"
+                          : "답해보기"}
+                  </span>
+                </Link>
+              ))}
+              {resolvedQuestions.map((question) => (
+                <Link className={`${styles.question} ${styles.resolvedQuestion}`} to={routePaths.question(note.id, question.id)} key={question.id}>
+                  <span className={styles.resolvedMark} aria-label="답변 완료">
+                    <Check aria-hidden="true" />
+                  </span>
+                  <strong>{question.question}</strong>
+                  <span>다시 보기</span>
+                </Link>
+              ))}
+            </div>
+          </section>
+        ) : null}
         {note.courseContext ? (
           <nav className={styles.courseActions} aria-label="코스 학습 이동">
             <Link to={routePaths.course(note.courseContext.courseId)}>코스로 돌아가기</Link>
