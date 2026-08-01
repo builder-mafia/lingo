@@ -16,6 +16,12 @@ import {
   type NoteMemo,
   type NoteMemoState,
 } from "../schemas/note-memo";
+import {
+  noteRelationListSchema,
+  noteRelationSchema,
+  type NoteRelation,
+  type NoteRelationList,
+} from "../schemas/note-relation";
 import { type CreateMultipleChoiceQuestion } from "../schemas/multiple-choice";
 import { type CreateSubjectiveQuestion } from "../schemas/subjective";
 import {
@@ -99,6 +105,19 @@ export interface DatabaseService {
   readonly findNoteMemo: (
     noteId: string,
   ) => Effect.Effect<NoteMemoState, CliError>;
+  readonly addNoteRelation: (
+    noteId: string,
+    targetNoteId: string,
+  ) => Effect.Effect<NoteRelation, CliError>;
+  readonly listNoteRelations: (
+    noteId: string,
+  ) => Effect.Effect<NoteRelationList, CliError>;
+  readonly removeNoteRelation: (
+    relationId: string,
+  ) => Effect.Effect<
+    { readonly relationId: string; readonly removed: true },
+    CliError
+  >;
   readonly addMultipleChoiceQuestion: (
     noteId: string,
     question: CreateMultipleChoiceQuestion,
@@ -274,6 +293,18 @@ type NoteMemoRow = {
   readonly content: string;
   readonly createdAt: string;
   readonly updatedAt: string;
+};
+
+type NoteRelationRow = {
+  readonly id: string;
+  readonly noteAId: string;
+  readonly noteBId: string;
+  readonly createdAt: string;
+};
+
+type RelatedNoteRow = NoteRelationRow & {
+  readonly noteId: string;
+  readonly title: string;
 };
 
 type NoteQuestionRow = {
@@ -905,6 +936,113 @@ const makeService = (databasePath: string): DatabaseService => ({
       databasePath,
       (database) => readNoteMemoState(database, noteId),
       "Could not read note memo.",
+    ),
+  addNoteRelation: (noteId, targetNoteId) =>
+    withDatabase(
+      databasePath,
+      (database) => {
+        if (noteId === targetNoteId) {
+          throw new Error("A note cannot relate to itself.");
+        }
+        requireActiveNote(database, noteId);
+        requireActiveNote(database, targetNoteId);
+
+        const [noteAId, noteBId] =
+          noteId < targetNoteId
+            ? [noteId, targetNoteId]
+            : [targetNoteId, noteId];
+        const findRelation = () =>
+          database
+            .query<NoteRelationRow, [string, string]>(`
+              SELECT
+                id,
+                note_a_id AS noteAId,
+                note_b_id AS noteBId,
+                created_at AS createdAt
+              FROM note_relations
+              WHERE note_a_id = ? AND note_b_id = ?
+            `)
+            .get(noteAId, noteBId);
+
+        database
+          .query(
+            "INSERT OR IGNORE INTO note_relations (id, note_a_id, note_b_id, created_at) VALUES (?, ?, ?, ?)",
+          )
+          .run(
+            crypto.randomUUID(),
+            noteAId,
+            noteBId,
+            new Date().toISOString(),
+          );
+
+        const stored = findRelation();
+        if (!stored) throw new Error("Relation was not stored.");
+        return noteRelationSchema.parse(stored);
+      },
+      "Could not add note relation.",
+    ),
+  listNoteRelations: (noteId) =>
+    withDatabase(
+      databasePath,
+      (database) => {
+        requireActiveNote(database, noteId);
+        const rows = database
+          .query<RelatedNoteRow, [string, string, string]>(`
+            SELECT
+              relations.id,
+              relations.note_a_id AS noteAId,
+              relations.note_b_id AS noteBId,
+              relations.created_at AS createdAt,
+              notes.id AS noteId,
+              notes.title
+            FROM note_relations AS relations
+            INNER JOIN notes ON notes.id = CASE
+              WHEN relations.note_a_id = ? THEN relations.note_b_id
+              ELSE relations.note_a_id
+            END
+            WHERE
+              (relations.note_a_id = ? OR relations.note_b_id = ?)
+              AND notes.deleted_at IS NULL
+            ORDER BY notes.title COLLATE NOCASE, relations.id
+          `)
+          .all(noteId, noteId, noteId);
+        const labelQuery = database.query<NoteLabelRow, [string]>(
+          "SELECT label FROM note_labels WHERE note_id = ? ORDER BY position",
+        );
+
+        return noteRelationListSchema.parse({
+          noteId,
+          relations: rows.map(
+            ({ noteId: relatedNoteId, title, ...relation }) => ({
+              relation,
+              note: {
+                id: relatedNoteId,
+                title,
+                labels: labelQuery
+                  .all(relatedNoteId)
+                  .map(({ label }) => label),
+              },
+            }),
+          ),
+        });
+      },
+      "Could not list note relations.",
+    ),
+  removeNoteRelation: (relationId) =>
+    withDatabase(
+      databasePath,
+      (database) => {
+        const relation = database
+          .query<{ readonly id: string }, [string]>(
+            "SELECT id FROM note_relations WHERE id = ?",
+          )
+          .get(relationId);
+        if (!relation) throw new Error("Relation not found.");
+
+        database.query("DELETE FROM note_relations WHERE id = ?").run(relationId);
+        return { relationId, removed: true as const };
+      },
+      "Could not remove note relation.",
     ),
   addMultipleChoiceQuestion: (noteId, question) =>
     withDatabase(

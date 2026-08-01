@@ -202,6 +202,9 @@ Lingo는 답변을 대신 만들거나 AI provider를 선택하지 않습니다.
 | 노트 만들기 | `lingo note create (--data <json> \| --data-file <path>)` |
 | 노트 내용 저장 | `lingo note content set <note-id> (--data <json> \| --data-file <path>)` |
 | 노트 내용 조회 | `lingo note content get <note-id>` |
+| 노트 연결 추가 | `lingo relation add <note-id> (--data <json> \| --data-file <path>)` |
+| 노트 연결 조회 | `lingo relation list <note-id>` |
+| 노트 연결 제거 | `lingo relation remove <relation-id>` |
 | 질문 추가 | `lingo question add <note-id> (--data <json> \| --data-file <path>)` |
 | 주관식 답변 저장 | `lingo answer set <question-id> (--data <json> \| --data-file <path>)` |
 | 평가가 필요한 답변 조회 | `lingo answer list <note-id>` |

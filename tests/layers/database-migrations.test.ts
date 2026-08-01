@@ -88,7 +88,7 @@ describe("database migrations", () => {
 
     try {
       initializeDatabaseSchema(database);
-      expect(readDatabaseVersion(database)).toBe(9);
+      expect(readDatabaseVersion(database)).toBe(10);
       database
         .query("INSERT INTO notes (id, title, created_at) VALUES (?, ?, ?)")
         .run(noteId, "메모가 있는 노트", "2026-08-01T00:00:00.000Z");
@@ -123,6 +123,56 @@ describe("database migrations", () => {
         database
           .query<{ readonly count: number }, []>(
             "SELECT COUNT(*) AS count FROM note_memos",
+          )
+          .get(),
+      ).toEqual({ count: 0 });
+    } finally {
+      database.close();
+    }
+  });
+
+  test("adds one canonical cascading relation per note pair", () => {
+    const database = new SqliteDatabase(":memory:");
+    const firstNoteId = "25aa185c-76c3-48ca-8e98-4b984242defc";
+    const secondNoteId = "f94ee51d-e25c-4833-9ba1-04e12db15c99";
+
+    try {
+      initializeDatabaseSchema(database);
+      database
+        .query("INSERT INTO notes (id, title, created_at) VALUES (?, ?, ?)")
+        .run(firstNoteId, "첫 노트", "2026-08-01T00:00:00.000Z");
+      database
+        .query("INSERT INTO notes (id, title, created_at) VALUES (?, ?, ?)")
+        .run(secondNoteId, "둘째 노트", "2026-08-01T00:00:00.000Z");
+      database
+        .query(
+          "INSERT INTO note_relations (id, note_a_id, note_b_id, created_at) VALUES (?, ?, ?, ?)",
+        )
+        .run(
+          crypto.randomUUID(),
+          firstNoteId,
+          secondNoteId,
+          "2026-08-01T00:00:00.000Z",
+        );
+
+      expect(() =>
+        database
+          .query(
+            "INSERT INTO note_relations (id, note_a_id, note_b_id, created_at) VALUES (?, ?, ?, ?)",
+          )
+          .run(
+            crypto.randomUUID(),
+            secondNoteId,
+            firstNoteId,
+            "2026-08-01T00:00:00.000Z",
+          ),
+      ).toThrow();
+
+      database.query("DELETE FROM notes WHERE id = ?").run(firstNoteId);
+      expect(
+        database
+          .query<{ readonly count: number }, []>(
+            "SELECT COUNT(*) AS count FROM note_relations",
           )
           .get(),
       ).toEqual({ count: 0 });

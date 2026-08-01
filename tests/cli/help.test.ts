@@ -29,6 +29,9 @@ describe("lingo --help", () => {
     expect(long.stdout).toContain("lingo note content set <note-id>");
     expect(long.stdout).toContain("lingo note memo set <note-id>");
     expect(long.stdout).toContain("lingo note memo get <note-id>");
+    expect(long.stdout).toContain("lingo relation add <note-id>");
+    expect(long.stdout).toContain("lingo relation list <note-id>");
+    expect(long.stdout).toContain("lingo relation remove <relation-id>");
     expect(long.stdout).toContain("lingo course create");
     expect(long.stdout).toContain("lingo answer list <note-id>");
     expect(long.stdout).toContain("--update");
