@@ -18,10 +18,15 @@ const formatDate = (value: string) => dateFormatter.format(new Date(value));
 
 type NoteRowProps = {
   note: NoteWorkspaceItem;
+  onFilterLabel: (label: string) => void;
   onRemove: (noteId: string) => Promise<void>;
 };
 
-export const NoteRow = memo(function NoteRow({ note, onRemove }: NoteRowProps) {
+export const NoteRow = memo(function NoteRow({
+  note,
+  onFilterLabel,
+  onRemove,
+}: NoteRowProps) {
   const [removing, setRemoving] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -67,7 +72,11 @@ export const NoteRow = memo(function NoteRow({ note, onRemove }: NoteRowProps) {
             )}
           </div>
         </div>
-        <span className={styles.questionCount} role="cell">
+        <span
+          className={styles.questionCount}
+          data-empty={note.openQuestionCount === 0 ? "" : undefined}
+          role="cell"
+        >
           {note.openQuestionCount}
         </span>
         <time role="cell" dateTime={note.updatedAt}>
@@ -75,10 +84,18 @@ export const NoteRow = memo(function NoteRow({ note, onRemove }: NoteRowProps) {
         </time>
         <div className={styles.labels} role="cell">
           {note.labels.slice(0, 2).map((label) => (
-            <span key={label}>{label}</span>
+            <button
+              className={styles.labelButton}
+              type="button"
+              aria-label={`${label} 라벨로 필터`}
+              onClick={() => onFilterLabel(label)}
+              key={label}
+            >
+              {label}
+            </button>
           ))}
           {note.labels.length > 2 ? (
-            <span>+{note.labels.length - 2}</span>
+            <span className={styles.labelOverflow}>+{note.labels.length - 2}</span>
           ) : null}
         </div>
         <div role="cell">
