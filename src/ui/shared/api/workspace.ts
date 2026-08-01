@@ -10,6 +10,8 @@ import type {
   CourseWorkspaceItem,
 } from "../../../schemas/course-workspace";
 import type { NoteMemoState } from "../../../schemas/note-memo";
+import type { KnowledgeMap } from "../../../schemas/knowledge-map";
+import type { NoteRelation } from "../../../schemas/note-relation";
 
 type ApiSuccess<Data> = { readonly ok: true; readonly data: Data };
 
@@ -48,6 +50,29 @@ export const updateCourseStatus = (courseId: string, status: NoteStatus) =>
 export const loadWorkspace = () =>
   fetch("/api/workspace", { headers: { Accept: "application/json" } }).then(
     readData<WorkspaceData>,
+  );
+
+export const loadKnowledgeMap = () =>
+  fetch("/api/knowledge-map", {
+    headers: { Accept: "application/json" },
+  }).then(readData<KnowledgeMap>);
+
+export const addKnowledgeMapRelation = (
+  noteId: string,
+  targetNoteId: string,
+) =>
+  fetch("/api/note-relations", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ noteId, targetNoteId }),
+  }).then(readData<NoteRelation>);
+
+export const removeKnowledgeMapRelation = (relationId: string) =>
+  fetch(`/api/note-relations/${encodeURIComponent(relationId)}`, {
+    method: "DELETE",
+    headers: { Accept: "application/json" },
+  }).then(
+    readData<{ readonly relationId: string; readonly removed: true }>,
   );
 
 export const updateNoteStatus = (noteId: string, status: NoteStatus) =>

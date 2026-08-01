@@ -16,6 +16,14 @@ import type {
   CourseOverview,
   CourseWorkspaceItem,
 } from "../schemas/course-workspace";
+import {
+  addKnowledgeMapRelationSchema,
+  type KnowledgeMap,
+} from "../schemas/knowledge-map";
+import {
+  noteRelationIdSchema,
+  type NoteRelation,
+} from "../schemas/note-relation";
 import type { WebAssets } from "./web-assets";
 
 export type LocalWebAppApi = {
@@ -49,6 +57,14 @@ export type LocalWebAppApi = {
     noteId: string,
     content: string,
   ) => Promise<NoteMemoState>;
+  readonly readKnowledgeMap: () => Promise<KnowledgeMap>;
+  readonly addNoteRelation: (
+    noteId: string,
+    targetNoteId: string,
+  ) => Promise<NoteRelation>;
+  readonly removeNoteRelation: (
+    relationId: string,
+  ) => Promise<{ readonly relationId: string; readonly removed: true }>;
   readonly findQuestionSession: (
     questionId: string,
   ) => Promise<QuestionSession | undefined>;
@@ -127,6 +143,49 @@ export const makeLocalWebApp = ({ webAssets, api }: LocalWebAppConfig) => {
   app.get("/api/workspace", async (context) => {
     try {
       return context.json({ ok: true, data: await api.listWorkspace() });
+    } catch {
+      return context.json(requestFailedResponse, 500);
+    }
+  });
+
+  app.get("/api/knowledge-map", async (context) => {
+    try {
+      return context.json({ ok: true, data: await api.readKnowledgeMap() });
+    } catch {
+      return context.json(requestFailedResponse, 500);
+    }
+  });
+
+  app.post("/api/note-relations", async (context) => {
+    const input = addKnowledgeMapRelationSchema.safeParse(
+      await context.req.json().catch(() => undefined),
+    );
+    if (!input.success) return context.json(invalidInputResponse, 400);
+
+    try {
+      return context.json({
+        ok: true,
+        data: await api.addNoteRelation(
+          input.data.noteId,
+          input.data.targetNoteId,
+        ),
+      });
+    } catch {
+      return context.json(requestFailedResponse, 500);
+    }
+  });
+
+  app.delete("/api/note-relations/:relationId", async (context) => {
+    const relationId = noteRelationIdSchema.safeParse(
+      context.req.param("relationId"),
+    );
+    if (!relationId.success) return context.json(invalidInputResponse, 400);
+
+    try {
+      return context.json({
+        ok: true,
+        data: await api.removeNoteRelation(relationId.data),
+      });
     } catch {
       return context.json(requestFailedResponse, 500);
     }

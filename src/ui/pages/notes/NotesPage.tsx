@@ -5,6 +5,7 @@ import { Link, useLoaderData, useRevalidator, useSearchParams } from "react-rout
 
 import { routePaths } from "../../app/route-paths";
 import { NoteSearch } from "../../features/note-search/NoteSearch";
+import { NoteViewSwitch } from "../../features/note-view-switch/NoteViewSwitch";
 import { moveNoteToTrash, type WorkspaceData } from "../../shared/api/workspace";
 import { filterAndSortNotes } from "./note-list";
 import { NoteRow } from "./NoteRow";
@@ -71,6 +72,7 @@ export const NotesPage = () => {
             <span>{notes.length}개</span>
           </div>
           <div className={styles.headingActions}>
+            <NoteViewSwitch active="list" />
             <Link className={styles.trashLink} to={routePaths.trash}>
               <Trash2 aria-hidden="true" />
               <span>휴지통</span>

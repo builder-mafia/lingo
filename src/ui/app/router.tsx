@@ -10,6 +10,7 @@ import {
   loadQuestionSession,
   loadTrash,
   loadWorkspace,
+  loadKnowledgeMap,
 } from "../shared/api/workspace";
 
 const RouteHydrationFallback = () => null;
@@ -29,6 +30,15 @@ export const appRoutes: RouteObject[] = [
             "../pages/notes/NotesPage"
           );
           return { Component: NotesPage };
+        },
+      },
+      {
+        path: "map",
+        loader: loadKnowledgeMap,
+        HydrateFallback: RouteHydrationFallback,
+        lazy: async () => {
+          const { KnowledgeMapPage } = await import("../pages/knowledge-map/KnowledgeMapPage");
+          return { Component: KnowledgeMapPage };
         },
       },
       {

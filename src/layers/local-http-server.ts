@@ -101,6 +101,12 @@ export const makeLocalHttpServerLayer = (config: LocalHttpServerConfig) =>
           Effect.runPromise(database.findNoteOverview(noteId)),
         setNoteMemo: (noteId, content) =>
           Effect.runPromise(database.setNoteMemo(noteId, content)),
+        readKnowledgeMap: () =>
+          Effect.runPromise(database.readKnowledgeMap()),
+        addNoteRelation: (noteId, targetNoteId) =>
+          Effect.runPromise(database.addNoteRelation(noteId, targetNoteId)),
+        removeNoteRelation: (relationId) =>
+          Effect.runPromise(database.removeNoteRelation(relationId)),
         findQuestionSession: (questionId) =>
           Effect.runPromise(database.findQuestionSession(questionId)),
         setSubjectiveAnswer: (questionId, content) =>
