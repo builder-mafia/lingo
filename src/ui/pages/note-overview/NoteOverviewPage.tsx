@@ -4,6 +4,7 @@ import { Link, useLoaderData } from "react-router";
 import type { NoteOverview } from "../../../schemas/question-session";
 import { routePaths } from "../../app/route-paths";
 import { NoteStatusSelect } from "../../features/note-status/NoteStatusSelect";
+import { NoteMemoEditor } from "../../features/note-memo/NoteMemoEditor";
 import { MarkdownContent } from "../../shared/markdown/MarkdownContent";
 import styles from "./NoteOverviewPage.module.css";
 
@@ -47,6 +48,14 @@ export const NoteOverviewPage = () => {
           ) : (
             <p className={styles.mutedContent}>아직 정리된 내용이 없습니다.</p>
           )}
+        </section>
+
+        <section className={styles.section} aria-labelledby="memo-heading">
+          <NoteMemoEditor
+            key={note.id}
+            noteId={note.id}
+            initialMemo={note.memo?.content ?? ""}
+          />
         </section>
 
         {note.questions.length > 0 ? (

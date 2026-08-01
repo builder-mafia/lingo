@@ -8,6 +8,10 @@ import type { NoteOverview, QuestionSession } from "../schemas/question-session"
 import { setSubjectiveAnswerSchema } from "../schemas/subjective-answer";
 import type { TrashedNote } from "../schemas/trashed-note";
 import { courseIdSchema } from "../schemas/course";
+import {
+  setNoteMemoSchema,
+  type NoteMemoState,
+} from "../schemas/note-memo";
 import type {
   CourseOverview,
   CourseWorkspaceItem,
@@ -41,6 +45,10 @@ export type LocalWebAppApi = {
     noteId: string,
   ) => Promise<{ readonly noteId: string; readonly deleted: true }>;
   readonly findNoteOverview: (noteId: string) => Promise<NoteOverview | undefined>;
+  readonly setNoteMemo: (
+    noteId: string,
+    content: string,
+  ) => Promise<NoteMemoState>;
   readonly findQuestionSession: (
     questionId: string,
   ) => Promise<QuestionSession | undefined>;
@@ -244,6 +252,25 @@ export const makeLocalWebApp = ({ webAssets, api }: LocalWebAppConfig) => {
       return note
         ? context.json({ ok: true, data: note })
         : context.json(notFoundResponse, 404);
+    } catch {
+      return context.json(requestFailedResponse, 500);
+    }
+  });
+
+  app.put("/api/notes/:noteId/memo", async (context) => {
+    const noteId = noteIdSchema.safeParse(context.req.param("noteId"));
+    const input = setNoteMemoSchema.safeParse(
+      await context.req.json().catch(() => undefined),
+    );
+    if (!noteId.success || !input.success) {
+      return context.json(invalidInputResponse, 400);
+    }
+
+    try {
+      return context.json({
+        ok: true,
+        data: await api.setNoteMemo(noteId.data, input.data.content),
+      });
     } catch {
       return context.json(requestFailedResponse, 500);
     }

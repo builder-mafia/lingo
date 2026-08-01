@@ -9,6 +9,7 @@ import type {
   CourseOverview,
   CourseWorkspaceItem,
 } from "../../../schemas/course-workspace";
+import type { NoteMemoState } from "../../../schemas/note-memo";
 
 type ApiSuccess<Data> = { readonly ok: true; readonly data: Data };
 
@@ -85,6 +86,13 @@ export const loadNoteOverview = (noteId: string) =>
   fetch(`/api/notes/${encodeURIComponent(noteId)}`, {
     headers: { Accept: "application/json" },
   }).then(readData<NoteOverview>);
+
+export const saveNoteMemo = (noteId: string, content: string) =>
+  fetch(`/api/notes/${encodeURIComponent(noteId)}/memo`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ content }),
+  }).then(readData<NoteMemoState>);
 
 export const loadQuestionSession = (questionId: string) =>
   fetch(`/api/questions/${encodeURIComponent(questionId)}`, {

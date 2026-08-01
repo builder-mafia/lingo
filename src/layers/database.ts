@@ -10,6 +10,12 @@ import {
   type Note,
 } from "../schemas/note";
 import { noteContentSchema, type NoteContent } from "../schemas/note-content";
+import {
+  noteMemoSchema,
+  noteMemoStateSchema,
+  type NoteMemo,
+  type NoteMemoState,
+} from "../schemas/note-memo";
 import { type CreateMultipleChoiceQuestion } from "../schemas/multiple-choice";
 import { type CreateSubjectiveQuestion } from "../schemas/subjective";
 import {
@@ -86,6 +92,13 @@ export interface DatabaseService {
   readonly findNoteContent: (
     noteId: string,
   ) => Effect.Effect<NoteContent | undefined, CliError>;
+  readonly setNoteMemo: (
+    noteId: string,
+    content: string,
+  ) => Effect.Effect<NoteMemoState, CliError>;
+  readonly findNoteMemo: (
+    noteId: string,
+  ) => Effect.Effect<NoteMemoState, CliError>;
   readonly addMultipleChoiceQuestion: (
     noteId: string,
     question: CreateMultipleChoiceQuestion,
@@ -253,6 +266,14 @@ type NoteOverviewRow = {
   readonly title: string;
   readonly content: string | null;
   readonly status: string;
+};
+
+type NoteMemoRow = {
+  readonly id: string;
+  readonly noteId: string;
+  readonly content: string;
+  readonly createdAt: string;
+  readonly updatedAt: string;
 };
 
 type NoteQuestionRow = {
@@ -470,10 +491,52 @@ const permanentNoteDeleteStatements = [
   `,
   "DELETE FROM subjective_questions WHERE note_id = ?",
   "DELETE FROM multiple_choice_questions WHERE note_id = ?",
+  "DELETE FROM note_memos WHERE note_id = ?",
   "DELETE FROM note_contents WHERE note_id = ?",
   "DELETE FROM note_labels WHERE note_id = ?",
   "DELETE FROM notes WHERE id = ? AND deleted_at IS NOT NULL",
 ] as const;
+
+const requireActiveNote = (database: SqliteDatabase, noteId: string) => {
+  const note = database
+    .query<{ readonly id: string }, [string]>(
+      "SELECT id FROM notes WHERE id = ? AND deleted_at IS NULL",
+    )
+    .get(noteId);
+
+  if (!note) throw new Error("Note not found.");
+};
+
+const findStoredNoteMemo = (
+  database: SqliteDatabase,
+  noteId: string,
+): NoteMemo | null => {
+  const row = database
+    .query<NoteMemoRow, [string]>(`
+      SELECT
+        id,
+        note_id AS noteId,
+        content,
+        created_at AS createdAt,
+        updated_at AS updatedAt
+      FROM note_memos
+      WHERE note_id = ?
+    `)
+    .get(noteId);
+
+  return row ? noteMemoSchema.parse(row) : null;
+};
+
+const readNoteMemoState = (
+  database: SqliteDatabase,
+  noteId: string,
+): NoteMemoState => {
+  requireActiveNote(database, noteId);
+  return noteMemoStateSchema.parse({
+    noteId,
+    memo: findStoredNoteMemo(database, noteId),
+  });
+};
 
 const requireTrashedNote = (database: SqliteDatabase, noteId: string) => {
   const trashed = database
@@ -809,6 +872,40 @@ const makeService = (databasePath: string): DatabaseService => ({
       },
       "Could not read note content.",
     ),
+  setNoteMemo: (noteId, content) =>
+    withDatabase(
+      databasePath,
+      (database) => {
+        requireActiveNote(database, noteId);
+
+        if (content.trim().length === 0) {
+          database
+            .query("DELETE FROM note_memos WHERE note_id = ?")
+            .run(noteId);
+          return noteMemoStateSchema.parse({ noteId, memo: null });
+        }
+
+        const now = new Date().toISOString();
+        database
+          .query(`
+            INSERT INTO note_memos (id, note_id, content, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(note_id) DO UPDATE SET
+              content = excluded.content,
+              updated_at = excluded.updated_at
+          `)
+          .run(crypto.randomUUID(), noteId, content, now, now);
+
+        return readNoteMemoState(database, noteId);
+      },
+      "Could not set note memo.",
+    ),
+  findNoteMemo: (noteId) =>
+    withDatabase(
+      databasePath,
+      (database) => readNoteMemoState(database, noteId),
+      "Could not read note memo.",
+    ),
   addMultipleChoiceQuestion: (noteId, question) =>
     withDatabase(
       databasePath,
@@ -962,6 +1059,11 @@ const makeService = (databasePath: string): DatabaseService => ({
               MAX(
                 notes.created_at,
                 COALESCE(contents.updated_at, notes.created_at),
+                COALESCE((
+                  SELECT memos.updated_at
+                  FROM note_memos AS memos
+                  WHERE memos.note_id = notes.id
+                ), notes.created_at),
                 COALESCE((
                   SELECT MAX(created_at)
                   FROM subjective_questions
@@ -1181,6 +1283,7 @@ const makeService = (databasePath: string): DatabaseService => ({
           ...note,
           labels,
           questions,
+          memo: findStoredNoteMemo(database, noteId),
           courseContext: findCourseNoteContext(database, noteId),
         });
       },

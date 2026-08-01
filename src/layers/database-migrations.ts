@@ -180,6 +180,19 @@ const addCourses = (database: SqliteDatabase) => {
   `);
 };
 
+const addNoteMemos = (database: SqliteDatabase) => {
+  database.run(`
+    CREATE TABLE note_memos (
+      id TEXT PRIMARY KEY NOT NULL,
+      note_id TEXT NOT NULL UNIQUE,
+      content TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY(note_id) REFERENCES notes(id) ON DELETE CASCADE
+    )
+  `);
+};
+
 const databaseMigrations: readonly DatabaseMigration[] = [
   { version: 1, migrate: createInitialSchema },
   { version: 2, migrate: renameProblemsToQuestions },
@@ -189,6 +202,7 @@ const databaseMigrations: readonly DatabaseMigration[] = [
   { version: 6, migrate: addMultipleChoiceAnswers },
   { version: 7, migrate: renameNoteSummariesToContents },
   { version: 8, migrate: addCourses },
+  { version: 9, migrate: addNoteMemos },
 ];
 
 export const LATEST_DATABASE_VERSION =

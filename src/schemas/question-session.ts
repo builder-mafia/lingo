@@ -4,6 +4,7 @@ import { multipleChoiceChoiceSchema } from "./multiple-choice";
 import { noteIdSchema, noteLabelSchema, noteTitleSchema } from "./note";
 import { noteStatusSchema } from "./note-status";
 import { courseNoteContextSchema } from "./course-workspace";
+import { noteMemoSchema } from "./note-memo";
 
 export const noteQuestionItemSchema = z.object({
   id: z.string().uuid(),
@@ -18,6 +19,7 @@ export const noteOverviewSchema = z.object({
   id: noteIdSchema,
   title: noteTitleSchema,
   content: z.string().nullable(),
+  memo: noteMemoSchema.nullable(),
   labels: z.array(noteLabelSchema),
   status: noteStatusSchema,
   questions: z.array(noteQuestionItemSchema),

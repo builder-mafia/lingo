@@ -11,12 +11,23 @@ describe("Lingo agent skill", () => {
     expect(skill).toContain("lingo note create");
     expect(skill).toContain("lingo note content set");
     expect(skill).toContain("lingo note content get");
+    expect(skill).toContain("lingo note memo set");
+    expect(skill).toContain("lingo note memo get");
     expect(skill).toContain("lingo question add");
     expect(skill).toContain("lingo answer list");
     expect(skill).toContain("lingo evaluation set");
     expect(skill).toContain("lingo course create");
     expect(skill).toContain("references/cli.md");
     expect(skill).not.toContain("lingo note summary set");
+  });
+
+  test("treats memo as user-owned scratch space with opt-in review", async () => {
+    const skill = await readProjectFile("skills/lingo/SKILL.md");
+
+    expect(skill).toContain("user-owned scratch space");
+    expect(skill).toContain("only when the user explicitly asks for feedback");
+    expect(skill).toContain("Do not copy generated note content into the memo");
+    expect(skill).toContain("or automatically evaluate every memo");
   });
 
   test("builds systematic courses as ordered chapter notes", async () => {
