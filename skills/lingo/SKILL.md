@@ -5,7 +5,7 @@ description: Save learned material as durable local Lingo notes, optionally crea
 
 # Lingo
 
-Use the `lingo` CLI between the active AI agent and the user's local learning workspace. Keep reasoning and research in the active agent. Persist courses, notes, memos, explicit note relations, questions, answers, and feedback through Lingo.
+Use the `lingo` CLI between the active AI agent and the user's local learning workspace. Keep reasoning and research in the active agent. Persist courses, notes, structured sources, memos, explicit note relations, questions, answers, and feedback through Lingo.
 
 ## Before starting
 
@@ -71,7 +71,8 @@ When related articles or documentation can materially improve accuracy, context,
 - Use sources to verify and enrich the user's model, not to replace it with a link collection.
 - Distinguish sourced facts from the agent's inference when the distinction matters.
 - Cite only sources actually consulted and directly relevant to the saved content.
-- Add a final `## Sources` section with descriptive Markdown links when sources were used. Omit the section when no external source was needed or available.
+- Store every consulted source as structured source data after saving the content. Use its real document title, canonical HTTP(S) URL, and one concise description of what was checked for this note.
+- Do not duplicate structured sources in a Markdown `## Sources` section. Omit source commands when no external source was needed or available.
 - Never invent a citation, title, author, or URL.
 
 ## Save new learning
@@ -109,7 +110,17 @@ lingo note content set <note-id> --data '{"content":"A cache needs an explicit c
 
 Prefer `--data-file` for substantive Markdown so shell quoting cannot corrupt it. Describe the learned model rather than the conversation that produced it.
 
-### 4. Add a question when requested
+### 4. Store consulted sources
+
+For each source actually used, call:
+
+```bash
+lingo note source add <note-id> --data '{"title":"Effect error management","url":"https://effect.website/docs/error-management/","description":"Error handling contracts checked for this note."}'
+```
+
+The description states what the source contributed to this note; it is not copied Open Graph text or a generic site summary. Adding the same URL again updates its title and description without duplicating it. Verify the final set with `lingo note source list <note-id>`.
+
+### 5. Add a question when requested
 
 For a subjective question, treat `referenceAnswer` as an evaluation rubric. Keep it accurate, self-contained, and hidden from any response meant to test the user.
 
@@ -123,9 +134,9 @@ For a multiple-choice question, provide two to four concise choices when the top
 lingo question add <note-id> --data '{"question":"Which situation can still expose stale cache data?","choices":[{"order":1,"option":"The source changes before the TTL expires","explanation":"The cached value remains valid by time even though the source has changed."},{"order":2,"option":"Every read bypasses the cache","explanation":"Bypassing the cache reads the source directly, so this is not stale cache data."},{"order":3,"option":"The cache entry is removed on every source update","explanation":"Successful invalidation removes the stale entry before the next read."}],"correctId":1}'
 ```
 
-### 5. Verify and return the result
+### 6. Verify and return the result
 
-For substantive content, read it back with `lingo note content get <note-id>` and apply the **post-save quality gate** in [references/note-design.md](references/note-design.md). Verify that Markdown structure and links survived serialization and, when a question was requested, that it tests the intended model.
+For substantive content, read it back with `lingo note content get <note-id>` and apply the **post-save quality gate** in [references/note-design.md](references/note-design.md). When sources were used, list them with `lingo note source list <note-id>` and verify their titles, URLs, and contribution descriptions. Verify that Markdown structure survived serialization and, when a question was requested, that it tests the intended model.
 
 Report what was saved and return `data.noteUrl`. Do not dump raw JSON unless asked. Never claim that data was saved if any required command failed. If content or question creation partially fails, identify the incomplete operation precisely.
 
@@ -135,9 +146,10 @@ Read the current body before writing:
 
 ```bash
 lingo note content get <note-id>
+lingo note source list <note-id>
 ```
 
-Preserve still-valid knowledge, integrate the new material, resolve contradictions where evidence permits, and produce one coherent replacement. Then write the complete body with `lingo note content set`; do not blindly append fragments. Keep the original retrieval need cohesive, split independent material into a separate note, and apply the post-save quality gate. Because the current CLI cannot inspect or edit the complete existing question bank, do not claim old questions were rechecked; warn the user when a substantive rewrite may have made them obsolete.
+Preserve still-valid knowledge, integrate the new material, resolve contradictions where evidence permits, and produce one coherent replacement. Then write the complete body with `lingo note content set`; do not blindly append fragments. Add or update every source used in the replacement with `lingo note source add`, and remove a stored source with `lingo note source remove <source-id>` only when it no longer contributed to the note. Keep the original retrieval need cohesive, split independent material into a separate note, and apply the post-save quality gate. Because the current CLI cannot inspect or edit the complete existing question bank, do not claim old questions were rechecked; warn the user when a substantive rewrite may have made them obsolete.
 
 ## Work with user memos
 
@@ -219,6 +231,7 @@ For each returned chapter `noteId`, build durable Markdown content using the cha
 
 ```bash
 lingo note content set <note-id> (--data <json> | --data-file <path>)
+lingo note source add <note-id> (--data <json> | --data-file <path>)
 lingo question add <note-id> (--data <json> | --data-file <path>)
 ```
 

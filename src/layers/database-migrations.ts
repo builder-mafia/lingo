@@ -212,6 +212,23 @@ const addNoteRelations = (database: SqliteDatabase) => {
   `);
 };
 
+const addNoteSources = (database: SqliteDatabase) => {
+  database.run(`
+    CREATE TABLE note_sources (
+      id TEXT PRIMARY KEY NOT NULL,
+      note_id TEXT NOT NULL,
+      title TEXT NOT NULL,
+      url TEXT NOT NULL,
+      description TEXT,
+      position INTEGER NOT NULL CHECK (position > 0),
+      created_at TEXT NOT NULL,
+      UNIQUE(note_id, url),
+      UNIQUE(note_id, position),
+      FOREIGN KEY(note_id) REFERENCES notes(id) ON DELETE CASCADE
+    )
+  `);
+};
+
 const databaseMigrations: readonly DatabaseMigration[] = [
   { version: 1, migrate: createInitialSchema },
   { version: 2, migrate: renameProblemsToQuestions },
@@ -223,6 +240,7 @@ const databaseMigrations: readonly DatabaseMigration[] = [
   { version: 8, migrate: addCourses },
   { version: 9, migrate: addNoteMemos },
   { version: 10, migrate: addNoteRelations },
+  { version: 11, migrate: addNoteSources },
 ];
 
 export const LATEST_DATABASE_VERSION =

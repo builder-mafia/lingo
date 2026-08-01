@@ -22,6 +22,13 @@ import {
   type NoteRelation,
   type NoteRelationList,
 } from "../schemas/note-relation";
+import {
+  noteSourceListSchema,
+  noteSourceSchema,
+  type CreateNoteSource,
+  type NoteSource,
+  type NoteSourceList,
+} from "../schemas/note-source";
 import { type CreateMultipleChoiceQuestion } from "../schemas/multiple-choice";
 import { type CreateSubjectiveQuestion } from "../schemas/subjective";
 import {
@@ -109,6 +116,19 @@ export interface DatabaseService {
   readonly findNoteMemo: (
     noteId: string,
   ) => Effect.Effect<NoteMemoState, CliError>;
+  readonly addNoteSource: (
+    noteId: string,
+    source: CreateNoteSource,
+  ) => Effect.Effect<NoteSource, CliError>;
+  readonly listNoteSources: (
+    noteId: string,
+  ) => Effect.Effect<NoteSourceList, CliError>;
+  readonly removeNoteSource: (
+    sourceId: string,
+  ) => Effect.Effect<
+    { readonly sourceId: string; readonly removed: true },
+    CliError
+  >;
   readonly addNoteRelation: (
     noteId: string,
     targetNoteId: string,
@@ -298,6 +318,16 @@ type NoteMemoRow = {
   readonly content: string;
   readonly createdAt: string;
   readonly updatedAt: string;
+};
+
+type NoteSourceRow = {
+  readonly id: string;
+  readonly noteId: string;
+  readonly title: string;
+  readonly url: string;
+  readonly description: string | null;
+  readonly position: number;
+  readonly createdAt: string;
 };
 
 type NoteRelationRow = {
@@ -596,6 +626,27 @@ const readNoteMemoState = (
     memo: findStoredNoteMemo(database, noteId),
   });
 };
+
+const findStoredNoteSources = (
+  database: SqliteDatabase,
+  noteId: string,
+): readonly NoteSource[] =>
+  database
+    .query<NoteSourceRow, [string]>(`
+      SELECT
+        id,
+        note_id AS noteId,
+        title,
+        url,
+        description,
+        position,
+        created_at AS createdAt
+      FROM note_sources
+      WHERE note_id = ?
+      ORDER BY position
+    `)
+    .all(noteId)
+    .map((source) => noteSourceSchema.parse(source));
 
 const requireTrashedNote = (database: SqliteDatabase, noteId: string) => {
   const trashed = database
@@ -964,6 +1015,87 @@ const makeService = (databasePath: string): DatabaseService => ({
       databasePath,
       (database) => readNoteMemoState(database, noteId),
       "Could not read note memo.",
+    ),
+  addNoteSource: (noteId, source) =>
+    withDatabase(
+      databasePath,
+      (database) => {
+        requireActiveNote(database, noteId);
+        const now = new Date().toISOString();
+
+        database
+          .query(`
+            INSERT INTO note_sources (
+              id, note_id, title, url, description, position, created_at
+            )
+            VALUES (
+              ?, ?, ?, ?, ?,
+              COALESCE(
+                (SELECT MAX(position) + 1 FROM note_sources WHERE note_id = ?),
+                1
+              ),
+              ?
+            )
+            ON CONFLICT(note_id, url) DO UPDATE SET
+              title = excluded.title,
+              description = excluded.description
+          `)
+          .run(
+            crypto.randomUUID(),
+            noteId,
+            source.title,
+            source.url,
+            source.description ?? null,
+            noteId,
+            now,
+          );
+
+        const stored = database
+          .query<NoteSourceRow, [string, string]>(`
+            SELECT
+              id,
+              note_id AS noteId,
+              title,
+              url,
+              description,
+              position,
+              created_at AS createdAt
+            FROM note_sources
+            WHERE note_id = ? AND url = ?
+          `)
+          .get(noteId, source.url);
+        if (!stored) throw new Error("Source was not stored.");
+        return noteSourceSchema.parse(stored);
+      },
+      "Could not add note source.",
+    ),
+  listNoteSources: (noteId) =>
+    withDatabase(
+      databasePath,
+      (database) => {
+        requireActiveNote(database, noteId);
+        return noteSourceListSchema.parse({
+          noteId,
+          sources: findStoredNoteSources(database, noteId),
+        });
+      },
+      "Could not list note sources.",
+    ),
+  removeNoteSource: (sourceId) =>
+    withDatabase(
+      databasePath,
+      (database) => {
+        const source = database
+          .query<{ readonly id: string }, [string]>(
+            "SELECT id FROM note_sources WHERE id = ?",
+          )
+          .get(sourceId);
+        if (!source) throw new Error("Source not found.");
+
+        database.query("DELETE FROM note_sources WHERE id = ?").run(sourceId);
+        return { sourceId, removed: true as const };
+      },
+      "Could not remove note source.",
     ),
   addNoteRelation: (noteId, targetNoteId) =>
     withDatabase(
@@ -1546,6 +1678,7 @@ const makeService = (databasePath: string): DatabaseService => ({
           ...note,
           labels,
           questions,
+          sources: findStoredNoteSources(database, noteId),
           memo: findStoredNoteMemo(database, noteId),
           courseContext: findCourseNoteContext(database, noteId),
         });

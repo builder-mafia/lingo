@@ -5,6 +5,7 @@ import { noteIdSchema, noteLabelSchema, noteTitleSchema } from "./note";
 import { noteStatusSchema } from "./note-status";
 import { courseNoteContextSchema } from "./course-workspace";
 import { noteMemoSchema } from "./note-memo";
+import { noteSourceSchema } from "./note-source";
 
 export const noteQuestionItemSchema = z.object({
   id: z.string().uuid(),
@@ -19,6 +20,7 @@ export const noteOverviewSchema = z.object({
   id: noteIdSchema,
   title: noteTitleSchema,
   content: z.string().nullable(),
+  sources: z.array(noteSourceSchema),
   memo: noteMemoSchema.nullable(),
   labels: z.array(noteLabelSchema),
   status: noteStatusSchema,

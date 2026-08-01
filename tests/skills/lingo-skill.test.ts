@@ -16,6 +16,9 @@ describe("Lingo agent skill", () => {
     expect(skill).toContain("lingo relation add");
     expect(skill).toContain("lingo relation list");
     expect(skill).toContain("lingo relation remove");
+    expect(skill).toContain("lingo note source add");
+    expect(skill).toContain("lingo note source list");
+    expect(skill).toContain("lingo note source remove");
     expect(skill).toContain("lingo question add");
     expect(skill).toContain("lingo answer list");
     expect(skill).toContain("lingo evaluation set");
@@ -76,7 +79,8 @@ describe("Lingo agent skill", () => {
 
     expect(skill).toContain("infer the user's current understanding");
     expect(skill).toContain("authoritative sources");
-    expect(skill).toContain("Sources");
+    expect(skill).toContain("structured source");
+    expect(skill).not.toContain("final `## Sources` section");
     expect(skill).toContain("Do not write a transcript");
   });
 
