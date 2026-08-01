@@ -60,6 +60,25 @@ const makeApi = () => {
       calls.push(`memo:${targetNoteId}:${content}`);
       return Promise.resolve({ noteId: targetNoteId, memo: null });
     },
+    readKnowledgeMap: () =>
+      Promise.resolve({
+        nodes: [],
+        edges: [],
+      }),
+    addNoteRelation: (sourceNoteId, targetNoteId) => {
+      calls.push(`relation-add:${sourceNoteId}:${targetNoteId}`);
+      const [noteAId, noteBId] = [sourceNoteId, targetNoteId].sort();
+      return Promise.resolve({
+        id: questionId,
+        noteAId: noteAId!,
+        noteBId: noteBId!,
+        createdAt: "2026-08-01T00:00:00.000Z",
+      });
+    },
+    removeNoteRelation: (relationId) => {
+      calls.push(`relation-remove:${relationId}`);
+      return Promise.resolve({ relationId, removed: true });
+    },
     findQuestionSession: () => Promise.resolve(undefined),
     setSubjectiveAnswer: (targetQuestionId, content) =>
       Promise.resolve({ questionId: targetQuestionId, content }),
@@ -187,6 +206,37 @@ describe("local web app note and choice actions", () => {
       data: { noteId, memo: null },
     });
     expect(calls).toEqual([`memo:${noteId}:비동기 경계를 다시 실험한다.`]);
+  });
+
+  test("reads the map and manages explicit relations through the local API", async () => {
+    const { api, calls } = makeApi();
+    const app = makeLocalWebApp({ api, webAssets });
+    const targetNoteId = "b62a0189-fde3-46f8-ad6a-485720074e51";
+
+    const mapResponse = await app.request("/api/knowledge-map");
+    const addResponse = await app.request("/api/note-relations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ noteId, targetNoteId }),
+    });
+    const removeResponse = await app.request(`/api/note-relations/${questionId}`, {
+      method: "DELETE",
+    });
+
+    expect(await mapResponse.json()).toEqual({
+      ok: true,
+      data: { nodes: [], edges: [] },
+    });
+    expect(addResponse.status).toBe(200);
+    expect((await addResponse.json()).data).toMatchObject({ id: questionId });
+    expect(await removeResponse.json()).toEqual({
+      ok: true,
+      data: { relationId: questionId, removed: true },
+    });
+    expect(calls).toEqual([
+      `relation-add:${noteId}:${targetNoteId}`,
+      `relation-remove:${questionId}`,
+    ]);
   });
 
   test("rejects an invalid multiple-choice selection", async () => {

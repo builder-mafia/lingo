@@ -1,0 +1,37 @@
+.inspector { position: absolute; z-index: 5; top: 12px; right: 12px; bottom: 12px; width: min(320px, calc(100% - 24px)); padding: 18px; overflow-y: auto; border: 1px solid var(--color-border-strong); border-radius: 9px; color: var(--color-ink); background: color-mix(in srgb, var(--color-surface) 96%, transparent); box-shadow: var(--shadow-popup); backdrop-filter: blur(14px); }
+.header { display: grid; gap: 13px; }
+.header span { color: var(--color-ink-subtle); font-size: 10px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+.header h2 { margin: 2px 0 0; color: var(--color-ink-strong); font-size: 17px; font-weight: 600; line-height: 1.35; letter-spacing: -0.02em; }
+.openLink { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 36px; border: 1px solid var(--color-border); border-radius: 6px; color: var(--color-ink); background: var(--color-surface-raised); font-size: 12px; font-weight: 550; text-decoration: none; }
+.openLink svg { width: 14px; height: 14px; stroke-width: 1.8; }
+.labels { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 14px; }
+.labels span { padding: 2px 7px; border: 1px solid var(--color-border); border-radius: 999px; color: var(--color-ink-muted); background: var(--color-surface-raised); font-size: 10px; }
+.section { margin-top: 20px; padding-top: 17px; border-top: 1px solid var(--color-border); }
+.section h3 { margin: 0 0 10px; color: var(--color-ink); font-size: 12px; font-weight: 600; }
+.connectionList { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.connectionList li { display: flex; align-items: center; min-height: 34px; gap: 8px; border-radius: 5px; }
+.connectionList a { min-width: 0; flex: 1; overflow: hidden; color: var(--color-ink-muted); font-size: 12px; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
+.removeButton { display: grid; place-items: center; width: 32px; height: 32px; flex: 0 0 32px; border: 0; border-radius: 5px; color: var(--color-ink-subtle); background: transparent; }
+.removeButton svg { width: 14px; height: 14px; stroke-width: 1.8; }
+.removeButton:active { background: var(--color-surface-active); transform: scale(0.96); }
+.courseBadge { color: var(--color-ink-subtle); font-size: 10px; }
+.empty, .error { margin: 0; color: var(--color-ink-subtle); font-size: 12px; }
+.error { margin-top: 12px; color: var(--color-danger); }
+.comboInputGroup { display: flex; min-height: 36px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-surface); }
+.comboInputGroup:focus-within { border-color: var(--color-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 14%, transparent); }
+.comboInput { min-width: 0; flex: 1; padding: 0 10px; border: 0; outline: 0; background: transparent; font-size: 12px; }
+.comboTrigger { display: grid; place-items: center; width: 34px; border: 0; color: var(--color-ink-subtle); background: transparent; }
+.comboTrigger svg { width: 14px; height: 14px; stroke-width: 1.8; }
+.positioner { z-index: 70; }
+.popup { width: var(--anchor-width); max-height: 240px; padding: 5px; overflow-y: auto; border: 1px solid var(--color-border-strong); border-radius: 7px; background: var(--color-surface-raised); box-shadow: var(--shadow-popup); }
+.comboList { margin: 0; padding: 0; }
+.comboItem { display: flex; align-items: center; gap: 7px; min-height: 34px; padding: 0 8px; border-radius: 5px; outline: 0; color: var(--color-ink-muted); font-size: 12px; }
+.comboItem[data-highlighted] { color: var(--color-ink-strong); background: var(--color-surface-hover); }
+.itemIndicator { display: grid; place-items: center; width: 14px; }
+.itemIndicator svg { width: 13px; height: 13px; stroke-width: 2; }
+.comboEmpty { padding: 14px 9px; color: var(--color-ink-subtle); font-size: 12px; }
+.addButton { display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: 100%; min-height: 36px; margin-top: 8px; border: 1px solid var(--color-border-strong); border-radius: 6px; color: var(--color-ink); background: var(--color-surface-raised); font-size: 12px; font-weight: 550; }
+.addButton svg { width: 14px; height: 14px; stroke-width: 1.9; }
+.addButton:disabled, .removeButton:disabled { opacity: 0.45; }
+.visuallyHidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+@media (hover: hover) and (pointer: fine) { .openLink:hover, .addButton:hover:not(:disabled) { border-color: var(--color-border-strong); background: var(--color-surface-hover); } .connectionList a:hover { color: var(--color-accent); } .removeButton:hover:not(:disabled) { color: var(--color-danger); background: var(--color-surface-hover); } }

@@ -52,6 +52,10 @@ import {
   type CourseOverview,
   type CourseWorkspaceItem,
 } from "../schemas/course-workspace";
+import {
+  knowledgeMapSchema,
+  type KnowledgeMap,
+} from "../schemas/knowledge-map";
 
 export type StoredMultipleChoiceQuestion = {
   readonly questionId: string;
@@ -118,6 +122,7 @@ export interface DatabaseService {
     { readonly relationId: string; readonly removed: true },
     CliError
   >;
+  readonly readKnowledgeMap: () => Effect.Effect<KnowledgeMap, CliError>;
   readonly addMultipleChoiceQuestion: (
     noteId: string,
     question: CreateMultipleChoiceQuestion,
@@ -305,6 +310,29 @@ type NoteRelationRow = {
 type RelatedNoteRow = NoteRelationRow & {
   readonly noteId: string;
   readonly title: string;
+};
+
+type KnowledgeMapNodeRow = {
+  readonly id: string;
+  readonly title: string;
+  readonly status: string;
+  readonly courseId: string | null;
+  readonly courseTitle: string | null;
+  readonly coursePosition: number | null;
+};
+
+type KnowledgeMapRelationRow = {
+  readonly id: string;
+  readonly sourceNoteId: string;
+  readonly targetNoteId: string;
+};
+
+type KnowledgeMapCourseEdgeRow = {
+  readonly courseId: string;
+  readonly sourcePosition: number;
+  readonly sourceNoteId: string;
+  readonly targetPosition: number;
+  readonly targetNoteId: string;
 };
 
 type NoteQuestionRow = {
@@ -1043,6 +1071,103 @@ const makeService = (databasePath: string): DatabaseService => ({
         return { relationId, removed: true as const };
       },
       "Could not remove note relation.",
+    ),
+  readKnowledgeMap: () =>
+    withDatabase(
+      databasePath,
+      (database) => {
+        const nodes = database
+          .query<KnowledgeMapNodeRow, []>(`
+            SELECT
+              notes.id,
+              notes.title,
+              notes.status,
+              courses.id AS courseId,
+              courses.title AS courseTitle,
+              chapters.position AS coursePosition
+            FROM notes
+            LEFT JOIN course_chapters AS chapters ON chapters.note_id = notes.id
+            LEFT JOIN courses ON courses.id = chapters.course_id
+            WHERE notes.deleted_at IS NULL
+            ORDER BY notes.title COLLATE NOCASE, notes.id
+          `)
+          .all();
+        const labelRows = database
+          .query<{ readonly noteId: string; readonly label: string }, []>(`
+            SELECT labels.note_id AS noteId, labels.label
+            FROM note_labels AS labels
+            INNER JOIN notes ON notes.id = labels.note_id
+            WHERE notes.deleted_at IS NULL
+            ORDER BY labels.note_id, labels.position
+          `)
+          .all();
+        const labelsByNote = new Map<string, string[]>();
+        for (const row of labelRows) {
+          const labels = labelsByNote.get(row.noteId) ?? [];
+          labels.push(row.label);
+          labelsByNote.set(row.noteId, labels);
+        }
+
+        const relations = database
+          .query<KnowledgeMapRelationRow, []>(`
+            SELECT
+              relations.id,
+              relations.note_a_id AS sourceNoteId,
+              relations.note_b_id AS targetNoteId
+            FROM note_relations AS relations
+            INNER JOIN notes AS source ON source.id = relations.note_a_id
+            INNER JOIN notes AS target ON target.id = relations.note_b_id
+            WHERE source.deleted_at IS NULL AND target.deleted_at IS NULL
+            ORDER BY relations.id
+          `)
+          .all()
+          .map((edge) => ({ ...edge, kind: "related" as const }));
+        const courseSequence = database
+          .query<KnowledgeMapCourseEdgeRow, []>(`
+            SELECT
+              source.course_id AS courseId,
+              source.position AS sourcePosition,
+              source.note_id AS sourceNoteId,
+              target.position AS targetPosition,
+              target.note_id AS targetNoteId
+            FROM course_chapters AS source
+            INNER JOIN course_chapters AS target
+              ON target.course_id = source.course_id
+              AND target.position = source.position + 1
+            INNER JOIN notes AS source_note ON source_note.id = source.note_id
+            INNER JOIN notes AS target_note ON target_note.id = target.note_id
+            WHERE
+              source_note.deleted_at IS NULL
+              AND target_note.deleted_at IS NULL
+            ORDER BY source.course_id, source.position
+          `)
+          .all()
+          .map((edge) => ({
+            id: `course:${edge.courseId}:${edge.sourcePosition}:${edge.targetPosition}`,
+            sourceNoteId: edge.sourceNoteId,
+            targetNoteId: edge.targetNoteId,
+            kind: "course_sequence" as const,
+          }));
+
+        return knowledgeMapSchema.parse({
+          nodes: nodes.map((node) => ({
+            id: node.id,
+            title: node.title,
+            labels: labelsByNote.get(node.id) ?? [],
+            status: node.status,
+            courseContext:
+              node.courseId && node.courseTitle && node.coursePosition
+                ? {
+                    courseId: node.courseId,
+                    courseTitle: node.courseTitle,
+                    position: node.coursePosition,
+                  }
+                : null,
+          })),
+          edges: [...relations, ...courseSequence],
+        });
+      },
+      "Could not read knowledge map.",
     ),
   addMultipleChoiceQuestion: (noteId, question) =>
     withDatabase(

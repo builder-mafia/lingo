@@ -1,0 +1,4 @@
+.graph { position: absolute; inset: 0; }
+.graph canvas { cursor: grab; }
+.graph canvas:active { cursor: grabbing; }
+.unavailable { display: grid; place-items: center; height: 100%; padding: 32px; color: var(--color-ink-muted); font-size: 13px; text-align: center; }

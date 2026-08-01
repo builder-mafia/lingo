@@ -1,13 +1,19 @@
 import { useEffect, useRef, useState } from "react";
+import { Search } from "lucide-react";
 
 import styles from "./NoteSearch.module.css";
 
 type NoteSearchProps = {
   readonly value: string;
   readonly onChange: (value: string) => void;
+  readonly label?: string;
 };
 
-export const NoteSearch = ({ value, onChange }: NoteSearchProps) => {
+export const NoteSearch = ({
+  value,
+  onChange,
+  label = "노트 검색",
+}: NoteSearchProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const composingRef = useRef(false);
   const [draft, setDraft] = useState(value);
@@ -31,11 +37,8 @@ export const NoteSearch = ({ value, onChange }: NoteSearchProps) => {
 
   return (
     <label className={styles.search}>
-      <svg viewBox="0 0 20 20" aria-hidden="true">
-        <circle cx="8.5" cy="8.5" r="5.25" />
-        <path d="m12.4 12.4 3.1 3.1" />
-      </svg>
-      <span className={styles.visuallyHidden}>노트 검색</span>
+      <Search aria-hidden="true" />
+      <span className={styles.visuallyHidden}>{label}</span>
       <input
         ref={inputRef}
         type="search"

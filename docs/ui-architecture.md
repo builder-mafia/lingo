@@ -37,6 +37,7 @@ src/ui/
 │   └── app-shell/              # 얇은 top bar와 Outlet
 ├── pages/
 │   ├── notes/                  # 홈 노트 목록과 필터
+│   ├── knowledge-map/          # lazy 지식 지도 route와 화면 조립
 │   ├── note-overview/          # 노트 내용과 선택적인 질문 이력
 │   ├── question-session/       # 한 질문의 답변 흐름
 │   └── not-found/
@@ -44,6 +45,8 @@ src/ui/
 │   ├── note-search/            # URL 검색과 Notes 전용 Cmd/Ctrl+F
 │   ├── note-filters/           # 상태·label·정렬 URL 상태
 │   ├── note-memo/              # 메모 입력과 직렬화된 자동 저장
+│   ├── knowledge-map/          # Sigma renderer, inspector, DOM 관계 목록
+│   ├── note-view-switch/       # 목록과 지도 route 전환
 │   └── note-status/            # Base UI 상태 선택과 저장
 ├── shared/
 │   └── api/                    # fetch, response schema, 오류 정규화
@@ -83,6 +86,7 @@ src/server/
 | Route | Page | Primary question |
 | --- | --- | --- |
 | `/` | Notes Workspace | 무엇을 모아두었고 지금 무엇을 다시 생각할 수 있는가? |
+| `/map` | Knowledge Map | 이 노트와 직접 이어진 다음 지식은 무엇인가? |
 | `/trash` | Trash | 제거한 노트를 복원하거나 영구 삭제할 것인가? |
 | `/notes/:noteId` | Note Overview | 이 주제의 현재 내용과 선택한 연습 이력은 무엇인가? |
 | `/notes/:noteId/questions/:questionId` | Question Session | 이 질문을 지금 내 언어로 어떻게 설명할 수 있는가? |
@@ -107,6 +111,17 @@ route는 `app/router.tsx` 한 곳에서 선언하고 링크는 `app/route-paths.
 - 열 순서는 `노트`, `열린 질문`, `최근 활동`, `라벨`, `상태`다.
 - 상태는 행 안에서 바꾸되 행 navigation을 일으키지 않는다.
 - `질문 있는 노트` 필터는 연습이 필요한 항목만 같은 목록에서 좁힌다.
+
+### Knowledge Map
+
+- Notes와 같은 노트 집합을 `목록 · 지도` 전환으로 탐색한다. 목록 route가 초기값이다.
+- route 자체를 lazy import하고 Sigma, Graphology, ForceAtlas2를 해당 chunk 안에 격리해 일반 노트 화면의 초기 번들에 포함하지 않는다.
+- API는 renderer와 무관한 `nodes + edges` 계약을 반환한다. 명시적 관계는 SQLite에서 읽고, 코스의 인접 장 관계는 읽을 때 파생한다.
+- 같은 라벨은 초기 배치에만 사용한다. 공유 라벨이나 키워드가 edge를 의미하지 않는다.
+- 레이아웃은 제한된 횟수로 계산하고 런타임 물리 시뮬레이션을 유지하지 않는다.
+- 노드 선택과 검색은 page가 소유하고 renderer에는 ID 집합과 callback만 전달한다. 관계 변경은 inspector가 요청 상태를 보여주고 성공 후 route loader를 revalidate한다.
+- WebGL canvas는 시각 탐색에만 사용한다. Base UI Dialog의 관계 목록과 모바일 DOM 목록이 링크 semantics와 키보드 탐색을 보존한다.
+- 700px 이하에서는 renderer를 마운트하지 않는다. 화면을 다시 넓히면 새 renderer를 만들어 숨겨진 canvas 초기화 오류와 불필요한 GPU 비용을 피한다.
 
 ### Note Overview
 
