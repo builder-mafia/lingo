@@ -1,5 +1,8 @@
 import { describe, expect, test } from "bun:test";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 
+import { MarkdownContent } from "../../src/ui/shared/markdown/MarkdownContent";
 import { toContentPreview } from "../../src/ui/shared/markdown/content-preview";
 
 const readSource = (relativePath: string) =>
@@ -17,6 +20,24 @@ describe("Markdown note content", () => {
     ).toBe("핵심 브랜치는 이동한다. Release에는 배포 파일이 연결된다.");
   });
 
+  test("renders GFM tables as accessible semantic tables", () => {
+    const html = renderToStaticMarkup(
+      createElement(MarkdownContent, {
+        content: `| 표현 | 의미 | 예문 |
+| --- | --- | --- |
+| underpin | 기반이 되다 | Trust underpins the relationship. |`,
+      }),
+    );
+
+    expect(html).toContain('role="region"');
+    expect(html).toContain('aria-label="표"');
+    expect(html).toContain('tabindex="0"');
+    expect(html).toContain("<table>");
+    expect(html).toContain("<thead>");
+    expect(html).toContain("<th>표현</th>");
+    expect(html).toContain("<td>underpin</td>");
+  });
+
   test("renders Markdown only in lazy note detail routes", async () => {
     const [packageJson, markdown, overview, question, notes, noteRow] =
       await Promise.all([
@@ -31,7 +52,10 @@ describe("Markdown note content", () => {
       ]);
 
     expect(packageJson.dependencies["react-markdown"]).toBeDefined();
+    expect(packageJson.dependencies["remark-gfm"]).toBeDefined();
     expect(markdown).toContain('from "react-markdown"');
+    expect(markdown).toContain('from "remark-gfm"');
+    expect(markdown).toContain("remarkPlugins={[remarkGfm]}");
     expect(markdown).toContain("memo(");
     expect(markdown).not.toContain("rehypeRaw");
     expect(overview).toContain("<MarkdownContent");

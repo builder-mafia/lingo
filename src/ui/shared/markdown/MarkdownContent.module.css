@@ -27,3 +27,58 @@
 .root pre code { padding: 0; border: 0; background: transparent; font-size: 0.86em; }
 .root a { color: var(--color-accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .root hr { margin: 1.4em 0; border: 0; border-top: 1px solid var(--color-border); }
+
+.tableScroller {
+  max-width: 100%;
+  margin: 1.1em 0;
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  outline: none;
+  background: var(--color-surface);
+  overscroll-behavior-inline: contain;
+}
+
+.tableScroller:focus-visible {
+  border-color: var(--color-focus);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-focus) 20%, transparent);
+}
+
+.root table {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92em;
+  line-height: 1.55;
+}
+
+.root th,
+.root td {
+  min-width: 11rem;
+  padding: 10px 12px;
+  border-right: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  overflow-wrap: break-word;
+  text-align: left;
+  vertical-align: top;
+}
+
+.root th {
+  min-width: 8rem;
+  color: var(--color-ink-strong);
+  background: var(--color-surface-raised);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.root th:last-child,
+.root td:last-child {
+  border-right: 0;
+}
+
+.root tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.root td > :first-child { margin-top: 0; }
+.root td > :last-child { margin-bottom: 0; }

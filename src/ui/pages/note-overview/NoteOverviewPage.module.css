@@ -10,6 +10,7 @@
 .section { padding: 36px 0; border-bottom: 1px solid var(--color-border); }
 .section h2 { margin: 0; color: var(--color-ink-strong); font-size: 14px; font-weight: 600; }
 .noteContent, .mutedContent { margin: 18px 0 0; }
+.noteContent { max-width: none; }
 .mutedContent { max-width: 68ch; color: var(--color-ink); font-size: 15px; line-height: 1.75; }
 .mutedContent { color: var(--color-ink-subtle); }
 .sectionHeading { display: flex; align-items: baseline; gap: 7px; }
