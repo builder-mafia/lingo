@@ -34,7 +34,7 @@ test("extracts only a strict final legacy Sources list", () => {
   });
 });
 
-test("renders a compact source list without remote metadata requests", async () => {
+test("renders sources as small local-icon links without descriptive cards", async () => {
   const html = renderToStaticMarkup(
     createElement(NoteSources, {
       sources: [
@@ -46,18 +46,24 @@ test("renders a compact source list without remote metadata requests", async () 
       ],
     }),
   );
-  const [component, overview] = await Promise.all([
+  const [component, css, overview] = await Promise.all([
     readSource("src/ui/features/note-sources/NoteSources.tsx"),
+    readSource("src/ui/features/note-sources/NoteSources.module.css"),
     readSource("src/ui/pages/note-overview/NoteOverviewPage.tsx"),
   ]);
 
   expect(html).toContain("출처");
-  expect(html).toContain("effect.website");
   expect(html).toContain("Effect documentation");
+  expect(html).toContain("effect.website");
+  expect(html).toContain('aria-hidden="true">effect.website</span>');
+  expect(html).toContain("effect.website, 새 탭으로 열기");
+  expect(html).not.toContain("Error handling semantics checked for this note.");
   expect(html).toContain('target="_blank"');
   expect(component).toContain('from "@base-ui/react/collapsible"');
-  expect(component).toContain("ExternalLink");
-  expect(component).not.toContain("favicon");
+  expect(component).toContain("Globe2");
+  expect(component).not.toContain("<img");
   expect(component).not.toContain("fetch(");
+  expect(css).toContain("min-height: 30px");
+  expect(css).toContain("flex-wrap: wrap");
   expect(overview).toContain("<NoteSources");
 });
