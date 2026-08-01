@@ -1,5 +1,5 @@
 import { Collapsible } from "@base-ui/react/collapsible";
-import { ChevronDown, ExternalLink } from "lucide-react";
+import { ChevronDown, ExternalLink, Globe2 } from "lucide-react";
 
 import type { NoteSource } from "../../../schemas/note-source";
 import styles from "./NoteSources.module.css";
@@ -23,22 +23,28 @@ const sourceDomain = (url: string) => {
   }
 };
 
-const SourceRow = ({ source }: { readonly source: DisplaySource }) => (
-  <a
-    aria-label={`새 탭에서 ${source.title} 열기`}
-    className={styles.sourceRow}
-    href={source.url}
-    rel="noopener noreferrer"
-    target="_blank"
-  >
-    <span className={styles.sourceText}>
-      <strong>{source.title}</strong>
-      <span>{sourceDomain(source.url)}</span>
-      {source.description ? <p>{source.description}</p> : null}
-    </span>
-    <ExternalLink aria-hidden="true" />
-  </a>
-);
+const SourceRow = ({ source }: { readonly source: DisplaySource }) => {
+  const domain = sourceDomain(source.url);
+
+  return (
+    <a
+      className={styles.sourceRow}
+      href={source.url}
+      rel="noopener noreferrer"
+      target="_blank"
+    >
+      <Globe2 aria-hidden="true" className={styles.siteIcon} />
+      <span className={styles.sourceTitle}>{source.title}</span>
+      <span aria-hidden="true" className={styles.sourceDomain}>
+        {domain}
+      </span>
+      <ExternalLink aria-hidden="true" className={styles.externalIcon} />
+      <span className={styles.visuallyHidden}>
+        {domain}, 새 탭으로 열기
+      </span>
+    </a>
+  );
+};
 
 export const NoteSources = ({ sources }: NoteSourcesProps) => {
   if (sources.length === 0) return null;
@@ -53,29 +59,33 @@ export const NoteSources = ({ sources }: NoteSourcesProps) => {
           <h3 id="note-sources-heading">출처</h3>
           <span>{sources.length}</span>
         </div>
-        <p>이 노트를 정리하며 참고한 문서</p>
       </header>
-      <div className={styles.list}>
-        {visibleSources.map((source) => (
-          <SourceRow source={source} key={source.url} />
-        ))}
-        {remainingSources.length > 0 ? (
-          <Collapsible.Root className={styles.collapsible}>
-            <Collapsible.Trigger className={styles.moreButton}>
-              <span className={styles.closedLabel}>
-                나머지 {remainingSources.length}개 보기
-              </span>
-              <span className={styles.openLabel}>접기</span>
-              <ChevronDown aria-hidden="true" />
-            </Collapsible.Trigger>
-            <Collapsible.Panel className={styles.panel}>
-              {remainingSources.map((source) => (
-                <SourceRow source={source} key={source.url} />
-              ))}
-            </Collapsible.Panel>
-          </Collapsible.Root>
-        ) : null}
-      </div>
+      <Collapsible.Root className={styles.collapsible}>
+        <div className={styles.list}>
+          {visibleSources.map((source) => (
+            <SourceRow source={source} key={source.url} />
+          ))}
+          {remainingSources.length > 0 ? (
+            <>
+              <Collapsible.Trigger className={styles.moreButton}>
+                <span className={styles.closedLabel}>
+                  <span aria-hidden="true">+{remainingSources.length}</span>
+                  <span className={styles.visuallyHidden}>
+                    나머지 출처 {remainingSources.length}개 보기
+                  </span>
+                </span>
+                <span className={styles.openLabel}>접기</span>
+                <ChevronDown aria-hidden="true" />
+              </Collapsible.Trigger>
+              <Collapsible.Panel className={styles.panel}>
+                {remainingSources.map((source) => (
+                  <SourceRow source={source} key={source.url} />
+                ))}
+              </Collapsible.Panel>
+            </>
+          ) : null}
+        </div>
+      </Collapsible.Root>
     </section>
   );
 };
