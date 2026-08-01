@@ -134,7 +134,7 @@ For each consequential claim, determine whether it is:
 
 Never silently turn a hypothesis from the conversation into a fact. When sources disagree, state the disagreement and the conditions that may explain it instead of forcing false certainty.
 
-Verify that a citation supports the nearby claim and points to the relevant page, not merely a homepage. Check dates and versions for software, APIs, laws, prices, policies, and other unstable material. Use a final `## Sources` section only for sources actually consulted.
+Verify that a source supports the note's claims and points to the relevant page, not merely a homepage. Check dates and versions for software, APIs, laws, prices, policies, and other unstable material. Store only sources actually consulted with `lingo note source add`, including a concise description of what each source established for the note; do not duplicate them in Markdown.
 
 Preserve precise foreign-language terms as instructed by `SKILL.md`. Define a term on first use when useful, then use one consistent form throughout the content and questions.
 

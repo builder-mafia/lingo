@@ -1,15 +1,34 @@
 import { ArrowRight, Check } from "lucide-react";
+import { useMemo } from "react";
 import { Link, useLoaderData } from "react-router";
 
 import type { NoteOverview } from "../../../schemas/question-session";
 import { routePaths } from "../../app/route-paths";
 import { NoteStatusSelect } from "../../features/note-status/NoteStatusSelect";
 import { NoteMemoEditor } from "../../features/note-memo/NoteMemoEditor";
+import {
+  NoteSources,
+  type DisplaySource,
+} from "../../features/note-sources/NoteSources";
+import { extractLegacySources } from "../../features/note-sources/legacy-sources";
 import { MarkdownContent } from "../../shared/markdown/MarkdownContent";
 import styles from "./NoteOverviewPage.module.css";
 
 export const NoteOverviewPage = () => {
   const note = useLoaderData() as NoteOverview;
+  const legacyContent = useMemo(
+    () => extractLegacySources(note.content ?? ""),
+    [note.content],
+  );
+  const sources = useMemo(() => {
+    const byUrl = new Map<string, DisplaySource>(
+      note.sources.map((source) => [source.url, source] as const),
+    );
+    legacyContent.sources.forEach((source) => {
+      if (!byUrl.has(source.url)) byUrl.set(source.url, source);
+    });
+    return [...byUrl.values()];
+  }, [legacyContent.sources, note.sources]);
   const openQuestions = note.questions.filter((question) => !question.resolvedAt);
   const resolvedQuestions = note.questions.filter((question) => question.resolvedAt);
 
@@ -43,11 +62,12 @@ export const NoteOverviewPage = () => {
 
         <section className={styles.section} aria-labelledby="content-heading">
           <h2 id="content-heading">내용</h2>
-          {note.content ? (
-            <MarkdownContent className={styles.noteContent} content={note.content} />
+          {legacyContent.content ? (
+            <MarkdownContent className={styles.noteContent} content={legacyContent.content} />
           ) : (
             <p className={styles.mutedContent}>아직 정리된 내용이 없습니다.</p>
           )}
+          <NoteSources sources={sources} />
         </section>
 
         <section className={styles.section} aria-labelledby="memo-heading">

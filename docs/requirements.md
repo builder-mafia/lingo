@@ -29,6 +29,9 @@ Use the resource first, then the minimum action and identifier needed:
 - `lingo note create --data <json>`
 - `lingo note content set <note-id>`
 - `lingo note content get <note-id>`
+- `lingo note source add <note-id>`
+- `lingo note source list <note-id>`
+- `lingo note source remove <source-id>`
 - `lingo question add <note-id>`
 - `lingo answer set <question-id>`
 - `lingo answer list <note-id>`
@@ -45,10 +48,11 @@ Global flags are standalone root operations. They cannot be combined with one an
 3. Create a note: `lingo note create --data <json>` stores a required non-empty `title` and optional `labels`, then returns that metadata with `noteId`, `createdAt`, and a localhost note URL. Label whitespace and duplicates are removed while preserving the first-seen order.
 4. Set note content: `lingo note content set <note-id> --data <json>` stores or replaces the note's Markdown body.
 5. Read note content: `lingo note content get <note-id>` returns the current body before it is deepened or reorganized.
-6. Add a question: `lingo question add <note-id> --data <json>` infers a multiple-choice or subjective contract from the JSON shape. Question prompts and multiple-choice options are plain text, not Markdown.
-7. Set an answer: `lingo answer set <question-id> --data <json>` stores or updates an answer for a subjective question.
-8. Read answers needing evaluation: `lingo answer list <note-id>` returns unanswered evaluations with question context.
-9. Store an evaluation: `lingo evaluation set <question-id> --data <json>` stores or updates external AI feedback.
+6. Manage note sources: `lingo note source add|list|remove` stores consulted HTTP(S) documents separately from Markdown. A source keeps its title, URL, optional contribution description, and display position; adding the same note URL updates it without duplication.
+7. Add a question: `lingo question add <note-id> --data <json>` infers a multiple-choice or subjective contract from the JSON shape. Question prompts and multiple-choice options are plain text, not Markdown.
+8. Set an answer: `lingo answer set <question-id> --data <json>` stores or updates an answer for a subjective question.
+9. Read answers needing evaluation: `lingo answer list <note-id>` returns unanswered evaluations with question context.
+10. Store an evaluation: `lingo evaluation set <question-id> --data <json>` stores or updates external AI feedback.
 
 ## Course model
 

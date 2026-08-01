@@ -102,7 +102,7 @@ Build content that enables the chapter objective rather than merely describing t
 
 Adapt guidance to the starting point. Give novices more explicit worked examples and make hidden reasoning visible. Give experienced learners fewer basic explanations and more boundary cases, tradeoffs, diagnosis, and transfer. Do not equate more text with greater depth.
 
-Keep each note self-contained and use the terminology rules in `SKILL.md`. Place sources used for that chapter in its own final `## Sources` section; do not copy the same generic link list into every chapter.
+Keep each note self-contained and use the terminology rules in `SKILL.md`. Store each chapter's consulted documents as structured sources with `lingo note source add`; do not copy the same generic source set into every chapter or duplicate it in Markdown.
 
 ## Assessment design
 

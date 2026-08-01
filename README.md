@@ -142,6 +142,16 @@ lingo note content set <note-id> --data '{
 }'
 ```
 
+참고한 문서는 본문 끝에 링크를 붙이지 않고 구조화된 출처로 저장합니다. 설명에는 이 노트를 위해 문서에서 무엇을 확인했는지 적습니다.
+
+```bash
+lingo note source add <note-id> --data '{
+  "title": "Caching guidance",
+  "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching",
+  "description": "HTTP cache freshness와 validation의 기준을 확인한 문서"
+}'
+```
+
 ```bash
 lingo question add <note-id> --data '{
   "question": "캐시 무효화가 어려운 이유를 자신의 말로 설명해보세요.",
@@ -204,6 +214,9 @@ Lingo는 답변을 대신 만들거나 AI provider를 선택하지 않습니다.
 | 노트 만들기 | `lingo note create (--data <json> \| --data-file <path>)` |
 | 노트 내용 저장 | `lingo note content set <note-id> (--data <json> \| --data-file <path>)` |
 | 노트 내용 조회 | `lingo note content get <note-id>` |
+| 노트 출처 추가·수정 | `lingo note source add <note-id> (--data <json> \| --data-file <path>)` |
+| 노트 출처 조회 | `lingo note source list <note-id>` |
+| 노트 출처 제거 | `lingo note source remove <source-id>` |
 | 노트 연결 추가 | `lingo relation add <note-id> (--data <json> \| --data-file <path>)` |
 | 노트 연결 조회 | `lingo relation list <note-id>` |
 | 노트 연결 제거 | `lingo relation remove <relation-id>` |

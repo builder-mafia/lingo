@@ -116,6 +116,34 @@ Each item contains the relation ID and the connected note's title and labels. Re
 lingo relation remove <relation-id>
 ```
 
+## Add a note source
+
+Store a source only after consulting it. `description` is optional, but when present it should state what the document established for this note rather than repeat generic page metadata.
+
+```bash
+lingo note source add <note-id> --data '{
+  "title": "Effect error management",
+  "url": "https://effect.website/docs/error-management/",
+  "description": "Error handling contracts checked for this note."
+}'
+```
+
+The URL must use HTTP or HTTPS. Adding the same URL to the same note updates its title and description while preserving its source ID and position.
+
+## List note sources
+
+```bash
+lingo note source list <note-id>
+```
+
+The response contains sources in display order with `id`, `title`, `url`, nullable `description`, and `position`.
+
+## Remove a note source
+
+```bash
+lingo note source remove <source-id>
+```
+
 The command returns `noteId` and a nullable `memo`. A missing memo is a successful response with `memo: null`, not an error.
 
 ## Add a subjective question

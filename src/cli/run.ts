@@ -17,6 +17,9 @@ import { getNoteMemo } from "./commands/get-note-memo";
 import { addNoteRelation } from "./commands/add-note-relation";
 import { listNoteRelations } from "./commands/list-note-relations";
 import { removeNoteRelation } from "./commands/remove-note-relation";
+import { addNoteSource } from "./commands/add-note-source";
+import { listNoteSources } from "./commands/list-note-sources";
+import { removeNoteSource } from "./commands/remove-note-source";
 import { startServer } from "./commands/start-server";
 import { updateCli } from "./commands/update-cli";
 import { createCourse } from "./commands/create-course";
@@ -33,6 +36,10 @@ const relationAddUsage =
   "Usage: lingo relation add <note-id> (--data <json> | --data-file <path>)";
 const relationListUsage = "Usage: lingo relation list <note-id>";
 const relationRemoveUsage = "Usage: lingo relation remove <relation-id>";
+const noteSourceAddUsage =
+  "Usage: lingo note source add <note-id> (--data <json> | --data-file <path>)";
+const noteSourceListUsage = "Usage: lingo note source list <note-id>";
+const noteSourceRemoveUsage = "Usage: lingo note source remove <source-id>";
 const noteCreateUsage =
   "Usage: lingo note create (--data <json> | --data-file <path>)";
 const courseCreateUsage =
@@ -284,6 +291,49 @@ export const runCli = (
           console.log(JSON.stringify({ ok: true, data }));
           return 0;
         },
+      }),
+    );
+  }
+
+  if (resource === "note" && type === "source" && action === "add") {
+    const [noteId, ...sourceInputArgs] = inputArgs;
+    if (noteId === undefined) {
+      console.error(errorResponse(new CliError(noteSourceAddUsage)));
+      return Effect.succeed(1);
+    }
+    return parseInputOptions(sourceInputArgs, noteSourceAddUsage).pipe(
+      Effect.flatMap((inputOptions) => addNoteSource(noteId, inputOptions)),
+      Effect.match({
+        onFailure: (error) => { console.error(errorResponse(error)); return 1; },
+        onSuccess: (data) => { console.log(JSON.stringify({ ok: true, data })); return 0; },
+      }),
+    );
+  }
+
+  if (resource === "note" && type === "source" && action === "list") {
+    const [noteId, ...unexpectedArgs] = inputArgs;
+    if (noteId === undefined || unexpectedArgs.length > 0) {
+      console.error(errorResponse(new CliError(noteSourceListUsage)));
+      return Effect.succeed(1);
+    }
+    return listNoteSources(noteId).pipe(
+      Effect.match({
+        onFailure: (error) => { console.error(errorResponse(error)); return 1; },
+        onSuccess: (data) => { console.log(JSON.stringify({ ok: true, data })); return 0; },
+      }),
+    );
+  }
+
+  if (resource === "note" && type === "source" && action === "remove") {
+    const [sourceId, ...unexpectedArgs] = inputArgs;
+    if (sourceId === undefined || unexpectedArgs.length > 0) {
+      console.error(errorResponse(new CliError(noteSourceRemoveUsage)));
+      return Effect.succeed(1);
+    }
+    return removeNoteSource(sourceId).pipe(
+      Effect.match({
+        onFailure: (error) => { console.error(errorResponse(error)); return 1; },
+        onSuccess: (data) => { console.log(JSON.stringify({ ok: true, data })); return 0; },
       }),
     );
   }
