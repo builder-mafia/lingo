@@ -141,7 +141,7 @@ test("standalone binary serves embedded UI and writes data outside the project",
     expect(workspaceResponse.status).toBe(200);
     expect(await workspaceResponse.json()).toEqual({
       ok: true,
-      data: { notes: [], prompts: [] },
+      data: { notes: [] },
     });
     expect(existsSync(join(home, ".lingo", "lingo.sqlite"))).toBe(true);
   } finally {

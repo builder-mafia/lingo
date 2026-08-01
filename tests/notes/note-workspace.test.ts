@@ -59,8 +59,6 @@ test("lists real note workspace data and updates workflow status", async () => {
           question.questionId,
         );
         const afterReopen = yield* database.listNoteWorkspace();
-        const prompts = yield* database.listWorkspacePrompts();
-
         return {
           note,
           question,
@@ -73,7 +71,6 @@ test("lists real note workspace data and updates workflow status", async () => {
           afterResolve,
           reopened,
           afterReopen,
-          prompts,
         };
       }),
     );
@@ -129,7 +126,6 @@ test("lists real note workspace data and updates workflow status", async () => {
       resolved: false,
     });
     expect(result.afterReopen[0]?.openQuestionCount).toBe(1);
-    expect(result.prompts).toEqual([]);
   } finally {
     await runtime.dispose();
     rmSync(databasePath, { force: true });

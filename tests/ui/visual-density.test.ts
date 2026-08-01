@@ -21,12 +21,12 @@ describe("UI visual density", () => {
       readStyle("features/note-status/NoteStatusSelect.module.css"),
     ]);
 
-    expect(notes).toContain("grid-template-columns: minmax(0, 1fr) 344px;");
+    expect(notes).not.toContain("grid-template-columns: minmax(0, 1fr) 344px;");
+    expect(notes).toContain(".questionFilter[data-pressed]");
     expect(notes).toContain("min-height: 68px;");
     expect(notes).toContain("font-size: 14px;");
     expect(notes).toContain("background: var(--color-surface-hover);");
     expect(notes).toContain("background: var(--color-surface-active);");
-    expect(notes).toContain("align-content: start;");
     expect(search).toContain("min-height: 38px;");
     expect(search).toContain("font-size: 13px;");
     expect(status).toContain("min-height: 36px;");

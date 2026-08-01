@@ -101,7 +101,7 @@ test("lingo start serves the local health endpoint", async () => {
     expect(workspaceResponse.status).toBe(200);
     expect(await workspaceResponse.json()).toEqual({
       ok: true,
-      data: { notes: [], prompts: [] },
+      data: { notes: [] },
     });
 
     const pageResponse = await fetch(started.data.serverUrl);
