@@ -134,7 +134,7 @@ export interface DatabaseService {
     { readonly sourceId: string; readonly removed: true },
     CliError
   >;
-  readonly listSourceOrigins: () => Effect.Effect<readonly string[], CliError>;
+  readonly listSourceUrls: () => Effect.Effect<readonly string[], CliError>;
   readonly findSiteIconCache: (
     origin: string,
   ) => Effect.Effect<SiteIconCacheEntry | undefined, CliError>;
@@ -675,15 +675,18 @@ const toOrigin = (url: string) => {
   }
 };
 
-const listStoredSourceOrigins = (database: SqliteDatabase) => {
-  const origins = new Set<string>();
+const listStoredSourceUrls = (database: SqliteDatabase) => {
+  const urlsByOrigin = new Map<string, string>();
+  const addUrl = (url: string) => {
+    const origin = toOrigin(url);
+    if (origin && !urlsByOrigin.has(origin)) urlsByOrigin.set(origin, url);
+  };
   database
-    .query<{ readonly url: string }, []>("SELECT url FROM note_sources")
+    .query<{ readonly url: string }, []>(
+      "SELECT url FROM note_sources ORDER BY url",
+    )
     .all()
-    .forEach(({ url }) => {
-      const origin = toOrigin(url);
-      if (origin) origins.add(origin);
-    });
+    .forEach(({ url }) => addUrl(url));
   database
     .query<{ readonly content: string }, []>(`
       SELECT contents.content
@@ -693,11 +696,10 @@ const listStoredSourceOrigins = (database: SqliteDatabase) => {
     `)
     .all()
     .flatMap(({ content }) => extractLegacySources(content).sources)
-    .forEach(({ url }) => {
-      const origin = toOrigin(url);
-      if (origin) origins.add(origin);
-    });
-  return [...origins].sort();
+    .forEach(({ url }) => addUrl(url));
+  return [...urlsByOrigin.entries()]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([, url]) => url);
 };
 
 const requireTrashedNote = (database: SqliteDatabase, noteId: string) => {
@@ -1149,11 +1151,11 @@ const makeService = (databasePath: string): DatabaseService => ({
       },
       "Could not remove note source.",
     ),
-  listSourceOrigins: () =>
+  listSourceUrls: () =>
     withDatabase(
       databasePath,
-      (database) => listStoredSourceOrigins(database),
-      "Could not list source origins.",
+      (database) => listStoredSourceUrls(database),
+      "Could not list source URLs.",
     ),
   findSiteIconCache: (origin) =>
     withDatabase(

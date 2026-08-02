@@ -4,7 +4,7 @@ import { expect, test } from "bun:test";
 
 import { Database, makeDatabaseLayer } from "../../src/layers/database";
 
-test("stores one site icon result per origin and lists source origins", async () => {
+test("stores one site icon result per origin and lists representative source URLs", async () => {
   const databasePath = `/tmp/lingo-site-icons-${crypto.randomUUID()}.sqlite`;
   const runtime = ManagedRuntime.make(makeDatabaseLayer(databasePath));
 
@@ -37,7 +37,7 @@ test("stores one site icon result per origin and lists source origins", async ()
         });
 
         return {
-          origins: yield* database.listSourceOrigins(),
+          sourceUrls: yield* database.listSourceUrls(),
           icon: yield* database.findSiteIconCache("https://effect.website"),
           missing: yield* database.findSiteIconCache(
             "https://www.typescriptlang.org",
@@ -46,9 +46,9 @@ test("stores one site icon result per origin and lists source origins", async ()
       }),
     );
 
-    expect(result.origins).toEqual([
-      "https://effect.website",
-      "https://www.typescriptlang.org",
+    expect(result.sourceUrls).toEqual([
+      "https://effect.website/docs/getting-started/",
+      "https://www.typescriptlang.org/docs/",
     ]);
     expect(result.icon).toMatchObject({
       origin: "https://effect.website",

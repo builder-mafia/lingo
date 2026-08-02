@@ -15,6 +15,13 @@ test("fetches a favicon once, validates it, and stores it by origin", async () =
   const SourceIconCacheLive = makeSourceIconCacheLayer({
     fetch: (url) => {
       requests.push(url);
+      if (url === "https://example.com/article?id=1") {
+        return Promise.resolve(
+          new Response("<html><head></head></html>", {
+            headers: { "content-type": "text/html; charset=utf-8" },
+          }),
+        );
+      }
       return Promise.resolve(
         new Response(new Uint8Array([0, 0, 1, 0]), {
           headers: { "content-type": "image/x-icon" },
@@ -37,9 +44,66 @@ test("fetches a favicon once, validates it, and stores it by origin", async () =
       }),
     );
 
-    expect(requests).toEqual(["https://example.com/favicon.ico"]);
+    expect(requests).toEqual([
+      "https://example.com/article?id=1",
+      "https://example.com/favicon.ico",
+    ]);
     expect(result?.mimeType).toBe("image/x-icon");
     expect([...result!.data!]).toEqual([0, 0, 1, 0]);
+  } finally {
+    await runtime.dispose();
+    rmSync(databasePath, { force: true });
+  }
+});
+
+test("discovers a page-declared icon before the conventional favicon", async () => {
+  const databasePath = `/tmp/lingo-icon-metadata-${crypto.randomUUID()}.sqlite`;
+  const DatabaseLive = makeDatabaseLayer(databasePath);
+  const requests: string[] = [];
+  const pageUrl = "https://www.cerebras.ai/blog/knowledge-base";
+  const iconUrl =
+    "https://cdn.sanity.io/images/project/production/logo.png?w=512&h=512";
+  const png = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
+  const SourceIconCacheLive = makeSourceIconCacheLayer({
+    fetch: (url) => {
+      requests.push(url);
+      if (url === pageUrl) {
+        return Promise.resolve(
+          new Response(
+            `<html><head>
+              <meta property="og:image" content="/article-cover.png">
+              <link rel="icon" href="/vector-logo.svg" type="image/svg+xml">
+              <link sizes="512x512" href="${iconUrl}" rel="icon">
+            </head></html>`,
+            { headers: { "content-type": "text/html" }, status: 500 },
+          ),
+        );
+      }
+      if (url === iconUrl) {
+        return Promise.resolve(
+          new Response(png, { headers: { "content-type": "image/png" } }),
+        );
+      }
+      return Promise.resolve(new Response("unexpected", { status: 404 }));
+    },
+  }).pipe(Layer.provide(DatabaseLive));
+  const runtime = ManagedRuntime.make(
+    Layer.merge(DatabaseLive, SourceIconCacheLive),
+  );
+
+  try {
+    const result = await runtime.runPromise(
+      Effect.gen(function* () {
+        const cache = yield* SourceIconCache;
+        const database = yield* Database;
+        yield* cache.cacheUrl(pageUrl);
+        return yield* database.findSiteIconCache("https://www.cerebras.ai");
+      }),
+    );
+
+    expect(requests).toEqual([pageUrl, iconUrl]);
+    expect(result?.mimeType).toBe("image/png");
+    expect([...result!.data!]).toEqual([...png]);
   } finally {
     await runtime.dispose();
     rmSync(databasePath, { force: true });
