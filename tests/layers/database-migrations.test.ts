@@ -88,7 +88,7 @@ describe("database migrations", () => {
 
     try {
       initializeDatabaseSchema(database);
-      expect(readDatabaseVersion(database)).toBe(11);
+      expect(readDatabaseVersion(database)).toBe(12);
       database
         .query("INSERT INTO notes (id, title, created_at) VALUES (?, ?, ?)")
         .run(noteId, "메모가 있는 노트", "2026-08-01T00:00:00.000Z");
@@ -126,6 +126,30 @@ describe("database migrations", () => {
           )
           .get(),
       ).toEqual({ count: 0 });
+    } finally {
+      database.close();
+    }
+  });
+
+  test("adds an origin-keyed cache for locally stored site icons", () => {
+    const database = new SqliteDatabase(":memory:");
+
+    try {
+      initializeDatabaseSchema(database);
+
+      const columns = database
+        .query<{ readonly name: string; readonly notnull: number }, []>(
+          "PRAGMA table_info(site_icon_cache)",
+        )
+        .all();
+      expect(columns).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ name: "origin", notnull: 1 }),
+          expect.objectContaining({ name: "mime_type", notnull: 0 }),
+          expect.objectContaining({ name: "data", notnull: 0 }),
+          expect.objectContaining({ name: "checked_at", notnull: 1 }),
+        ]),
+      );
     } finally {
       database.close();
     }

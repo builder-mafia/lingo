@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { Link, useLoaderData } from "react-router";
 
 import type { NoteOverview } from "../../../schemas/question-session";
+import { extractLegacySources } from "../../../note-sources/legacy-sources";
 import { routePaths } from "../../app/route-paths";
 import { NoteStatusSelect } from "../../features/note-status/NoteStatusSelect";
 import { NoteMemoEditor } from "../../features/note-memo/NoteMemoEditor";
@@ -10,7 +11,6 @@ import {
   NoteSources,
   type DisplaySource,
 } from "../../features/note-sources/NoteSources";
-import { extractLegacySources } from "../../features/note-sources/legacy-sources";
 import { MarkdownContent } from "../../shared/markdown/MarkdownContent";
 import styles from "./NoteOverviewPage.module.css";
 

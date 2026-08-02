@@ -3,7 +3,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import { NoteSources } from "../../src/ui/features/note-sources/NoteSources";
-import { extractLegacySources } from "../../src/ui/features/note-sources/legacy-sources";
+import { extractLegacySources } from "../../src/note-sources/legacy-sources";
 
 const readSource = (relativePath: string) =>
   Bun.file(new URL(`../../${relativePath}`, import.meta.url)).text();
@@ -34,7 +34,7 @@ test("extracts only a strict final legacy Sources list", () => {
   });
 });
 
-test("renders sources as small local-icon links without descriptive cards", async () => {
+test("renders locally cached favicons and reveals descriptions in a compact tooltip", async () => {
   const html = renderToStaticMarkup(
     createElement(NoteSources, {
       sources: [
@@ -57,11 +57,15 @@ test("renders sources as small local-icon links without descriptive cards", asyn
   expect(html).toContain("effect.website");
   expect(html).toContain('aria-hidden="true">effect.website</span>');
   expect(html).toContain("effect.website, 새 탭으로 열기");
-  expect(html).not.toContain("Error handling semantics checked for this note.");
+  expect(component).toContain("source.description");
+  expect(component).toContain("<Tooltip.Popup");
   expect(html).toContain('target="_blank"');
   expect(component).toContain('from "@base-ui/react/collapsible"');
+  expect(component).toContain('from "@base-ui/react/tooltip"');
   expect(component).toContain("Globe2");
-  expect(component).not.toContain("<img");
+  expect(component).toContain("<img");
+  expect(html).toContain("/api/site-icon?origin=https%3A%2F%2Fwww.effect.website");
+  expect(html).not.toContain("https://www.google.com/s2/favicons");
   expect(component).not.toContain("fetch(");
   expect(css).toContain("min-height: 30px");
   expect(css).toContain("flex-wrap: wrap");

@@ -9,11 +9,12 @@ import {
   type NoteSource,
 } from "../../schemas/note-source";
 import { CliError } from "../errors";
+import { SourceIconCache } from "../../layers/source-icon-cache";
 
 export const addNoteSource = (
   noteId: string,
   inputOptions: JsonInputOptions,
-): Effect.Effect<NoteSource, CliError, Database | JsonInput> =>
+): Effect.Effect<NoteSource, CliError, Database | JsonInput | SourceIconCache> =>
   Effect.gen(function* () {
     const parsedNoteId = noteIdSchema.safeParse(noteId);
     if (!parsedNoteId.success) {
@@ -30,5 +31,6 @@ export const addNoteSource = (
       parsedNoteId.data,
       parsedInput.data,
     );
+    yield* (yield* SourceIconCache).cacheUrl(source.url);
     return noteSourceSchema.parse(source);
   });

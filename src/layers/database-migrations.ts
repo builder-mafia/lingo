@@ -229,6 +229,21 @@ const addNoteSources = (database: SqliteDatabase) => {
   `);
 };
 
+const addSiteIconCache = (database: SqliteDatabase) => {
+  database.run(`
+    CREATE TABLE site_icon_cache (
+      origin TEXT PRIMARY KEY NOT NULL,
+      mime_type TEXT,
+      data BLOB,
+      checked_at TEXT NOT NULL,
+      CHECK (
+        (mime_type IS NULL AND data IS NULL) OR
+        (mime_type IS NOT NULL AND data IS NOT NULL)
+      )
+    )
+  `);
+};
+
 const databaseMigrations: readonly DatabaseMigration[] = [
   { version: 1, migrate: createInitialSchema },
   { version: 2, migrate: renameProblemsToQuestions },
@@ -241,6 +256,7 @@ const databaseMigrations: readonly DatabaseMigration[] = [
   { version: 9, migrate: addNoteMemos },
   { version: 10, migrate: addNoteRelations },
   { version: 11, migrate: addNoteSources },
+  { version: 12, migrate: addSiteIconCache },
 ];
 
 export const LATEST_DATABASE_VERSION =

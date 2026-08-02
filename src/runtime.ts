@@ -16,6 +16,7 @@ import {
 } from "./server/web-assets";
 import { isStandaloneBuild } from "./standalone";
 import { lingoVersion } from "./version";
+import { makeSourceIconCacheLayer } from "./layers/source-icon-cache";
 
 const databasePath = join(Bun.env.HOME ?? ".", ".lingo", "lingo.sqlite");
 const localServerPort = Number(Bun.env.LINGO_PORT ?? "4312");
@@ -28,6 +29,9 @@ export type AppRuntimeConfig = {
 
 export const makeAppRuntime = (config: AppRuntimeConfig = {}) => {
   const DatabaseLive = makeDatabaseLayer(databasePath);
+  const SourceIconCacheLive = makeSourceIconCacheLayer({
+    fetch: (url, init) => fetch(url, init),
+  }).pipe(Layer.provide(DatabaseLive));
   const LocalHttpServerLive = makeLocalHttpServerLayer({
     hostname: "127.0.0.1",
     port: localServerPort,
@@ -47,6 +51,7 @@ export const makeAppRuntime = (config: AppRuntimeConfig = {}) => {
   const AppLayer = Layer.mergeAll(
     JsonInputLive,
     DatabaseLive,
+    SourceIconCacheLive,
     LocalHttpServerLive,
     SelfUpdaterLive,
   );
