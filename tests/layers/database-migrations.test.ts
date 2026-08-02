@@ -88,7 +88,7 @@ describe("database migrations", () => {
 
     try {
       initializeDatabaseSchema(database);
-      expect(readDatabaseVersion(database)).toBe(12);
+      expect(readDatabaseVersion(database)).toBe(13);
       database
         .query("INSERT INTO notes (id, title, created_at) VALUES (?, ?, ?)")
         .run(noteId, "메모가 있는 노트", "2026-08-01T00:00:00.000Z");
@@ -150,6 +150,42 @@ describe("database migrations", () => {
           expect.objectContaining({ name: "checked_at", notnull: 1 }),
         ]),
       );
+    } finally {
+      database.close();
+    }
+  });
+
+  test("retries failed icons after the metadata discovery upgrade", () => {
+    const database = new SqliteDatabase(":memory:");
+
+    try {
+      initializeDatabaseSchema(database);
+      database
+        .query(
+          "INSERT INTO site_icon_cache (origin, mime_type, data, checked_at) VALUES (?, NULL, NULL, ?)",
+        )
+        .run("https://missing.example", "2026-08-01T00:00:00.000Z");
+      database
+        .query(
+          "INSERT INTO site_icon_cache (origin, mime_type, data, checked_at) VALUES (?, ?, ?, ?)",
+        )
+        .run(
+          "https://working.example",
+          "image/png",
+          new Uint8Array([137, 80, 78, 71]),
+          "2026-08-01T00:00:00.000Z",
+        );
+      database.run("PRAGMA user_version = 12");
+
+      runDatabaseMigrations(database);
+
+      expect(
+        database
+          .query<{ readonly origin: string }, []>(
+            "SELECT origin FROM site_icon_cache ORDER BY origin",
+          )
+          .all(),
+      ).toEqual([{ origin: "https://working.example" }]);
     } finally {
       database.close();
     }

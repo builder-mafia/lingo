@@ -244,6 +244,10 @@ const addSiteIconCache = (database: SqliteDatabase) => {
   `);
 };
 
+const retryFailedSiteIcons = (database: SqliteDatabase) => {
+  database.run("DELETE FROM site_icon_cache WHERE data IS NULL");
+};
+
 const databaseMigrations: readonly DatabaseMigration[] = [
   { version: 1, migrate: createInitialSchema },
   { version: 2, migrate: renameProblemsToQuestions },
@@ -257,6 +261,7 @@ const databaseMigrations: readonly DatabaseMigration[] = [
   { version: 10, migrate: addNoteRelations },
   { version: 11, migrate: addNoteSources },
   { version: 12, migrate: addSiteIconCache },
+  { version: 13, migrate: retryFailedSiteIcons },
 ];
 
 export const LATEST_DATABASE_VERSION =
