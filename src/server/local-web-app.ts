@@ -25,8 +25,15 @@ import {
   type NoteRelation,
 } from "../schemas/note-relation";
 import type { WebAssets } from "./web-assets";
+import {
+  siteIconOriginSchema,
+  type SiteIconCacheEntry,
+} from "../schemas/site-icon";
 
 export type LocalWebAppApi = {
+  readonly findSiteIcon: (
+    origin: string,
+  ) => Promise<SiteIconCacheEntry | undefined>;
   readonly listCourses: () => Promise<readonly CourseWorkspaceItem[]>;
   readonly findCourseOverview: (
     courseId: string,
@@ -139,6 +146,28 @@ export const makeLocalWebApp = ({ webAssets, api }: LocalWebAppConfig) => {
   app.get("/health", (context) =>
     context.json({ ok: true, data: { status: "ready" } }),
   );
+
+  app.get("/api/site-icon", async (context) => {
+    const origin = siteIconOriginSchema.safeParse(context.req.query("origin"));
+    if (!origin.success) return context.json(invalidInputResponse, 400);
+
+    try {
+      const cached = await api.findSiteIcon(origin.data);
+      if (!cached?.data || !cached.mimeType) {
+        return context.json(notFoundResponse, 404);
+      }
+      return new Response(cached.data, {
+        headers: {
+          "Cache-Control": "public, max-age=31536000, immutable",
+          "Content-Type": cached.mimeType,
+          "Content-Length": String(cached.data.byteLength),
+          "X-Content-Type-Options": "nosniff",
+        },
+      });
+    } catch {
+      return context.json(requestFailedResponse, 500);
+    }
+  });
 
   app.get("/api/workspace", async (context) => {
     try {

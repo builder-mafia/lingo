@@ -4,6 +4,7 @@ import { Database } from "../layers/database";
 import { JsonInput, type JsonInputOptions } from "../layers/json-input";
 import { LocalHttpServer } from "../layers/local-http-server";
 import { SelfUpdater } from "../layers/self-updater";
+import { SourceIconCache } from "../layers/source-icon-cache";
 import { addQuestion } from "./commands/add-question";
 import { errorResponse, CliError } from "./errors";
 import { createNote } from "./commands/create-note";
@@ -107,7 +108,7 @@ export const runCli = (
 ): Effect.Effect<
   number,
   never,
-  JsonInput | Database | LocalHttpServer | SelfUpdater
+  JsonInput | Database | LocalHttpServer | SelfUpdater | SourceIconCache
 > => {
   if (args[0] === "--help" || args[0] === "-h") {
     if (args.length !== 1) {

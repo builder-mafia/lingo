@@ -47,6 +47,11 @@ import {
   type QuestionSession,
 } from "../schemas/question-session";
 import { runDatabaseMigrations } from "./database-migrations";
+import { extractLegacySources } from "../note-sources/legacy-sources";
+import {
+  siteIconCacheEntrySchema,
+  type SiteIconCacheEntry,
+} from "../schemas/site-icon";
 import {
   createdCourseSchema,
   type CreateCourse,
@@ -129,6 +134,13 @@ export interface DatabaseService {
     { readonly sourceId: string; readonly removed: true },
     CliError
   >;
+  readonly listSourceOrigins: () => Effect.Effect<readonly string[], CliError>;
+  readonly findSiteIconCache: (
+    origin: string,
+  ) => Effect.Effect<SiteIconCacheEntry | undefined, CliError>;
+  readonly storeSiteIconCache: (
+    entry: SiteIconCacheEntry,
+  ) => Effect.Effect<void, CliError>;
   readonly addNoteRelation: (
     noteId: string,
     targetNoteId: string,
@@ -328,6 +340,13 @@ type NoteSourceRow = {
   readonly description: string | null;
   readonly position: number;
   readonly createdAt: string;
+};
+
+type SiteIconCacheRow = {
+  readonly origin: string;
+  readonly mimeType: string | null;
+  readonly data: Uint8Array | null;
+  readonly checkedAt: string;
 };
 
 type NoteRelationRow = {
@@ -647,6 +666,39 @@ const findStoredNoteSources = (
     `)
     .all(noteId)
     .map((source) => noteSourceSchema.parse(source));
+
+const toOrigin = (url: string) => {
+  try {
+    return new URL(url).origin;
+  } catch {
+    return undefined;
+  }
+};
+
+const listStoredSourceOrigins = (database: SqliteDatabase) => {
+  const origins = new Set<string>();
+  database
+    .query<{ readonly url: string }, []>("SELECT url FROM note_sources")
+    .all()
+    .forEach(({ url }) => {
+      const origin = toOrigin(url);
+      if (origin) origins.add(origin);
+    });
+  database
+    .query<{ readonly content: string }, []>(`
+      SELECT contents.content
+      FROM note_contents AS contents
+      INNER JOIN notes ON notes.id = contents.note_id
+      WHERE notes.deleted_at IS NULL
+    `)
+    .all()
+    .flatMap(({ content }) => extractLegacySources(content).sources)
+    .forEach(({ url }) => {
+      const origin = toOrigin(url);
+      if (origin) origins.add(origin);
+    });
+  return [...origins].sort();
+};
 
 const requireTrashedNote = (database: SqliteDatabase, noteId: string) => {
   const trashed = database
@@ -1096,6 +1148,49 @@ const makeService = (databasePath: string): DatabaseService => ({
         return { sourceId, removed: true as const };
       },
       "Could not remove note source.",
+    ),
+  listSourceOrigins: () =>
+    withDatabase(
+      databasePath,
+      (database) => listStoredSourceOrigins(database),
+      "Could not list source origins.",
+    ),
+  findSiteIconCache: (origin) =>
+    withDatabase(
+      databasePath,
+      (database) => {
+        const row = database
+          .query<SiteIconCacheRow, [string]>(`
+            SELECT
+              origin,
+              mime_type AS mimeType,
+              data,
+              checked_at AS checkedAt
+            FROM site_icon_cache
+            WHERE origin = ?
+          `)
+          .get(origin);
+        return row ? siteIconCacheEntrySchema.parse(row) : undefined;
+      },
+      "Could not read cached site icon.",
+    ),
+  storeSiteIconCache: (entry) =>
+    withDatabase(
+      databasePath,
+      (database) => {
+        const parsed = siteIconCacheEntrySchema.parse(entry);
+        database
+          .query(`
+            INSERT INTO site_icon_cache (origin, mime_type, data, checked_at)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(origin) DO UPDATE SET
+              mime_type = excluded.mime_type,
+              data = excluded.data,
+              checked_at = excluded.checked_at
+          `)
+          .run(parsed.origin, parsed.mimeType, parsed.data, parsed.checkedAt);
+      },
+      "Could not store cached site icon.",
     ),
   addNoteRelation: (noteId, targetNoteId) =>
     withDatabase(

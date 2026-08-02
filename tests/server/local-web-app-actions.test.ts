@@ -12,6 +12,17 @@ const courseId = "11a848e1-d725-4820-aac6-5bb4661f08ef";
 const makeApi = () => {
   const calls: string[] = [];
   const api: LocalWebAppApi = {
+    findSiteIcon: (origin) =>
+      Promise.resolve(
+        origin === "https://example.com"
+          ? {
+              origin,
+              mimeType: "image/png",
+              data: new Uint8Array([137, 80, 78, 71]),
+              checkedAt: "2026-08-02T00:00:00.000Z",
+            }
+          : undefined,
+      ),
     listCourses: () =>
       Promise.resolve([
         {
@@ -98,6 +109,35 @@ const makeApi = () => {
 
   return { api, calls };
 };
+
+test("serves only locally cached site icons", async () => {
+  const { api } = makeApi();
+  const app = makeLocalWebApp({ api, webAssets });
+
+  const response = await app.fetch(
+    new Request(
+      "http://localhost/api/site-icon?origin=https%3A%2F%2Fexample.com",
+    ),
+  );
+  expect(response.status).toBe(200);
+  expect(response.headers.get("content-type")).toBe("image/png");
+  expect(response.headers.get("cache-control")).toContain("immutable");
+  expect([...new Uint8Array(await response.arrayBuffer())]).toEqual([
+    137, 80, 78, 71,
+  ]);
+
+  const missing = await app.fetch(
+    new Request(
+      "http://localhost/api/site-icon?origin=https%3A%2F%2Fmissing.example",
+    ),
+  );
+  expect(missing.status).toBe(404);
+
+  const invalid = await app.fetch(
+    new Request("http://localhost/api/site-icon?origin=not-a-url"),
+  );
+  expect(invalid.status).toBe(400);
+});
 
 const webAssets = {
   hasIndex: () => Promise.resolve(false),
