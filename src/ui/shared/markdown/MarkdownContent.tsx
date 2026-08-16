@@ -1,5 +1,6 @@
 import { memo, type ComponentPropsWithoutRef } from "react";
 import Markdown, { type Components } from "react-markdown";
+import remarkCjkFriendly from "remark-cjk-friendly";
 import remarkGfm from "remark-gfm";
 
 import styles from "./MarkdownContent.module.css";
@@ -86,7 +87,7 @@ export const MarkdownContent = memo(function MarkdownContent({
       <Markdown
         allowedElements={[...allowedElements]}
         components={components}
-        remarkPlugins={[remarkGfm]}
+        remarkPlugins={[remarkCjkFriendly, remarkGfm]}
         skipHtml
       >
         {content}

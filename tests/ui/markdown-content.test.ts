@@ -9,6 +9,20 @@ const readSource = (relativePath: string) =>
   Bun.file(new URL(`../../${relativePath}`, import.meta.url)).text();
 
 describe("Markdown note content", () => {
+  test("renders bold text when a Korean particle follows the closing marker", () => {
+    const html = renderToStaticMarkup(
+      createElement(MarkdownContent, {
+        content:
+          "**Liskov Substitution Principle(LSP, 리스코프 치환 원칙)**은 subtype의 계약을 지킨다.",
+      }),
+    );
+
+    expect(html).toContain(
+      "<strong>Liskov Substitution Principle(LSP, 리스코프 치환 원칙)</strong>은",
+    );
+    expect(html).not.toContain("**");
+  });
+
   test("keeps list previews readable without rendering every Markdown tree", () => {
     expect(
       toContentPreview(`
@@ -52,10 +66,14 @@ describe("Markdown note content", () => {
       ]);
 
     expect(packageJson.dependencies["react-markdown"]).toBeDefined();
+    expect(packageJson.dependencies["remark-cjk-friendly"]).toBeDefined();
     expect(packageJson.dependencies["remark-gfm"]).toBeDefined();
     expect(markdown).toContain('from "react-markdown"');
+    expect(markdown).toContain('from "remark-cjk-friendly"');
     expect(markdown).toContain('from "remark-gfm"');
-    expect(markdown).toContain("remarkPlugins={[remarkGfm]}");
+    expect(markdown).toContain(
+      "remarkPlugins={[remarkCjkFriendly, remarkGfm]}",
+    );
     expect(markdown).toContain("memo(");
     expect(markdown).not.toContain("rehypeRaw");
     expect(overview).toContain("<MarkdownContent");
