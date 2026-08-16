@@ -88,7 +88,7 @@ test("standalone binary reports its embedded version", async () => {
   expect(stderr).toBe("");
   expect(JSON.parse(stdout)).toEqual({
     ok: true,
-    data: { version: "0.6.0" },
+    data: { version: "0.6.1" },
   });
 });
 
